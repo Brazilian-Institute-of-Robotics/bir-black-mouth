@@ -1,0 +1,153 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="quadruped">
+
+    <xacro:property name="M_PI" value="3.1415"/>
+
+    <xacro:property name="body_length" value="0.262"/> 
+    <xacro:property name="body_width" value="0.162"/>  
+    <xacro:property name="body_height" value="0.062"/> 
+
+    <xacro:property name="hip_length" value="0.1"/>
+    <xacro:property name="femur_length" value="0.146"/>
+    <xacro:property name="tibia_length" value="0.144"/>
+    <xacro:property name="leg_thickness" value="0.05"/>
+
+    <xacro:property name="leg_x_offset" value="${2*body_length/5}"/>
+    <xacro:property name="leg_y_offset" value="${body_width/2 + hip_length/2}"/>
+    <xacro:property name="leg_z_offset" value="${-body_height/4}"/>
+
+
+    <xacro:macro name="leg" params="prefix left *joint_pose ">
+        
+        <link name="${prefix}_hip"/>
+
+        <joint name="${prefix}_hip_roll_joint" type="revolute">
+            <parent link="base_link"/>
+            <child link="${prefix}_hip"/>
+            <axis xyz="1 0 0"/>
+            <limit lower="-3.14159" upper="3.14159" velocity="50.0" effort="1000.0"/>
+            <xacro:insert_block name="joint_pose"/>
+        </joint>
+
+        <link name="${prefix}_femur">
+            <visual>
+                <origin xyz="0.0 0.0 ${-femur_length/2} " rpy="${M_PI/2} 0.0  0.0"/>
+                <geometry>
+                    <box size="0.035 ${femur_length} 0.036"/>
+                </geometry>
+                <!-- <mesh filename="file://$(find black_mouth_description)/meshes/left_femur.dae" /> -->
+                <material name="Green">
+                    <color rgba="0.0 1.0 0.0 1.0"/>
+                </material>
+            </visual>
+            <collision>
+                <origin xyz="0.0 0.0 ${-femur_length/2} " rpy="${M_PI/2} 0.0  0.0"/>
+                <geometry>
+                    <box size="0.035 ${femur_length} 0.036"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <mass value="1.0"/>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                <inertia ixx="1e-6" ixy="0.0" ixz="0.0" iyy="1e-6" iyz="0.0" izz="1e-6"/>
+            </inertial>
+        </link>
+
+        <joint name="${prefix}_hip_pitch_joint" type="revolute">
+            <parent link="${prefix}_hip"/>
+            <child link="${prefix}_femur"/>
+            <axis xyz="0 1 0"/>
+            <limit lower="-3.14159" upper="3.14159" velocity="50.0" effort="1000.0"/>
+            <xacro:if value="${left}">
+                <origin xyz="0 0.045 0.0" rpy="0.0 0.0 0.0"/>
+            </xacro:if>
+            <xacro:unless value="${left}">
+                <origin xyz="0 -0.045 0.0" rpy="0.0 0.0 0.0"/>
+            </xacro:unless>
+        </joint>
+
+        <link name="${prefix}_tibia">
+            <visual>
+            <xacro:if value="${left}">
+                <!-- <origin xyz="0 0.045 0.0" rpy="0.0 0.0 0.0"/>
+                <mesh filename="file://$(find black_mouth_description)/meshes/left_tibia.dae" /> -->
+                <origin xyz="0.0 0.0 ${-tibia_length/2} " rpy="${M_PI/2} 0.0  0.0"/>
+                <geometry>
+                    <box size="0.035 ${tibia_length} 0.036"/>
+                </geometry>
+                <material name="Red">
+                    <color rgba="1.0 .0 0.0 1.0"/>
+                </material>
+            </xacro:if>
+            <xacro:unless value="${left}">
+                <origin xyz="0 -0.045 0.0" rpy="0.0 0.0 0.0"/>
+                <mesh filename="file://$(find black_mouth_description)/meshes/right_tibia.dae" />
+            </xacro:unless>
+            </visual>
+            <collision>
+                <origin xyz="0.0 0.0 ${-tibia_length/2} " rpy="${M_PI/2} 0.0  0.0"/>
+                <geometry>
+                    <box size="0.035 ${tibia_length} 0.036"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <mass value="1.0"/>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                <inertia ixx="1e-6" ixy="0.0" ixz="0.0" iyy="1e-6" iyz="0.0" izz="1e-6"/>
+            </inertial>
+        </link>
+
+        <joint name="${prefix}_elbow_joint" type="revolute">
+            <parent link="${prefix}_femur"/>
+            <child link="${prefix}_tibia"/>
+            <axis xyz="0 1 0"/>
+            <limit lower="-3.14159" upper="3.14159" velocity="50.0" effort="1000.0"/>
+            <origin xyz="0.0 0.0 -${femur_length}" rpy="0.0 0.0 0.0"/>
+        </joint> 
+
+    </xacro:macro>
+
+    <link name="base_footprint"/>
+
+    <link name="base_link">
+        <visual>
+            <geometry>
+                <mesh filename="file://$(find black_mouth_description)/meshes/Chassis_assembly.dae" />
+            </geometry>
+        </visual>
+        <collision>
+            <geometry>
+                <box size="${body_length} ${body_width} ${body_height}" />
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="1.0"/>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <inertia ixx="4.182" ixy="-0.002532" ixz="-0.011148" iyy="8.258" iyz="0.001" izz="11.706"/>
+        </inertial> 
+    </link>
+
+    <joint name="base_footprint_joint" type="fixed">
+        <parent link="base_footprint"/>
+        <child link="base_link"/>
+        <origin xyz="0.0 0.0 0.15" rpy="0.0 0.0 0.0"/>
+    </joint>
+    
+    <xacro:leg prefix="front_left" left="${True}" >
+        <origin xyz="0.11 0.07 0.020822" rpy="0.0 0.0 0.0"/>
+    </xacro:leg>
+
+    <xacro:leg prefix="front_right" left="${False}">
+        <origin xyz="0.11 -0.07 0.020822" rpy="0.0 0.0 0.0"/>
+    </xacro:leg>
+ 
+    <xacro:leg prefix="back_left" left="${True}">
+        <origin xyz="-0.11 0.07 0.020822" rpy="0.0 0.0 0.0"/>
+    </xacro:leg>
+
+    <xacro:leg prefix="back_right" left="${False}" >
+        <origin xyz="-0.11 -0.07 0.020822" rpy="0.0 0.0 0.0"/>
+    </xacro:leg>  
+
+
+</robot>
