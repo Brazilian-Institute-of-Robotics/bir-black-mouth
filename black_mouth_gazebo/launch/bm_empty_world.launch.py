@@ -11,7 +11,7 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
 
     pkg_description=get_package_share_directory('black_mouth_description')
-    default_model = os.path.join(pkg_description, "urdf","quadruped1.urdf.xacro")
+    default_model = os.path.join(pkg_description, "urdf","black_mouth.urdf.xacro")
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
     default_rviz_config_path = os.path.join(pkg_description, 'rviz/urdf_config.rviz')
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')

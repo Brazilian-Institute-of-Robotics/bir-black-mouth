@@ -31,26 +31,30 @@
 
         <link name="${prefix}_femur">
             <visual>
-                <origin xyz="0.0 0.0 ${-femur_length/2} " rpy="${M_PI/2} 0.0  0.0"/>
-                <geometry>
-                    <box size="0.035 ${femur_length} 0.036"/>
-                </geometry>
-                <!-- <mesh filename="file://$(find black_mouth_description)/meshes/left_femur.dae" /> -->
-                <material name="Green">
-                    <color rgba="0.0 1.0 0.0 1.0"/>
-                </material>
+                <xacro:if value="${left}">
+                    <origin xyz="0.0 -0.006 0.0" rpy="${M_PI/2} 0.0 ${-M_PI/2} "/>
+                    <geometry> 
+                        <mesh filename="file://$(find black_mouth_description)/meshes/left_femur.dae" />
+                    </geometry>
+                </xacro:if>
+                <xacro:unless value="${left}">
+                    <origin xyz="0.0 0.006 0.0" rpy="${M_PI/2} 0.0 ${-M_PI/2} "/>
+                    <geometry> 
+                        <mesh filename="file://$(find black_mouth_description)/meshes/right_femur.dae" />
+                    </geometry>
+                </xacro:unless> 
             </visual>
             <collision>
-                <origin xyz="0.0 0.0 ${-femur_length/2} " rpy="${M_PI/2} 0.0  0.0"/>
+                <origin xyz="0.0 0.0 ${-femur_length/3}" rpy="${M_PI/2} 0.0 ${-M_PI/2} "/>
                 <geometry>
-                    <box size="0.035 ${femur_length} 0.036"/>
+                    <box size="0.035 ${femur_length} 0.036" />
                 </geometry>
             </collision>
             <inertial>
                 <mass value="1.0"/>
                 <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-                <inertia ixx="1e-6" ixy="0.0" ixz="0.0" iyy="1e-6" iyz="0.0" izz="1e-6"/>
-            </inertial>
+                <inertia ixx="4.182" ixy="-0.002532" ixz="-0.011148" iyy="8.258" iyz="0.001" izz="11.706"/>
+            </inertial> 
         </link>
 
         <joint name="${prefix}_hip_pitch_joint" type="revolute">
@@ -59,29 +63,26 @@
             <axis xyz="0 1 0"/>
             <limit lower="-3.14159" upper="3.14159" velocity="50.0" effort="1000.0"/>
             <xacro:if value="${left}">
-                <origin xyz="0 0.045 0.0" rpy="0.0 0.0 0.0"/>
+                <origin xyz="0 0.05 0.0" rpy="0.0 0.0 0.0"/>
             </xacro:if>
             <xacro:unless value="${left}">
-                <origin xyz="0 -0.045 0.0" rpy="0.0 0.0 0.0"/>
-            </xacro:unless>
+                <origin xyz="0 -0.05 0.0" rpy="0.0 0.0 0.0"/>
+            </xacro:unless> 
         </joint>
 
         <link name="${prefix}_tibia">
             <visual>
             <xacro:if value="${left}">
-                <!-- <origin xyz="0 0.045 0.0" rpy="0.0 0.0 0.0"/>
-                <mesh filename="file://$(find black_mouth_description)/meshes/left_tibia.dae" /> -->
-                <origin xyz="0.0 0.0 ${-tibia_length/2} " rpy="${M_PI/2} 0.0  0.0"/>
+                <origin xyz="0.0 0.0 0.0 " rpy="0.0 0.0 0.0"/>
                 <geometry>
-                    <box size="0.035 ${tibia_length} 0.036"/>
+                    <mesh filename="file://$(find black_mouth_description)/meshes/left_tibia.dae" />
                 </geometry>
-                <material name="Red">
-                    <color rgba="1.0 .0 0.0 1.0"/>
-                </material>
             </xacro:if>
             <xacro:unless value="${left}">
-                <origin xyz="0 -0.045 0.0" rpy="0.0 0.0 0.0"/>
-                <mesh filename="file://$(find black_mouth_description)/meshes/right_tibia.dae" />
+                <origin xyz="0.0 0.0 0.0 " rpy="0.0 0.0 0.0"/>
+                <geometry>
+                    <mesh filename="file://$(find black_mouth_description)/meshes/right_tibia.dae" />
+                </geometry>
             </xacro:unless>
             </visual>
             <collision>
@@ -102,7 +103,7 @@
             <child link="${prefix}_tibia"/>
             <axis xyz="0 1 0"/>
             <limit lower="-3.14159" upper="3.14159" velocity="50.0" effort="1000.0"/>
-            <origin xyz="0.0 0.0 -${femur_length}" rpy="0.0 0.0 0.0"/>
+            <origin xyz="-0.00 0.0 ${-femur_length +0.035}" rpy="0.0 0.0 0.0"/>
         </joint> 
 
     </xacro:macro>
@@ -116,6 +117,7 @@
             </geometry>
         </visual>
         <collision>
+            <origin xyz="0.0 0.0 ${body_height/2}" rpy="0.0 0.0 0.0"/>
             <geometry>
                 <box size="${body_length} ${body_width} ${body_height}" />
             </geometry>
@@ -130,9 +132,9 @@
     <joint name="base_footprint_joint" type="fixed">
         <parent link="base_footprint"/>
         <child link="base_link"/>
-        <origin xyz="0.0 0.0 0.15" rpy="0.0 0.0 0.0"/>
+        <origin xyz="0.0 0.0 0.15" rpy="0.0 0.0 ${M_PI/2}"/>
     </joint>
-    
+
     <xacro:leg prefix="front_left" left="${True}" >
         <origin xyz="0.11 0.07 0.020822" rpy="0.0 0.0 0.0"/>
     </xacro:leg>
@@ -140,7 +142,7 @@
     <xacro:leg prefix="front_right" left="${False}">
         <origin xyz="0.11 -0.07 0.020822" rpy="0.0 0.0 0.0"/>
     </xacro:leg>
- 
+
     <xacro:leg prefix="back_left" left="${True}">
         <origin xyz="-0.11 0.07 0.020822" rpy="0.0 0.0 0.0"/>
     </xacro:leg>
@@ -149,5 +151,34 @@
         <origin xyz="-0.11 -0.07 0.020822" rpy="0.0 0.0 0.0"/>
     </xacro:leg>  
 
+    <link name="imu_link"/>
 
+    <joint name="imu_joint" type="fixed">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <parent link="base_link"/>
+        <child link="imu_link"/>
+        <axis xyz="0.075 0.0 0.0738"/>
+    </joint>
+
+    <gazebo reference="imu_link">
+    <gravity>true</gravity>
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <visualize>true</visualize>
+      <topic>__default_topic__</topic>
+      <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+        <topicName>imu</topicName>
+        <bodyName>imu_link</bodyName>
+        <updateRateHZ>10.0</updateRateHZ>
+        <gaussianNoise>0.0</gaussianNoise>
+        <xyzOffset>0 0 0</xyzOffset>
+        <rpyOffset>0 0 0</rpyOffset>
+        <frameName>imu_link</frameName>
+        <initialOrientationAsReference>false</initialOrientationAsReference>
+      </plugin>
+      <pose>0 0 0 0 0 0</pose>
+    </sensor>
+  </gazebo>
+  
 </robot>
