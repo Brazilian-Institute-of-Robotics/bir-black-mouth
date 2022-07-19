@@ -4,7 +4,7 @@
     <xacro:property name="M_PI" value="3.1415"/>
 
     <xacro:property name="body_length" value="0.262"/> 
-    <xacro:property name="body_width" value="0.162"/>  
+    <xacro:property name="body_width" value="0.11"/>  
     <xacro:property name="body_height" value="0.062"/> 
 
     <xacro:property name="hip_length" value="0.1"/>
@@ -17,9 +17,37 @@
     <xacro:property name="leg_z_offset" value="${-body_height/4}"/>
 
 
-    <xacro:macro name="leg" params="prefix left *joint_pose ">
+    <xacro:macro name="leg" params="prefix left front *joint_pose ">
         
-        <link name="${prefix}_hip"/>
+        <link name="${prefix}_hip">
+            <inertial>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                <mass value="0.7"/>
+                <inertia ixx="13.0" ixy="0.689" ixz="0.02" iyy="18.242" iyz="0.008" izz="22.035"/>
+            </inertial>
+            <visual>
+                <xacro:if value="${front}">
+                    <origin xyz="0.0 0.0 0.0" rpy="0.0 ${-M_PI/2} ${-M_PI/2}"/>
+                </xacro:if>
+                <xacro:unless value="${front}">
+                    <origin xyz="0.0 0.0 0.0" rpy="0.0 ${M_PI/2} ${M_PI/2}"/>
+                </xacro:unless>
+                <geometry> 
+                        <mesh filename="file://$(find black_mouth_description)/meshes/dynamixel.dae" />
+                </geometry>
+            </visual>
+            <collision>
+                <xacro:if value="${front}">
+                    <origin xyz="-0.015 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                </xacro:if>
+                <xacro:unless value="${front}">
+                    <origin xyz="0.015 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                </xacro:unless>
+                <geometry>
+                    <box size="0.05 0.03 0.035"/>
+                </geometry>
+            </collision>
+        </link>
 
         <joint name="${prefix}_hip_roll_joint" type="revolute">
             <parent link="base_link"/>
@@ -113,13 +141,13 @@
     <link name="base_link">
         <visual>
             <geometry>
-                <mesh filename="file://$(find black_mouth_description)/meshes/Chassis_assembly.dae" />
+                <mesh filename="file://$(find black_mouth_description)/meshes/base_link.dae" />
             </geometry>
         </visual>
         <collision>
             <origin xyz="0.0 0.0 ${body_height/2}" rpy="0.0 0.0 0.0"/>
             <geometry>
-                <box size="${body_length} ${body_width} ${body_height}" />
+                <box size="${body_length} ${body_width-0.001} ${body_height}" />
             </geometry>
         </collision>
         <inertial>
@@ -135,20 +163,20 @@
         <origin xyz="0.0 0.0 0.15" rpy="0.0 0.0 ${M_PI/2}"/>
     </joint>
 
-    <xacro:leg prefix="front_left" left="${True}" >
-        <origin xyz="0.11 0.07 0.020822" rpy="0.0 0.0 0.0"/>
+    <xacro:leg prefix="front_left" left="${True}" front="${True}">
+        <origin xyz="${body_length/2 -0.02} 0.07 0.020822" rpy="0.0 0.0 0.0"/>
     </xacro:leg>
 
-    <xacro:leg prefix="front_right" left="${False}">
-        <origin xyz="0.11 -0.07 0.020822" rpy="0.0 0.0 0.0"/>
+    <xacro:leg prefix="front_right" left="${False}" front="${True}">
+        <origin xyz="${body_length/2 -0.02} -0.07 0.020822" rpy="0.0 0.0 0.0"/>
     </xacro:leg>
 
-    <xacro:leg prefix="back_left" left="${True}">
-        <origin xyz="-0.11 0.07 0.020822" rpy="0.0 0.0 0.0"/>
+    <xacro:leg prefix="back_left" left="${True}" front="${False}">
+        <origin xyz="${-(body_length/2 -0.02)} 0.07 0.020822" rpy="0.0 0.0 0.0"/>
     </xacro:leg>
 
-    <xacro:leg prefix="back_right" left="${False}" >
-        <origin xyz="-0.11 -0.07 0.020822" rpy="0.0 0.0 0.0"/>
+    <xacro:leg prefix="back_right" left="${False}" front="${False}" >
+        <origin xyz="${-(body_length/2 -0.02)} -0.07 0.020822" rpy="0.0 0.0 0.0"/>
     </xacro:leg>  
 
     <link name="imu_link"/>

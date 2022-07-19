@@ -51,7 +51,13 @@ def generate_launch_description():
         output='screen',
         arguments=['-entity','quadruped', '-topic', '/robot_description'],
     )
-
+    
+    joint_state_publisher_gui = Node(
+        package='joint_state_publisher_gui',
+        executable='joint_state_publisher_gui',
+        name='joint_state_publisher_gui',
+        condition=launch.conditions.IfCondition(LaunchConfiguration('gui'))
+    )
     rviz = Node(
         package='rviz2',
         executable='rviz2',
@@ -63,13 +69,15 @@ def generate_launch_description():
 
     return LaunchDescription([
         launch.actions.DeclareLaunchArgument('use_sim_time', default_value='false', description='Use simulation (Gazebo) clock if true'),
-
+        launch.actions.DeclareLaunchArgument(name='gui', default_value='True',
+                                                    description='Flag to enable joint_state_publisher_gui'),
         launch.actions.DeclareLaunchArgument(name='model',          default_value=default_model,description='Absolute path to robot urdf file'),
 
         launch.actions.DeclareLaunchArgument(name='rviz_config', default_value=default_rviz_config_path,
                                             description='Absolute path to rviz config file'),
         gzserver,
         gzclient,
+        joint_state_publisher_gui,
         node_robot_state_publisher,
         joint_state_publisher,
         spawn_robot,
