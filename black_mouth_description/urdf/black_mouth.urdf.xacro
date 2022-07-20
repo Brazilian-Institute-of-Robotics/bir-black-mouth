@@ -57,25 +57,25 @@
             <xacro:insert_block name="joint_pose"/>
         </joint>
 
-        <link name="${prefix}_femur">
+        <link name="${prefix}_motor_femur">
             <visual>
                 <xacro:if value="${left}">
-                    <origin xyz="0.0 -0.006 0.0" rpy="${M_PI/2} 0.0 ${-M_PI/2} "/>
+                    <origin xyz="0.0 -0.001 0.0" rpy="${M_PI/2} 0.0 ${-M_PI/2} "/>
                     <geometry> 
-                        <mesh filename="file://$(find black_mouth_description)/meshes/left_femur.dae" />
+                        <mesh filename="file://$(find black_mouth_description)/meshes/dynamixel.dae" />
                     </geometry>
                 </xacro:if>
                 <xacro:unless value="${left}">
-                    <origin xyz="0.0 0.006 0.0" rpy="${M_PI/2} 0.0 ${-M_PI/2} "/>
+                    <origin xyz="0.0 0.001 0.0" rpy="${M_PI/2} 0.0 ${-M_PI/2} "/>
                     <geometry> 
-                        <mesh filename="file://$(find black_mouth_description)/meshes/right_femur.dae" />
+                        <mesh filename="file://$(find black_mouth_description)/meshes/dynamixel.dae"/>
                     </geometry>
                 </xacro:unless> 
             </visual>
             <collision>
-                <origin xyz="0.0 0.0 ${-femur_length/3}" rpy="${M_PI/2} 0.0 ${-M_PI/2} "/>
+                <origin xyz="0.0 0.0 -0.015" rpy="0.0 ${-M_PI/2} 0.0 "/>
                 <geometry>
-                    <box size="0.035 ${femur_length} 0.036" />
+                    <box size="0.05 0.03 0.035"/>
                 </geometry>
             </collision>
             <inertial>
@@ -87,36 +87,70 @@
 
         <joint name="${prefix}_hip_pitch_joint" type="revolute">
             <parent link="${prefix}_hip"/>
-            <child link="${prefix}_femur"/>
+            <child link="${prefix}_motor_femur"/>
             <axis xyz="0 1 0"/>
             <limit lower="-3.14159" upper="3.14159" velocity="50.0" effort="1000.0"/>
             <xacro:if value="${left}">
-                <origin xyz="0 0.05 0.0" rpy="0.0 0.0 0.0"/>
+                <origin xyz="0 0.04 0.0" rpy="0.0 0.0 0.0"/>
             </xacro:if>
             <xacro:unless value="${left}">
-                <origin xyz="0 -0.05 0.0" rpy="0.0 0.0 0.0"/>
+                <origin xyz="0 -0.04 0.0" rpy="0.0 0.0 0.0"/>
             </xacro:unless> 
         </joint>
 
+        <link name="${prefix}_link_femur">
+            <visual>
+                <xacro:if value="${left}">
+                    <origin xyz="0.0 0 0.035" rpy="${M_PI/2} 0.0 ${-M_PI/2} "/>
+                    <geometry> 
+                        <mesh filename="file://$(find black_mouth_description)/meshes/left_femur.dae" />
+                    </geometry>
+                </xacro:if>
+                <xacro:unless value="${left}">
+                    <origin xyz="0.0 0.0 0.035" rpy="${M_PI/2} 0.0 ${-M_PI/2} "/>
+                    <geometry> 
+                        <mesh filename="file://$(find black_mouth_description)/meshes/right_femur.dae" />
+                    </geometry>
+                </xacro:unless> 
+            </visual>
+            <collision>
+                <origin xyz="0.0 0.0 -0.04" rpy="${M_PI/2} 0.0 ${-M_PI/2} "/>
+                <geometry>
+                    <box size="0.035 ${femur_length*2/3} 0.036" />
+                </geometry>
+            </collision>
+            <inertial>
+                <mass value="1.0"/>
+                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                <inertia ixx="4.182" ixy="-0.002532" ixz="-0.011148" iyy="8.258" iyz="0.001" izz="11.706"/>
+            </inertial> 
+        </link> 
+
+        <joint name="${prefix}_femur_joint" type="fixed">
+            <parent link="${prefix}_motor_femur"/>
+            <child link="${prefix}_link_femur"/>
+            <origin xyz="0.00 0.0 -0.05" rpy="0.0 0.0 0.0"/>
+        </joint>  
+ 
         <link name="${prefix}_tibia">
             <visual>
             <xacro:if value="${left}">
-                <origin xyz="0.0 0.0 0.0 " rpy="0.0 0.0 0.0"/>
+                <origin xyz="0.0 0.007 0.0 " rpy="0.0 0.0 0.0"/>
                 <geometry>
                     <mesh filename="file://$(find black_mouth_description)/meshes/left_tibia.dae" />
                 </geometry>
             </xacro:if>
             <xacro:unless value="${left}">
-                <origin xyz="0.0 0.0 0.0 " rpy="0.0 0.0 0.0"/>
+                <origin xyz="0.0 -0.007 0.0 " rpy="0.0 0.0 0.0"/>
                 <geometry>
                     <mesh filename="file://$(find black_mouth_description)/meshes/right_tibia.dae" />
                 </geometry>
             </xacro:unless>
             </visual>
             <collision>
-                <origin xyz="0.0 0.0 ${-tibia_length/2} " rpy="${M_PI/2} 0.0  0.0"/>
+                <origin xyz="0.0 0.0 ${-tibia_length/2 -0.0025} " rpy="${M_PI/2} 0.0  0.0"/>
                 <geometry>
-                    <box size="0.035 ${tibia_length} 0.036"/>
+                    <box size="0.035 ${tibia_length -0.02} 0.036"/>
                 </geometry>
             </collision>
             <inertial>
@@ -127,12 +161,12 @@
         </link>
 
         <joint name="${prefix}_elbow_joint" type="revolute">
-            <parent link="${prefix}_femur"/>
+            <parent link="${prefix}_link_femur"/>
             <child link="${prefix}_tibia"/>
             <axis xyz="0 1 0"/>
             <limit lower="-3.14159" upper="3.14159" velocity="50.0" effort="1000.0"/>
-            <origin xyz="-0.00 0.0 ${-femur_length +0.035}" rpy="0.0 0.0 0.0"/>
-        </joint> 
+            <origin xyz="-0.00 0.0 ${-femur_length +0.065}" rpy="0.0 0.0 0.0"/>
+        </joint>  
 
     </xacro:macro>
 
@@ -160,7 +194,7 @@
     <joint name="base_footprint_joint" type="fixed">
         <parent link="base_footprint"/>
         <child link="base_link"/>
-        <origin xyz="0.0 0.0 0.15" rpy="0.0 0.0 ${M_PI/2}"/>
+        <origin xyz="0.0 0.0 0.15" rpy="0.0 0.0 0.0"/>
     </joint>
 
     <xacro:leg prefix="front_left" left="${True}" front="${True}">
