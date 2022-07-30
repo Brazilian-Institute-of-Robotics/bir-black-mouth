@@ -21,6 +21,7 @@ def generate_launch_description():
         cmd=['gzserver',
              '-s', 'libgazebo_ros_init.so',
              '-s', 'libgazebo_ros_factory.so',
+             '-u',
              ''],
         output='screen',
     )
@@ -31,6 +32,7 @@ def generate_launch_description():
         output='screen',
         # condition=IfCondition(LaunchConfiguration('gui')),
     )
+
     node_robot_state_publisher = Node(
             package="robot_state_publisher",
             executable="robot_state_publisher",
@@ -58,6 +60,7 @@ def generate_launch_description():
         name='joint_state_publisher_gui',
         condition=launch.conditions.IfCondition(LaunchConfiguration('gui'))
     )
+    
     rviz = Node(
         package='rviz2',
         executable='rviz2',

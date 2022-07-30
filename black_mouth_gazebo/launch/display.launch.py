@@ -7,7 +7,7 @@ import os
 
 def generate_launch_description():
     pkg_share = FindPackageShare(package='black_mouth_description').find('black_mouth_description')
-    default_model_path = os.path.join(pkg_share, 'urdf/quadruped.urdf.xacro')
+    default_model_path = os.path.join(pkg_share, 'urdf/black_mouth.urdf.xacro')
     default_rviz_config_path = os.path.join(pkg_share, 'rviz/urdf_config.rviz')
 
     robot_description = {'robot_description': Command(['xacro ', LaunchConfiguration('model')])}

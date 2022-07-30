@@ -3,37 +3,47 @@
 
     <xacro:property name="M_PI" value="3.1415"/>
 
-    <xacro:property name="body_length" value="0.262"/> 
-    <xacro:property name="body_width" value="0.11"/>  
-    <xacro:property name="body_height" value="0.062"/> 
+    <xacro:property name="body_length" value="0.272"/> 
+    <xacro:property name="body_width" value="0.168"/>  
+    <xacro:property name="body_height" value="0.064"/> 
 
-    <xacro:property name="hip_length" value="0.1"/>
-    <xacro:property name="femur_length" value="0.146"/>
-    <xacro:property name="tibia_length" value="0.144"/>
-    <xacro:property name="leg_thickness" value="0.05"/>
+    <xacro:property name="hip_length" value="0.0415"/>
+    <xacro:property name="femur_length" value="0.120"/>
+    <xacro:property name="tibia_length" value="0.120"/>
+    <xacro:property name="femur_thickness" value="0.022"/>
+    <xacro:property name="femur_offset" value="0.0053"/>
 
-    <xacro:property name="leg_x_offset" value="${2*body_length/5}"/>
-    <xacro:property name="leg_y_offset" value="${body_width/2 + hip_length/2}"/>
-    <xacro:property name="leg_z_offset" value="${-body_height/4}"/>
+    <xacro:property name="leg_x_offset" value="0.11455"/>
+    <xacro:property name="leg_y_offset" value="0.07"/>
+    <xacro:property name="leg_z_offset" value="0.020822"/>
 
 
-    <xacro:macro name="leg" params="prefix left front *joint_pose ">
+    <xacro:macro name="leg" params="prefix left front *joint_pose">
         
         <link name="${prefix}_hip">
-            <inertial>
-                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-                <mass value="0.7"/>
-                <inertia ixx="13.0" ixy="0.689" ixz="0.02" iyy="18.242" iyz="0.008" izz="22.035"/>
-            </inertial>
-            <visual>
-                <xacro:if value="${front}">
-                    <origin xyz="0.0 0.0 0.0" rpy="0.0 ${-M_PI/2} ${-M_PI/2}"/>
+
+            <xacro:if value="${front}">
+                <xacro:if value="${left}">
+                    <xacro:property name="hip_rpy" value="0.0 0.0 0.0"/>
                 </xacro:if>
-                <xacro:unless value="${front}">
-                    <origin xyz="0.0 0.0 0.0" rpy="0.0 ${M_PI/2} ${M_PI/2}"/>
+                <xacro:unless value="${left}">
+                    <xacro:property name="hip_rpy" value="${M_PI} 0.0 0.0"/>
                 </xacro:unless>
+            </xacro:if>
+            <xacro:unless value="${front}">
+                <xacro:if value="${left}">
+                    <xacro:property name="hip_rpy" value="${M_PI} 0.0 ${M_PI}"/>
+                </xacro:if>
+
+                <xacro:unless value="${left}">
+                    <xacro:property name="hip_rpy" value="0.0 0.0 ${M_PI}"/>
+                </xacro:unless>
+            </xacro:unless>
+
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="${hip_rpy}"/>
                 <geometry> 
-                        <mesh filename="file://$(find black_mouth_description)/meshes/dynamixel.dae" />
+                    <mesh filename="file://$(find black_mouth_description)/meshes/hip.dae" />
                 </geometry>
             </visual>
             <collision>
@@ -47,6 +57,16 @@
                     <box size="0.05 0.03 0.035"/>
                 </geometry>
             </collision>
+            <inertial>
+                <xacro:if value="${front}">
+                    <origin xyz="-0.011 0.0 0.0" rpy="${hip_rpy}"/>
+                </xacro:if>
+                <xacro:unless value="${front}">
+                    <origin xyz="0.011 0.0 0.0" rpy="${hip_rpy}"/>
+                </xacro:unless>
+                <mass value="0.077"/>
+                <inertia ixx="1.365e-5" ixy="-6.888e-7" ixz="2.025e-8" iyy="1.824e-5" iyz="-8.308e-9" izz="2.204e-5"/>
+            </inertial>
         </link>
 
         <joint name="${prefix}_hip_roll_joint" type="revolute">
@@ -57,61 +77,17 @@
             <xacro:insert_block name="joint_pose"/>
         </joint>
 
-        <link name="${prefix}_motor_femur">
-            <visual>
-                <xacro:if value="${left}">
-                    <origin xyz="0.0 -0.001 0.0" rpy="${M_PI/2} 0.0 ${-M_PI/2} "/>
-                    <geometry> 
-                        <mesh filename="file://$(find black_mouth_description)/meshes/dynamixel.dae" />
-                    </geometry>
-                </xacro:if>
-                <xacro:unless value="${left}">
-                    <origin xyz="0.0 0.001 0.0" rpy="${M_PI/2} 0.0 ${-M_PI/2} "/>
-                    <geometry> 
-                        <mesh filename="file://$(find black_mouth_description)/meshes/dynamixel.dae"/>
-                    </geometry>
-                </xacro:unless> 
-            </visual>
-            <collision>
-                <origin xyz="0.0 0.0 -0.015" rpy="0.0 ${-M_PI/2} 0.0 "/>
-                <geometry>
-                    <box size="0.05 0.03 0.035"/>
-                </geometry>
-            </collision>
-            <inertial>
-                <mass value="1.0"/>
-                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-                <inertia ixx="4.182" ixy="-0.002532" ixz="-0.011148" iyy="8.258" iyz="0.001" izz="11.706"/>
-            </inertial> 
-        </link>
-
-        <joint name="${prefix}_hip_pitch_joint" type="revolute">
-            <parent link="${prefix}_hip"/>
-            <child link="${prefix}_motor_femur"/>
-            <axis xyz="0 1 0"/>
-            <limit lower="-3.14159" upper="3.14159" velocity="50.0" effort="1000.0"/>
-            <xacro:if value="${left}">
-                <origin xyz="0 0.04 0.0" rpy="0.0 0.0 0.0"/>
-            </xacro:if>
-            <xacro:unless value="${left}">
-                <origin xyz="0 -0.04 0.0" rpy="0.0 0.0 0.0"/>
-            </xacro:unless> 
-        </joint>
-
         <link name="${prefix}_link_femur">
             <visual>
-                <xacro:if value="${left}">
-                    <origin xyz="0.0 0 0.035" rpy="${M_PI/2} 0.0 ${-M_PI/2} "/>
-                    <geometry> 
+                <origin xyz="0.0 0 ${-femur_offset}" rpy="0.0 0.0 0.0 "/>
+                <geometry> 
+                    <xacro:if value="${left}">
                         <mesh filename="file://$(find black_mouth_description)/meshes/left_femur.dae" />
-                    </geometry>
-                </xacro:if>
-                <xacro:unless value="${left}">
-                    <origin xyz="0.0 0.0 0.035" rpy="${M_PI/2} 0.0 ${-M_PI/2} "/>
-                    <geometry> 
+                    </xacro:if>
+                    <xacro:unless value="${left}">
                         <mesh filename="file://$(find black_mouth_description)/meshes/right_femur.dae" />
-                    </geometry>
-                </xacro:unless> 
+                    </xacro:unless> 
+                </geometry>
             </visual>
             <collision>
                 <origin xyz="0.0 0.0 -0.04" rpy="${M_PI/2} 0.0 ${-M_PI/2} "/>
@@ -120,32 +96,38 @@
                 </geometry>
             </collision>
             <inertial>
-                <mass value="1.0"/>
-                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-                <inertia ixx="4.182" ixy="-0.002532" ixz="-0.011148" iyy="8.258" iyz="0.001" izz="11.706"/>
+                <xacro:if value="${left}">
+                    <mass value="0.118"/>
+                    <origin xyz="-1.830e-4 0.002 -0.019" rpy="0.0 0.0 0.0"/>
+                    <inertia ixx="1.604e-4" ixy="-5.665e-8" ixz="0.00000115" iyy="1.647e-4" iyz="1.108e-5" izz="2.100e-5"/>
+                </xacro:if>
+                <xacro:unless value="${left}">
+                    <mass value="0.118"/>
+                    <origin xyz="-1.830e-4 -0.002 -0.019" rpy="0.0 0.0 0.0"/>
+                    <inertia ixx="1.604e-4" ixy="3.969e-8" ixz="1.151e-6" iyy="1.647e-4" iyz="-1.105e-5" izz="2.099e-5"/>
+                </xacro:unless> 
             </inertial> 
         </link> 
 
-        <joint name="${prefix}_femur_joint" type="fixed">
-            <parent link="${prefix}_motor_femur"/>
+        <joint name="${prefix}_hip_pitch_joint" type="revolute">
+            <parent link="${prefix}_hip"/>
             <child link="${prefix}_link_femur"/>
-            <origin xyz="0.00 0.0 -0.05" rpy="0.0 0.0 0.0"/>
-        </joint>  
+            <axis xyz="0 1 0"/>
+            <limit lower="-3.14159" upper="3.14159" velocity="50.0" effort="1000.0"/>
+            <xacro:if value="${left}">
+                <origin xyz="0 ${hip_length} 0.0" rpy="0.0 0.0 0.0"/>
+            </xacro:if>
+            <xacro:unless value="${left}">
+                <origin xyz="0 ${-hip_length} 0.0" rpy="0.0 0.0 0.0"/>
+            </xacro:unless> 
+        </joint>
  
         <link name="${prefix}_tibia">
             <visual>
-            <xacro:if value="${left}">
-                <origin xyz="0.0 0.007 0.0 " rpy="0.0 0.0 0.0"/>
+                <origin xyz="0.0 0.0 0.0 " rpy="0.0 0.0 0.0"/>
                 <geometry>
-                    <mesh filename="file://$(find black_mouth_description)/meshes/left_tibia.dae" />
+                    <mesh filename="file://$(find black_mouth_description)/meshes/tibia.dae" />
                 </geometry>
-            </xacro:if>
-            <xacro:unless value="${left}">
-                <origin xyz="0.0 -0.007 0.0 " rpy="0.0 0.0 0.0"/>
-                <geometry>
-                    <mesh filename="file://$(find black_mouth_description)/meshes/right_tibia.dae" />
-                </geometry>
-            </xacro:unless>
             </visual>
             <collision>
                 <origin xyz="0.0 0.0 ${-tibia_length/2 -0.0025} " rpy="${M_PI/2} 0.0  0.0"/>
@@ -154,9 +136,9 @@
                 </geometry>
             </collision>
             <inertial>
-                <mass value="1.0"/>
-                <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-                <inertia ixx="1e-6" ixy="0.0" ixz="0.0" iyy="1e-6" iyz="0.0" izz="1e-6"/>
+                <mass value="0.034"/>
+                <origin xyz="0.005 0.0 -0.059" rpy="0.0 0.0 0.0"/>
+                <inertia ixx="7.865e-5" ixy="3.266e-12" ixz="5.845e-6" iyy="8.013e-5" iyz="-5.341e-12" izz="2.525e-6"/>
             </inertial>
         </link>
 
@@ -165,7 +147,12 @@
             <child link="${prefix}_tibia"/>
             <axis xyz="0 1 0"/>
             <limit lower="-3.14159" upper="3.14159" velocity="50.0" effort="1000.0"/>
-            <origin xyz="-0.00 0.0 ${-femur_length +0.065}" rpy="0.0 0.0 0.0"/>
+            <xacro:if value="${left}">
+                <origin xyz="0.00 ${femur_thickness/2 - 0.0042} ${-femur_length}" rpy="0.0 0.0 0.0"/>
+            </xacro:if>
+            <xacro:unless value="${left}">
+                <origin xyz="0.00 ${-femur_thickness/2 + 0.0042} ${-femur_length}" rpy="0.0 0.0 0.0"/>
+            </xacro:unless> 
         </joint>  
 
     </xacro:macro>
@@ -181,13 +168,13 @@
         <collision>
             <origin xyz="0.0 0.0 ${body_height/2}" rpy="0.0 0.0 0.0"/>
             <geometry>
-                <box size="${body_length} ${body_width-0.001} ${body_height}" />
+                <box size="${body_length} ${body_width} ${body_height}" />
             </geometry>
         </collision>
         <inertial>
-            <mass value="1.0"/>
-            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-            <inertia ixx="4.182" ixy="-0.002532" ixz="-0.011148" iyy="8.258" iyz="0.001" izz="11.706"/>
+            <mass value="1.28"/>
+            <origin xyz="0.0015 1.622e-4 0.0238" rpy="0.0 0.0 0.0"/>
+            <inertia ixx="0.00327123" ixy="-2.696e-6" ixz="-1.456e-5" iyy="0.00459934" iyz="-1.166e-5" izz="0.00718769"/>
         </inertial> 
     </link>
 
@@ -198,19 +185,19 @@
     </joint>
 
     <xacro:leg prefix="front_left" left="${True}" front="${True}">
-        <origin xyz="${body_length/2 -0.02} 0.07 0.020822" rpy="0.0 0.0 0.0"/>
+        <origin xyz="${leg_x_offset} ${leg_y_offset} ${leg_z_offset}" rpy="0.0 0.0 0.0"/>
     </xacro:leg>
 
     <xacro:leg prefix="front_right" left="${False}" front="${True}">
-        <origin xyz="${body_length/2 -0.02} -0.07 0.020822" rpy="0.0 0.0 0.0"/>
+        <origin xyz="${leg_x_offset} ${-leg_y_offset} ${leg_z_offset}" rpy="0.0 0.0 0.0"/>
     </xacro:leg>
 
     <xacro:leg prefix="back_left" left="${True}" front="${False}">
-        <origin xyz="${-(body_length/2 -0.02)} 0.07 0.020822" rpy="0.0 0.0 0.0"/>
+        <origin xyz="${-leg_x_offset} ${leg_y_offset} ${leg_z_offset}" rpy="0.0 0.0 0.0"/>
     </xacro:leg>
 
     <xacro:leg prefix="back_right" left="${False}" front="${False}" >
-        <origin xyz="${-(body_length/2 -0.02)} -0.07 0.020822" rpy="0.0 0.0 0.0"/>
+        <origin xyz="${-leg_x_offset} ${-leg_y_offset} ${leg_z_offset}" rpy="0.0 0.0 0.0"/>
     </xacro:leg>  
 
     <link name="imu_link"/>
@@ -223,24 +210,24 @@
     </joint>
 
     <gazebo reference="imu_link">
-    <gravity>true</gravity>
-    <sensor name="imu_sensor" type="imu">
-      <always_on>true</always_on>
-      <update_rate>100</update_rate>
-      <visualize>true</visualize>
-      <topic>__default_topic__</topic>
-      <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
-        <topicName>imu</topicName>
-        <bodyName>imu_link</bodyName>
-        <updateRateHZ>10.0</updateRateHZ>
-        <gaussianNoise>0.0</gaussianNoise>
-        <xyzOffset>0 0 0</xyzOffset>
-        <rpyOffset>0 0 0</rpyOffset>
-        <frameName>imu_link</frameName>
-        <initialOrientationAsReference>false</initialOrientationAsReference>
-      </plugin>
-      <pose>0 0 0 0 0 0</pose>
-    </sensor>
-  </gazebo>
+        <gravity>true</gravity>
+        <sensor name="imu_sensor" type="imu">
+        <always_on>true</always_on>
+        <update_rate>100</update_rate>
+        <visualize>true</visualize>
+        <topic>__default_topic__</topic>
+        <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+            <topicName>imu</topicName>
+            <bodyName>imu_link</bodyName>
+            <updateRateHZ>10.0</updateRateHZ>
+            <gaussianNoise>0.0</gaussianNoise>
+            <xyzOffset>0 0 0</xyzOffset>
+            <rpyOffset>0 0 0</rpyOffset>
+            <frameName>imu_link</frameName>
+            <initialOrientationAsReference>false</initialOrientationAsReference>
+        </plugin>
+        <pose>0 0 0 0 0 0</pose>
+        </sensor>
+    </gazebo>
   
 </robot>
