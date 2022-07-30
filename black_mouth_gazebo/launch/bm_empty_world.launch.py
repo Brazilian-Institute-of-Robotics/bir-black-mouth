@@ -80,7 +80,7 @@ def generate_launch_description():
                                             description='Absolute path to rviz config file'),
         gzserver,
         gzclient,
-        joint_state_publisher_gui,
+        # joint_state_publisher_gui,
         node_robot_state_publisher,
         joint_state_publisher,
         spawn_robot,

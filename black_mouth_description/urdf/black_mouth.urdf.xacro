@@ -48,13 +48,13 @@
             </visual>
             <collision>
                 <xacro:if value="${front}">
-                    <origin xyz="-0.015 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                    <origin xyz="-0.0149 0.0 0.0" rpy="0.0 0.0 0.0"/>
                 </xacro:if>
                 <xacro:unless value="${front}">
-                    <origin xyz="0.015 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                    <origin xyz="0.0149 0.0 0.0" rpy="0.0 0.0 0.0"/>
                 </xacro:unless>
                 <geometry>
-                    <box size="0.05 0.03 0.035"/>
+                    <box size="0.0538 0.036 0.036"/>
                 </geometry>
             </collision>
             <inertial>
@@ -90,9 +90,14 @@
                 </geometry>
             </visual>
             <collision>
-                <origin xyz="0.0 0.0 -0.04" rpy="${M_PI/2} 0.0 ${-M_PI/2} "/>
+                <xacro:if value="${left}">
+                    <origin xyz="0.0 0.0 ${-femur_offset}" rpy="0.0 0.0 0.0"/>
+                </xacro:if>
+                <xacro:unless value="${left}">
+                    <origin xyz="0.0 0.0 ${-femur_offset}" rpy="0.0 0.0 ${M_PI}"/>
+                </xacro:unless>
                 <geometry>
-                    <box size="0.035 ${femur_length*2/3} 0.036" />
+                    <mesh filename="file://$(find black_mouth_description)/meshes/femur.stl"/>
                 </geometry>
             </collision>
             <inertial>
@@ -130,9 +135,9 @@
                 </geometry>
             </visual>
             <collision>
-                <origin xyz="0.0 0.0 ${-tibia_length/2 -0.0025} " rpy="${M_PI/2} 0.0  0.0"/>
+                <origin xyz="0.0 0.0 0.0 " rpy="0.0 0.0 0.0"/>
                 <geometry>
-                    <box size="0.035 ${tibia_length -0.02} 0.036"/>
+                    <mesh filename="file://$(find black_mouth_description)/meshes/tibia.stl"/>
                 </geometry>
             </collision>
             <inertial>
@@ -166,9 +171,8 @@
             </geometry>
         </visual>
         <collision>
-            <origin xyz="0.0 0.0 ${body_height/2}" rpy="0.0 0.0 0.0"/>
             <geometry>
-                <box size="${body_length} ${body_width} ${body_height}" />
+                <mesh filename="file://$(find black_mouth_description)/meshes/base_link.stl"/>
             </geometry>
         </collision>
         <inertial>
