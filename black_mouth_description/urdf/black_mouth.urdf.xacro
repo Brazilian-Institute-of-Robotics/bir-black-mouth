@@ -153,9 +153,9 @@
                 </geometry>
             </collision>
             <inertial>
-                <mass value="0.034"/>
-                <origin xyz="0.005 0.0 -0.059" rpy="0.0 0.0 0.0"/>
-                <inertia ixx="7.865e-5" ixy="3.266e-12" ixz="5.845e-6" iyy="8.013e-5" iyz="-5.341e-12" izz="2.525e-6"/>
+                <mass value="0.035"/>
+                <origin xyz="0.005 0.0 -0.06" rpy="0.0 0.0 0.0"/>
+                <inertia ixx="8.305e-5" ixy="-4.892e-10" ixz="6.002e-6" iyy="8.447e-5" iyz="-4.088e-10" izz="2.687e-6"/>
             </inertial>
         </link>
 
