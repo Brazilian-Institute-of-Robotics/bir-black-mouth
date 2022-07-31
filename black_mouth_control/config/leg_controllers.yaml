@@ -1,0 +1,44 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 100  # Hz
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    front_left_joint_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+    
+    front_right_joint_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    back_left_joint_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+    
+    back_right_joint_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+
+front_left_joint_trajectory_controller:
+  ros__parameters:
+    joints:
+      - front_left_hip_roll_joint
+      - front_left_hip_pitch_joint
+      - front_left_elbow_joint
+
+    command_interfaces:  #TODO do some tests with velocity also
+      - position
+
+    state_interfaces:  #TODO do some tests with velocity also
+      - position
+
+    state_publish_rate: 50.0
+    action_monitor_rate: 20.0
+
+    allow_partial_joints_goal: false
+    open_loop_control: true
+    constraints:
+      stopped_velocity_tolerance: 0.01
+      goal_time: 0.0  # 0.0 (not checked)
+      # joint1:
+      #   trajectory: 0.05
+      #   goal: 0.03
