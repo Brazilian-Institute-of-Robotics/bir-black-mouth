@@ -6,9 +6,12 @@ from launch_ros.actions import Node
 import os
 
 def generate_launch_description():
-    pkg_share = FindPackageShare(package='black_mouth_description').find('black_mouth_description')
-    default_model_path = os.path.join(pkg_share, 'urdf/black_mouth.urdf.xacro')
-    default_rviz_config_path = os.path.join(pkg_share, 'rviz/urdf_config.rviz')
+
+    description_pkg_share = FindPackageShare(package='black_mouth_description').find('black_mouth_description')
+    kinematics_pkg_description=FindPackageShare('black_mouth_kinematics').find('black_mouth_kinematics')
+    
+    default_model_path = os.path.join(description_pkg_share, 'urdf/black_mouth.urdf.xacro')
+    default_rviz_config_path = os.path.join(kinematics_pkg_description, 'rviz/test_grid.rviz')
 
     robot_description = {'robot_description': Command(['xacro ', LaunchConfiguration('model')])}
 
