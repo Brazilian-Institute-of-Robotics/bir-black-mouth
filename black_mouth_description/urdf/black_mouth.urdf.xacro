@@ -22,6 +22,24 @@
 
     <xacro:macro name="leg" params="prefix left front *joint_pose">
 
+        <link name="${prefix}_hip_fixed">
+            <collision>
+                <geometry>
+                    <sphere radius="0.001"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <mass value="0.001"/>
+                <inertia ixx="1e-6" ixy="0.0" ixz="0.0" iyy="1e-6" iyz="0.0" izz="1e-6"/>
+            </inertial>
+        </link>
+
+        <joint name="${prefix}_hip_fixed_joint" type="fixed">
+            <parent link="base_link"/>
+            <child link="${prefix}_hip_fixed"/>
+            <xacro:insert_block name="joint_pose"/>
+        </joint>
+    
         <link name="${prefix}_hip">
 
             <xacro:if value="${front}">
@@ -78,16 +96,16 @@
         </gazebo>
 
         <joint name="${prefix}_hip_roll_joint" type="revolute">
-            <parent link="base_link"/>
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <parent link="${prefix}_hip_fixed"/>
             <child link="${prefix}_hip"/>
             <axis xyz="1 0 0"/>
             <limit lower="${-M_PI/6}" upper="${M_PI/6}" velocity="5.75" effort="${effort_limit}"/>
-            <xacro:insert_block name="joint_pose"/>
             <!-- <dynamics damping="5.0" friction="5.0" /> -->
         </joint>
 
-        <link name="${prefix}_link_femur">
 
+        <link name="${prefix}_femur">
             <visual>
                 <origin xyz="0.0 0 ${-femur_offset}" rpy="0.0 0.0 0.0 "/>
                 <geometry>
@@ -124,7 +142,7 @@
             </inertial>
         </link>
 
-        <gazebo reference="${prefix}_link_femur">
+        <gazebo reference="${prefix}_femur">
             <mu1>0.4</mu1>
             <mu2>0.4</mu2>
             <selfCollide>true</selfCollide>
@@ -132,13 +150,14 @@
 
         <joint name="${prefix}_hip_pitch_joint" type="revolute">
             <xacro:if value="${left}">
-                <origin xyz="0 ${hip_length} 0.0" rpy="0.0 ${M_PI/4} 0.0"/>
+                <!-- <origin xyz="0 ${hip_length} 0.0" rpy="0.0 ${M_PI/4} 0.0"/> -->
+                <origin xyz="0 ${hip_length} 0.0" rpy="0.0 0.0 0.0"/>
             </xacro:if>
             <xacro:unless value="${left}">
                 <origin xyz="0 ${-hip_length} 0.0" rpy="0.0 ${M_PI/4} 0.0"/>
             </xacro:unless>
             <parent link="${prefix}_hip"/>
-            <child link="${prefix}_link_femur"/>
+            <child link="${prefix}_femur"/>
             <axis xyz="0 1 0"/>
             <limit lower="${-M_PI/4}" upper="${M_PI/4}" velocity="5.75" effort="${effort_limit}"/>
             <!-- <dynamics damping="5.0" friction="5.0" /> -->
@@ -181,11 +200,20 @@
             <xacro:unless value="${left}">
                 <origin xyz="0.00 ${-femur_thickness/2 + 0.0042} ${-femur_length}" rpy="0.0 ${-M_PI/2} 0.0"/>
             </xacro:unless>
-            <parent link="${prefix}_link_femur"/>
+            <parent link="${prefix}_femur"/>
             <child link="${prefix}_tibia"/>
             <axis xyz="0 1 0"/>
             <limit lower="${-M_PI/5}" upper="${M_PI/5}" velocity="5.75" effort="${effort_limit}"/>
             <!-- <dynamics damping="5.0" friction="5.0" /> -->
+        </joint>
+
+
+        <link name="${prefix}_foot"/>
+
+        <joint name="${prefix}_foot_joint" type="fixed">
+            <parent link="${prefix}_tibia"/>
+            <child link="${prefix}_foot"/>
+            <origin xyz="0.0 0.0 ${-tibia_length}" rpy="0.0 ${M_PI/4} 0.0"/>
         </joint>
 
     </xacro:macro>

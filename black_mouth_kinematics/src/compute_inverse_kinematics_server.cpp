@@ -1,28 +1,40 @@
 #include "rclcpp/rclcpp.hpp"
 #include "black_mouth_kinematics/srv/inv_kinematics.hpp"
+#include "geometry_msgs/msg/point.hpp"
 
 #include <memory>
+#include <cmath>
+
+float L1 = 0.0483;
+float L2 = 0.120;
+float L3 = 0.120;
+
+black_mouth_kinematics::msg::LegJoints getLegIK(geometry_msgs::msg::Point point)
+{
+
+  float a = sqrt(pow(point.y, 2) + pow(point.z, 2) - pow(L1, 2));
+  float A = (pow(a, 2) + pow(point.x, 2) + pow(L2, 2) - pow(L3, 2)) / (2*L2*sqrt(pow(a,2) + pow(point.x, 2)));
+  float B = (pow(a, 2) + pow(point.x, 2) - pow(L2, 2) - pow(L3, 2)) / (2*L2*L3);
+
+  black_mouth_kinematics::msg::LegJoints leg_joints;
+  leg_joints.hip_roll_joint  = atan2(point.y, point.z) - atan2(L1, a);
+  leg_joints.hip_pitch_joint = M_PI_2 - atan2(a, point.x) - atan2(sqrt(1 - pow(A, 2)), A);
+  leg_joints.elbow_joint     = atan2(sqrt(1 - pow(B, 2)), B);
+
+  return leg_joints;
+
+}
 
 void computeInvKinematics(const std::shared_ptr<black_mouth_kinematics::srv::InvKinematics::Request> request,
                           std::shared_ptr<black_mouth_kinematics::srv::InvKinematics::Response> responde)
 {
-  responde->front_right_leg.hip_roll_joint  = request->body_rotation.x;
-  responde->front_right_leg.hip_pitch_joint = request->body_rotation.y;
-  responde->front_right_leg.elbow_joint     = request->body_rotation.z;
-
-  responde->front_left_leg.hip_roll_joint  = 2*request->body_rotation.x;
-  responde->front_left_leg.hip_pitch_joint = 2*request->body_rotation.y;
-  responde->front_left_leg.elbow_joint     = 2*request->body_rotation.z;
-
-  responde->back_left_leg.hip_roll_joint  = 3*request->body_rotation.x;
-  responde->back_left_leg.hip_pitch_joint = 3*request->body_rotation.y;
-  responde->back_left_leg.elbow_joint     = 3*request->body_rotation.z;
-
-  responde->back_right_leg.hip_roll_joint  = 4*request->body_rotation.x;
-  responde->back_right_leg.hip_pitch_joint = 4*request->body_rotation.y;
-  responde->back_right_leg.elbow_joint     = 4*request->body_rotation.z;
 
   RCLCPP_INFO(rclcpp::get_logger("ik_server"), "Incoming request for Inverse Kinematics");
+
+  responde->front_right_leg = getLegIK(request->front_right_leg);
+  responde->front_left_leg  = getLegIK(request->front_left_leg);
+  responde->back_left_leg   = getLegIK(request->back_left_leg);
+  responde->back_right_leg  = getLegIK(request->back_right_leg);
 
 }
 
