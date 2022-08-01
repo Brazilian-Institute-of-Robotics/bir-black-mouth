@@ -2,12 +2,12 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="quadruped">
 
     <xacro:macro name="joint_tf">
-        <param name="num">4.99916635e-07 4.99833323e-07</param>
-        <param name="den">1.0 -1.99949913 0.99950012</param>
-        <param name="predict_vel">true</param>
+        <param name="num">1.0</param>
+        <param name="den">1.0</param>
+        <param name="predict_vel">false</param>
     </xacro:macro>
 
-    <xacro:macro name="leg_joints" params="prefix use_sim">
+    <xacro:macro name="leg_joints" params="prefix">
         <joint name="${prefix}_hip_roll_joint">
             <xacro:joint_tf/>
             <command_interface name="position">
