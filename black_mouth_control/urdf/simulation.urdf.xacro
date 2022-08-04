@@ -4,6 +4,8 @@
     <xacro:macro name="joint_tf">
         <param name="num">1.0</param>
         <param name="den">1.0</param>
+        <!-- <param name="num">0.00213984 0.00214816 0.00420358 0.00477611 0.00609169</param> ARX model -->
+        <!-- <param name="den">1.0 -1.1071699 0.03831938 -0.1805567 0.00378954 0.26499942</param> ARX model -->
         <param name="predict_vel">false</param>
     </xacro:macro>
 
