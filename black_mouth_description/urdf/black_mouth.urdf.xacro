@@ -15,7 +15,7 @@
 
     <xacro:property name="leg_x_offset" value="0.11455"/>
     <xacro:property name="leg_y_offset" value="0.07"/>
-    <xacro:property name="leg_z_offset" value="0.020822"/>
+    <xacro:property name="leg_z_offset" value="0.0208"/>
 
     <xacro:property name="effort_limit" value="0.01"/>
 
@@ -222,18 +222,20 @@
 
     <link name="base_link">
         <visual>
+            <origin xyz="0.0 0.0 ${-leg_z_offset}" rpy="0.0 0.0 0.0"/>                
             <geometry>
                 <mesh filename="file://$(find black_mouth_description)/meshes/base_link.dae" />
             </geometry>
         </visual>
         <collision>
+            <origin xyz="0.0 0.0 ${-leg_z_offset}" rpy="0.0 0.0 0.0"/>                
             <geometry>
                 <mesh filename="file://$(find black_mouth_description)/meshes/base_link.stl"/>
             </geometry>
         </collision>
         <inertial>
             <mass value="1.28"/>
-            <origin xyz="0.0015 1.622e-4 0.0238" rpy="0.0 0.0 0.0"/>
+            <origin xyz="0.0015 1.622e-4 ${0.0238-leg_z_offset}" rpy="0.0 0.0 0.0"/>
             <inertia ixx="0.00327123" ixy="-2.696e-6" ixz="-1.456e-5" iyy="0.00459934" iyz="-1.166e-5" izz="0.00718769"/>
         </inertial>
     </link>
@@ -253,24 +255,24 @@
     <joint name="base_footprint_joint" type="fixed">
         <parent link="base_footprint"/>
         <child link="base_link"/>
-        <origin xyz="0.0 0.0 0.15" rpy="0.0 0.0 0.0"/>
+        <origin xyz="0.0 0.0 0.17" rpy="0.0 0.0 0.0"/>
     </joint>
 
     <xacro:leg prefix="front_left" left="${True}" front="${True}">
-        <origin xyz="${leg_x_offset} ${leg_y_offset} ${leg_z_offset}" rpy="0.0 0.0 0.0"/>
+        <origin xyz="${leg_x_offset} ${leg_y_offset} 0.0" rpy="0.0 0.0 0.0"/>
     </xacro:leg>
 
     <xacro:leg prefix="front_right" left="${False}" front="${True}">
-        <origin xyz="${leg_x_offset} ${-leg_y_offset} ${leg_z_offset}" rpy="0.0 0.0 0.0"/>
+        <origin xyz="${leg_x_offset} ${-leg_y_offset} 0.0" rpy="0.0 0.0 0.0"/>
     </xacro:leg>
 
     <xacro:leg prefix="back_left" left="${True}" front="${False}">
-        <origin xyz="${-leg_x_offset} ${leg_y_offset} ${leg_z_offset}" rpy="0.0 0.0 0.0"/>
+        <origin xyz="${-leg_x_offset} ${leg_y_offset} 0.0" rpy="0.0 0.0 0.0"/>
     </xacro:leg>
 
-    <xacro:leg prefix="back_right" left="${False}" front="${False}">
-        <origin xyz="${-leg_x_offset} ${-leg_y_offset} ${leg_z_offset}" rpy="0.0 0.0 0.0"/>
-    </xacro:leg>
+    <xacro:leg prefix="back_right" left="${False}" front="${False}" >
+        <origin xyz="${-leg_x_offset} ${-leg_y_offset} 0.0" rpy="0.0 0.0 0.0"/>
+    </xacro:leg>  
 
     <link name="imu_link"/>
 
