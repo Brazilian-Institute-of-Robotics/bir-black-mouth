@@ -150,8 +150,7 @@
 
         <joint name="${prefix}_hip_pitch_joint" type="revolute">
             <xacro:if value="${left}">
-                <!-- <origin xyz="0 ${hip_length} 0.0" rpy="0.0 ${M_PI/4} 0.0"/> -->
-                <origin xyz="0 ${hip_length} 0.0" rpy="0.0 0.0 0.0"/>
+                <origin xyz="0 ${hip_length} 0.0" rpy="0.0 ${M_PI/4} 0.0"/>
             </xacro:if>
             <xacro:unless value="${left}">
                 <origin xyz="0 ${-hip_length} 0.0" rpy="0.0 ${M_PI/4} 0.0"/>
@@ -215,7 +214,6 @@
             <child link="${prefix}_foot"/>
             <origin xyz="0.0 0.0 ${-tibia_length}" rpy="0.0 ${M_PI/4} 0.0"/>
         </joint>
-
     </xacro:macro>
 
     <link name="base_footprint">

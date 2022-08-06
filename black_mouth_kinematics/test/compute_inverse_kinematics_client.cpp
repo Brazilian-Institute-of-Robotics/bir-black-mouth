@@ -19,26 +19,26 @@ int main(int argc, char **argv)
   auto request = std::make_shared<black_mouth_kinematics::srv::InvKinematics::Request>();
   request->body_position.x = 0.0;
   request->body_position.y = 0.0;
-  request->body_position.z = 0.0;
+  request->body_position.z = -0.045;
   request->body_rotation.x = 0.0;
   request->body_rotation.y = 0.0;
   request->body_rotation.z = 0.0;
 
-  request->front_right_leg.x = -0.10;
-  request->front_right_leg.y = 0.0883;
-  request->front_right_leg.z = 0.169;
+  request->front_right_leg.x = 0.0;
+  request->front_right_leg.y = 0.058;
+  request->front_right_leg.z = -0.17;
 
   request->front_left_leg.x = 0.0;
-  request->front_left_leg.y = 0.0;
-  request->front_left_leg.z = 0.0;
+  request->front_left_leg.y = 0.058;
+  request->front_left_leg.z = -0.17;
+
+  request->back_left_leg.x = -0.0;
+  request->back_left_leg.y = 0.048;
+  request->back_left_leg.z = -0.17;
 
   request->back_right_leg.x = -0.0;
-  request->back_right_leg.y = 0.0;
-  request->back_right_leg.z = 0.0;
-
-  request->back_left_leg.x = 0.0;
-  request->back_left_leg.y = 0.0;
-  request->back_left_leg.z = 0.0;
+  request->back_right_leg.y = 0.048;
+  request->back_right_leg.z = -0.17;
 
 
   while(!client->wait_for_service(1s))
