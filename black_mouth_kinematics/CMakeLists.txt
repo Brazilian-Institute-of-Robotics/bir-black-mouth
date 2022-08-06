@@ -17,7 +17,9 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(tf2_eigen REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
@@ -54,17 +56,19 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+include_directories(${EIGEN3_INCLUDE_DIR})
+
 install(
   DIRECTORY launch rviz
   DESTINATION share/${PROJECT_NAME}
 )
-
+  
 install(
   TARGETS
-    inv_kinematics_server
-    inv_kinematics_client
+  inv_kinematics_server
+  inv_kinematics_client
   DESTINATION 
-    lib/${PROJECT_NAME}
+  lib/${PROJECT_NAME}
 )
-
+  
 ament_package()

@@ -26,7 +26,7 @@ Visualization Manager:
         Z: 0
       Plane: XY
       Plane Cell Count: 10
-      Reference Frame: front_right_hip_fixed
+      Reference Frame: base_link
       Value: true
     - Alpha: 0.5
       Cell Size: 0.05000000074505806
@@ -44,7 +44,7 @@ Visualization Manager:
         Z: 0
       Plane: XZ
       Plane Cell Count: 10
-      Reference Frame: front_right_hip_fixed
+      Reference Frame: base_link
       Value: true
     - Alpha: 1
       Class: rviz_default_plugins/RobotModel
@@ -286,25 +286,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 0.812039852142334
+      Distance: 0.6841669082641602
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.021954432129859924
-        Y: 0.007825534790754318
-        Z: -0.027771539986133575
+        X: 0.032131679356098175
+        Y: 0.010992096737027168
+        Z: -0.04302484914660454
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.20020252466201782
+      Pitch: 0.2902013957500458
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.088571071624756
+      Yaw: 5.676728248596191
     Saved: ~
 Window Geometry:
   Displays:
@@ -312,7 +312,7 @@ Window Geometry:
   Height: 987
   Hide Left Dock: true
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd00000001000000000000015600000381fc0200000001fb000000100044006900730070006c006100790073000000003d00000381000000c900ffffff000003fd0000038100000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
-  Width: 1021
-  X: 259
+  QMainWindow State: 000000ff00000000fd00000001000000000000015600000381fc0200000001fb000000100044006900730070006c006100790073000000003d00000381000000c900ffffff000004000000038100000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Width: 1024
+  X: 256
   Y: 0
