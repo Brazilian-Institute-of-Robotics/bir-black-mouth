@@ -98,8 +98,7 @@
             <parent link="${prefix}_hip_fixed"/>
             <child link="${prefix}_hip"/>
             <axis xyz="1 0 0"/>
-            <!-- <limit lower="${-M_PI/6}" upper="${M_PI/6}" velocity="5.75" effort="2.5"/> -->
-            <limit lower="${-M_PI}" upper="${M_PI}" velocity="5.75" effort="2.5"/>
+            <limit lower="${-M_PI/6}" upper="${M_PI/6}" velocity="5.75" effort="2.5"/>
         </joint>
 
         <link name="${prefix}_femur">
@@ -147,18 +146,15 @@
 
         <joint name="${prefix}_hip_pitch_joint" type="revolute">
             <xacro:if value="${left}">
-                <!-- <origin xyz="0 ${hip_length} 0.0" rpy="0.0 ${M_PI/4} 0.0"/> -->
-                <origin xyz="0 ${hip_length} 0.0" rpy="0.0 0.0 0.0"/>
+                <origin xyz="0 ${hip_length} 0.0" rpy="0.0 ${M_PI/4} 0.0"/>
             </xacro:if>
             <xacro:unless value="${left}">
-                <!-- <origin xyz="0 ${-hip_length} 0.0" rpy="0.0 ${M_PI/4} 0.0"/> -->
-                <origin xyz="0 ${-hip_length} 0.0" rpy="0.0 0.0 0.0"/>
+                <origin xyz="0 ${-hip_length} 0.0" rpy="0.0 ${M_PI/4} 0.0"/>
             </xacro:unless> 
             <parent link="${prefix}_hip"/>
             <child link="${prefix}_femur"/>
             <axis xyz="0 1 0"/>
-            <!-- <limit lower="${-M_PI/4}" upper="${M_PI/4}" velocity="5.75" effort="2.5"/> -->
-            <limit lower="${-M_PI}" upper="${M_PI}" velocity="5.75" effort="2.5"/>
+            <limit lower="${-M_PI/4}" upper="${M_PI/4}" velocity="5.75" effort="2.5"/>
         </joint>
  
         <link name="${prefix}_tibia">
@@ -189,18 +185,15 @@
 
         <joint name="${prefix}_elbow_joint" type="revolute">
             <xacro:if value="${left}">
-                <!-- <origin xyz="0.00 ${femur_thickness/2 - 0.0042} ${-femur_length}" rpy="0.0 ${-M_PI/2} 0.0"/> -->
-                <origin xyz="0.00 ${femur_thickness/2 - 0.0042} ${-femur_length}" rpy="0.0 0.0 0.0"/>
+                <origin xyz="0.00 ${femur_thickness/2 - 0.0042} ${-femur_length}" rpy="0.0 ${-M_PI/2} 0.0"/>
             </xacro:if>
             <xacro:unless value="${left}">
-                <!-- <origin xyz="0.00 ${-femur_thickness/2 + 0.0042} ${-femur_length}" rpy="0.0 ${-M_PI/2} 0.0"/> -->
-                <origin xyz="0.00 ${-femur_thickness/2 + 0.0042} ${-femur_length}" rpy="0.0 0.0 0.0"/>
+                <origin xyz="0.00 ${-femur_thickness/2 + 0.0042} ${-femur_length}" rpy="0.0 ${-M_PI/2} 0.0"/>
             </xacro:unless> 
             <parent link="${prefix}_femur"/>
             <child link="${prefix}_tibia"/>
             <axis xyz="0 1 0"/>
-            <!-- <limit lower="${-M_PI/5}" upper="${M_PI/5}" velocity="5.75" effort="2.5"/> -->
-            <limit lower="${-M_PI}" upper="${M_PI}" velocity="5.75" effort="2.5"/>
+            <limit lower="${-M_PI/5}" upper="${M_PI/5}" velocity="5.75" effort="2.5"/>
         </joint>
 
         <link name="${prefix}_foot"/>
@@ -211,8 +204,6 @@
             <origin xyz="0.0 0.0 ${-tibia_length}" rpy="0.0 ${M_PI/4} 0.0"/>
         </joint>
         
-        
-
     </xacro:macro>
 
     <link name="base_footprint"/>
