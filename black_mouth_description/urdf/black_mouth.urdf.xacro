@@ -3,9 +3,9 @@
 
     <xacro:property name="M_PI" value="3.1415"/>
 
-    <xacro:property name="body_length" value="0.272"/> 
-    <xacro:property name="body_width" value="0.168"/>  
-    <xacro:property name="body_height" value="0.064"/> 
+    <xacro:property name="body_length" value="0.272"/>
+    <xacro:property name="body_width" value="0.168"/>
+    <xacro:property name="body_height" value="0.064"/>
 
     <xacro:property name="hip_length" value="0.0415"/>
     <xacro:property name="femur_length" value="0.120"/>
@@ -17,9 +17,11 @@
     <xacro:property name="leg_y_offset" value="0.07"/>
     <xacro:property name="leg_z_offset" value="0.020822"/>
 
+    <xacro:property name="effort_limit" value="0.01"/>
+
 
     <xacro:macro name="leg" params="prefix left front *joint_pose">
-        
+
         <link name="${prefix}_hip">
 
             <xacro:if value="${front}">
@@ -42,7 +44,7 @@
 
             <visual>
                 <origin xyz="0.0 0.0 0.0" rpy="${hip_rpy}"/>
-                <geometry> 
+                <geometry>
                     <mesh filename="file://$(find black_mouth_description)/meshes/hip.dae" />
                 </geometry>
             </visual>
@@ -79,20 +81,22 @@
             <parent link="base_link"/>
             <child link="${prefix}_hip"/>
             <axis xyz="1 0 0"/>
-            <limit lower="${-M_PI/6}" upper="${M_PI/6}" velocity="5.75" effort="2.5"/>
+            <limit lower="${-M_PI/6}" upper="${M_PI/6}" velocity="5.75" effort="${effort_limit}"/>
             <xacro:insert_block name="joint_pose"/>
+            <!-- <dynamics damping="5.0" friction="5.0" /> -->
         </joint>
 
         <link name="${prefix}_link_femur">
+
             <visual>
                 <origin xyz="0.0 0 ${-femur_offset}" rpy="0.0 0.0 0.0 "/>
-                <geometry> 
+                <geometry>
                     <xacro:if value="${left}">
                         <mesh filename="file://$(find black_mouth_description)/meshes/left_femur.dae" />
                     </xacro:if>
                     <xacro:unless value="${left}">
                         <mesh filename="file://$(find black_mouth_description)/meshes/right_femur.dae" />
-                    </xacro:unless> 
+                    </xacro:unless>
                 </geometry>
             </visual>
             <collision>
@@ -116,9 +120,9 @@
                     <mass value="0.118"/>
                     <origin xyz="-1.830e-4 -0.002 -0.019" rpy="0.0 0.0 0.0"/>
                     <inertia ixx="1.604e-4" ixy="3.969e-8" ixz="1.151e-6" iyy="1.647e-4" iyz="-1.105e-5" izz="2.099e-5"/>
-                </xacro:unless> 
-            </inertial> 
-        </link> 
+                </xacro:unless>
+            </inertial>
+        </link>
 
         <gazebo reference="${prefix}_link_femur">
             <mu1>0.4</mu1>
@@ -132,14 +136,16 @@
             </xacro:if>
             <xacro:unless value="${left}">
                 <origin xyz="0 ${-hip_length} 0.0" rpy="0.0 ${M_PI/4} 0.0"/>
-            </xacro:unless> 
+            </xacro:unless>
             <parent link="${prefix}_hip"/>
             <child link="${prefix}_link_femur"/>
             <axis xyz="0 1 0"/>
-            <limit lower="${-M_PI/4}" upper="${M_PI/4}" velocity="5.75" effort="2.5"/>
+            <limit lower="${-M_PI/4}" upper="${M_PI/4}" velocity="5.75" effort="${effort_limit}"/>
+            <!-- <dynamics damping="5.0" friction="5.0" /> -->
         </joint>
- 
+
         <link name="${prefix}_tibia">
+
             <visual>
                 <origin xyz="0.0 0.0 0.0 " rpy="0.0 0.0 0.0"/>
                 <geometry>
@@ -160,8 +166,11 @@
         </link>
 
         <gazebo reference="${prefix}_tibia">
-            <mu1>0.8</mu1>
-            <mu2>0.8</mu2>
+            <mu1>1.0</mu1>
+            <mu2>1.0</mu2>
+            <minDepth>0.0002</minDepth>
+            <kp value="1000000.0"/>
+            <kd value="100.0"/>
             <selfCollide>true</selfCollide>
         </gazebo>
 
@@ -171,16 +180,19 @@
             </xacro:if>
             <xacro:unless value="${left}">
                 <origin xyz="0.00 ${-femur_thickness/2 + 0.0042} ${-femur_length}" rpy="0.0 ${-M_PI/2} 0.0"/>
-            </xacro:unless> 
+            </xacro:unless>
             <parent link="${prefix}_link_femur"/>
             <child link="${prefix}_tibia"/>
             <axis xyz="0 1 0"/>
-            <limit lower="${-M_PI/5}" upper="${M_PI/5}" velocity="5.75" effort="2.5"/>
-        </joint>  
+            <limit lower="${-M_PI/5}" upper="${M_PI/5}" velocity="5.75" effort="${effort_limit}"/>
+            <!-- <dynamics damping="5.0" friction="5.0" /> -->
+        </joint>
 
     </xacro:macro>
 
-    <link name="base_footprint"/>
+    <link name="base_footprint">
+
+    </link>
 
     <link name="base_link">
         <visual>
@@ -197,7 +209,7 @@
             <mass value="1.28"/>
             <origin xyz="0.0015 1.622e-4 0.0238" rpy="0.0 0.0 0.0"/>
             <inertia ixx="0.00327123" ixy="-2.696e-6" ixz="-1.456e-5" iyy="0.00459934" iyz="-1.166e-5" izz="0.00718769"/>
-        </inertial> 
+        </inertial>
     </link>
 
     <gazebo reference="base_footprint">
@@ -230,9 +242,9 @@
         <origin xyz="${-leg_x_offset} ${leg_y_offset} ${leg_z_offset}" rpy="0.0 0.0 0.0"/>
     </xacro:leg>
 
-    <xacro:leg prefix="back_right" left="${False}" front="${False}" >
+    <xacro:leg prefix="back_right" left="${False}" front="${False}">
         <origin xyz="${-leg_x_offset} ${-leg_y_offset} ${leg_z_offset}" rpy="0.0 0.0 0.0"/>
-    </xacro:leg>  
+    </xacro:leg>
 
     <link name="imu_link"/>
 
@@ -246,22 +258,25 @@
     <gazebo reference="imu_link">
         <gravity>true</gravity>
         <sensor name="imu_sensor" type="imu">
-        <always_on>true</always_on>
-        <update_rate>100</update_rate>
-        <visualize>true</visualize>
-        <topic>__default_topic__</topic>
-        <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
-            <topicName>imu</topicName>
-            <bodyName>imu_link</bodyName>
-            <updateRateHZ>10.0</updateRateHZ>
-            <gaussianNoise>0.0</gaussianNoise>
-            <xyzOffset>0 0 0</xyzOffset>
-            <rpyOffset>0 0 0</rpyOffset>
-            <frameName>imu_link</frameName>
-            <initialOrientationAsReference>false</initialOrientationAsReference>
-        </plugin>
-        <pose>0 0 0 0 0 0</pose>
+            <always_on>true</always_on>
+            <update_rate>100</update_rate>
+            <visualize>true</visualize>
+            <topic>__default_topic__</topic>
+            <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+                <topicName>imu</topicName>
+                <bodyName>imu_link</bodyName>
+                <updateRateHZ>10.0</updateRateHZ>
+                <gaussianNoise>0.0</gaussianNoise>
+                <xyzOffset>0 0 0</xyzOffset>
+                <rpyOffset>0 0 0</rpyOffset>
+                <frameName>imu_link</frameName>
+                <initialOrientationAsReference>false</initialOrientationAsReference>
+            </plugin>
+            <pose>0 0 0 0 0 0</pose>
         </sensor>
     </gazebo>
-  
+
+    <!-- Ros2 Control -->
+    <xacro:include filename="$(find black_mouth_control)/urdf/simulation.urdf.xacro"/>
+
 </robot>
