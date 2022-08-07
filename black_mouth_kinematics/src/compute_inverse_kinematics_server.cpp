@@ -6,14 +6,16 @@
 #include <memory>
 #include <cmath>
 
+// TODO: Put these values in a .yaml config file
 float L = 0.2291;
-float W = 0.14;
-float H = 0.0208;
+float W = 0.140;
+float W_HIP = 0.048;
+float H = 0.170;
 float L1 = 0.0483;
 float L2 = 0.120;
 float L3 = 0.120;
 
-struct bodyLegsEigen
+struct legsEigenTransformations
 {
   Eigen::Matrix4d Tm_front_right;
   Eigen::Matrix4d Tm_front_left;
@@ -21,6 +23,15 @@ struct bodyLegsEigen
   Eigen::Matrix4d Tm_back_right;
 };
 
+Eigen::Matrix4d getTranslationMatrix(const float x, const float y, const float z)
+{
+  Eigen::Matrix4d translation_matrix;
+  translation_matrix << 1.0, 0.0, 0.0, x,
+                        0.0, 1.0, 0.0, y,
+                        0.0, 0.0, 1.0, z,
+                        0.0, 0.0, 0.0, 1.0;
+  return translation_matrix;
+}
 
 Eigen::Matrix4d getTransformationMatrix(const geometry_msgs::msg::Vector3 translation_vector3, 
                                         const geometry_msgs::msg::Vector3 rotation_vector3)
@@ -42,40 +53,23 @@ Eigen::Matrix4d getTransformationMatrix(const geometry_msgs::msg::Vector3 transl
   return Tm;
 }
 
-bodyLegsEigen getBodyIK(const geometry_msgs::msg::Vector3 body_position, 
-                        const geometry_msgs::msg::Vector3 body_rotation)
+legsEigenTransformations getBodyIK(const geometry_msgs::msg::Vector3 body_position, 
+                                   const geometry_msgs::msg::Vector3 body_rotation)
 {
   Eigen::Matrix4d Tm = getTransformationMatrix(body_position, body_rotation);
 
-  geometry_msgs::msg::Vector3 body_leg_rotation;
+  Eigen::Matrix4d T_front_right = getTranslationMatrix( L/2, -W/2, 0.0);
+  Eigen::Matrix4d T_front_left  = getTranslationMatrix( L/2,  W/2, 0.0);
+  Eigen::Matrix4d T_back_left   = getTranslationMatrix(-L/2,  W/2, 0.0);
+  Eigen::Matrix4d T_back_right  = getTranslationMatrix(-L/2, -W/2, 0.0);
 
-  geometry_msgs::msg::Vector3 FR;
-  FR.x = L/2;
-  FR.y = -W/2;
-  geometry_msgs::msg::Vector3 FL;
-  FL.x = L/2;
-  FL.y = W/2;
-  geometry_msgs::msg::Vector3 BR;
-  BR.x = -L/2;
-  BR.y = -W/2;
-  geometry_msgs::msg::Vector3 BL;
-  BL.x = -L/2;
-  BL.y = W/2;
-
-  Eigen::Matrix4d T_front_right = getTransformationMatrix(FR, body_leg_rotation);
-  Eigen::Matrix4d T_front_left  = getTransformationMatrix(FL, body_leg_rotation);
-  Eigen::Matrix4d T_back_left   = getTransformationMatrix(BL, body_leg_rotation);
-  Eigen::Matrix4d T_back_right  = getTransformationMatrix(BR, body_leg_rotation);
-
-  bodyLegsEigen transformations;
-
+  legsEigenTransformations transformations;
   transformations.Tm_front_right = Tm*T_front_right;
   transformations.Tm_front_left  = Tm*T_front_left;
   transformations.Tm_back_left   = Tm*T_back_left;
   transformations.Tm_back_right  = Tm*T_back_right;
 
   return transformations;
-
 }
 
 black_mouth_kinematics::msg::LegJoints getLegIK(const geometry_msgs::msg::Point point, bool left=false)
@@ -102,7 +96,7 @@ void computeInvKinematics(const std::shared_ptr<black_mouth_kinematics::srv::Inv
                                 std::shared_ptr<black_mouth_kinematics::srv::InvKinematics::Response> responde)
 {
 
-  RCLCPP_INFO(rclcpp::get_logger("ik_server"), "Incoming request for Inverse Kinematics");
+  // RCLCPP_INFO(rclcpp::get_logger("ik_server"), "Incoming request for Inverse Kinematics");
 
   Eigen::Vector3d front_right_foot;
   Eigen::Vector3d front_left_foot;
@@ -114,7 +108,22 @@ void computeInvKinematics(const std::shared_ptr<black_mouth_kinematics::srv::Inv
   tf2::fromMsg(request->back_left_leg, back_left_foot);
   tf2::fromMsg(request->back_right_leg, back_right_foot);
 
-  bodyLegsEigen bodyIK = getBodyIK(request->body_position, request->body_rotation);
+  if (request->reference_link == black_mouth_kinematics::srv::InvKinematics_Request::FOOT_LINK_AS_REFERENCE)
+  {
+    front_right_foot = (getTranslationMatrix( L/2, -(W/2+W_HIP), -H)*front_right_foot.homogeneous()).head<3>();
+    front_left_foot  = (getTranslationMatrix( L/2,  (W/2+W_HIP), -H)*front_left_foot.homogeneous()).head<3>();
+    back_left_foot   = (getTranslationMatrix(-L/2,  (W/2+W_HIP), -H)*back_left_foot.homogeneous()).head<3>();
+    back_right_foot  = (getTranslationMatrix(-L/2, -(W/2+W_HIP), -H)*back_right_foot.homogeneous()).head<3>();
+  }
+  else if (request->reference_link == black_mouth_kinematics::srv::InvKinematics_Request::HIP_LINK_AS_REFERENCE)
+  {
+    front_right_foot = (getTranslationMatrix( L/2, -W/2, 0.0)*front_right_foot.homogeneous()).head<3>();
+    front_left_foot  = (getTranslationMatrix( L/2,  W/2, 0.0)*front_left_foot.homogeneous()).head<3>();
+    back_left_foot   = (getTranslationMatrix(-L/2,  W/2, 0.0)*back_left_foot.homogeneous()).head<3>();
+    back_right_foot  = (getTranslationMatrix(-L/2, -W/2, 0.0)*back_right_foot.homogeneous()).head<3>();
+  }
+
+  legsEigenTransformations bodyIK = getBodyIK(request->body_position, request->body_rotation);
 
   Eigen::Vector4d front_right_IK = bodyIK.Tm_front_right.inverse()*front_right_foot.homogeneous();
   Eigen::Vector4d front_left_IK  = bodyIK.Tm_front_left.inverse()*front_left_foot.homogeneous();
