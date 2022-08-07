@@ -17,6 +17,7 @@ int main(int argc, char **argv)
     node->create_client<black_mouth_kinematics::srv::InvKinematics>("compute_inverse_kinematics");
 
   auto request = std::make_shared<black_mouth_kinematics::srv::InvKinematics::Request>();
+
   request->body_position.x = 0.0;
   request->body_position.y = 0.0;
   request->body_position.z = 0.025;
@@ -24,21 +25,58 @@ int main(int argc, char **argv)
   request->body_rotation.y = 0.0;
   request->body_rotation.z = M_PI/8;
 
-  request->front_right_leg.x = 0.115;
-  request->front_right_leg.y = -0.118;
-  request->front_right_leg.z = -0.170;
+  // request->reference_link = black_mouth_kinematics::srv::InvKinematics::Request::BASE_LINK_AS_REFERENCE;
+  // request->front_right_leg.x = 0.115;
+  // request->front_right_leg.y = -0.118;
+  // request->front_right_leg.z = -0.170;
 
-  request->front_left_leg.x = 0.115;
-  request->front_left_leg.y = 0.118;
-  request->front_left_leg.z = -0.170;
+  // request->front_left_leg.x = 0.115;
+  // request->front_left_leg.y = 0.118;
+  // request->front_left_leg.z = -0.170;
 
-  request->back_left_leg.x = -0.115;
-  request->back_left_leg.y = 0.118;
-  request->back_left_leg.z = -0.170;
+  // request->back_left_leg.x = -0.115;
+  // request->back_left_leg.y = 0.118;
+  // request->back_left_leg.z = -0.170;
 
-  request->back_right_leg.x = -0.115;
-  request->back_right_leg.y = -0.118;
-  request->back_right_leg.z = -0.170;
+  // request->back_right_leg.x = -0.115;
+  // request->back_right_leg.y = -0.118;
+  // request->back_right_leg.z = -0.170;
+
+
+  request->reference_link = black_mouth_kinematics::srv::InvKinematics::Request::FOOT_LINK_AS_REFERENCE;
+  request->front_right_leg.x = 0.0;
+  request->front_right_leg.y = 0.0;
+  request->front_right_leg.z = 0.0;
+
+  request->front_left_leg.x = 0.0;
+  request->front_left_leg.y = 0.0;
+  request->front_left_leg.z = 0.0;
+
+  request->back_left_leg.x = 0.0;
+  request->back_left_leg.y = 0.0;
+  request->back_left_leg.z = 0.0;
+
+  request->back_right_leg.x = 0.0;
+  request->back_right_leg.y = 0.0;
+  request->back_right_leg.z = 0.0;
+
+
+  // request->reference_link = black_mouth_kinematics::srv::InvKinematics::Request::HIP_LINK_AS_REFERENCE;
+  // request->front_right_leg.x = 0.0;
+  // request->front_right_leg.y = -0.048;
+  // request->front_right_leg.z = -0.170;
+
+  // request->front_left_leg.x = 0.0;
+  // request->front_left_leg.y = 0.048;
+  // request->front_left_leg.z = -0.170;
+
+  // request->back_left_leg.x = 0.0;
+  // request->back_left_leg.y = 0.048;
+  // request->back_left_leg.z = -0.170;
+
+  // request->back_right_leg.x = 0.0;
+  // request->back_right_leg.y = -0.048;
+  // request->back_right_leg.z = -0.170;
 
 
   while(!client->wait_for_service(1s))
@@ -50,6 +88,8 @@ int main(int argc, char **argv)
     }
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "service not available, waiting again...");
   }
+
+  auto start = std::chrono::steady_clock::now();
 
   auto result = client->async_send_request(request);
   if (rclcpp::spin_until_future_complete(node, result) == rclcpp::FutureReturnCode::SUCCESS)
@@ -67,9 +107,15 @@ int main(int argc, char **argv)
                   front_left.hip_roll_joint,  front_left.hip_pitch_joint,  front_left.elbow_joint,
                   back_left.hip_roll_joint,   back_left.hip_pitch_joint,   back_left.elbow_joint,
                   back_right.hip_roll_joint,  back_right.hip_pitch_joint,  back_right.elbow_joint);
+    
+    auto end = std::chrono::steady_clock::now();
+    std::cout << "Elapsed time in microseconds: "
+         << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+         << " µs" << std::endl;
   }
   else
     RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service compute_inverse_kinematics");
+
 
   rclcpp::shutdown();
   return 0;
