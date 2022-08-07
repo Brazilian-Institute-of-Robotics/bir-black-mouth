@@ -94,10 +94,10 @@ int main(int argc, char **argv)
   auto result = client->async_send_request(request);
   if (rclcpp::spin_until_future_complete(node, result) == rclcpp::FutureReturnCode::SUCCESS)
   {
-    black_mouth_kinematics::msg::LegJoints front_right = result.get()->front_right_leg;
-    black_mouth_kinematics::msg::LegJoints front_left  = result.get()->front_left_leg;
-    black_mouth_kinematics::msg::LegJoints back_left   = result.get()->back_left_leg;
-    black_mouth_kinematics::msg::LegJoints back_right  = result.get()->back_right_leg;
+    black_mouth_kinematics::msg::LegJoints front_right = result.get()->leg_joints.front_right_leg;
+    black_mouth_kinematics::msg::LegJoints front_left  = result.get()->leg_joints.front_left_leg;
+    black_mouth_kinematics::msg::LegJoints back_left   = result.get()->leg_joints.back_left_leg;
+    black_mouth_kinematics::msg::LegJoints back_right  = result.get()->leg_joints.back_right_leg;
     RCLCPP_INFO(rclcpp::get_logger("ik_client"), "Leg joints computed: \n \
                   Front Right Leg: %.2f, %.2f. %.2f \n \
                   Front Left Leg: %.2f, %.2f. %.2f \n \
@@ -110,8 +110,8 @@ int main(int argc, char **argv)
     
     auto end = std::chrono::steady_clock::now();
     std::cout << "Elapsed time in microseconds: "
-         << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
-         << " µs" << std::endl;
+              << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+              << " µs" << std::endl;
   }
   else
     RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to call service compute_inverse_kinematics");
