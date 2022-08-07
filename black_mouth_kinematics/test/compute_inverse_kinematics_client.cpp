@@ -1,5 +1,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "black_mouth_kinematics/srv/inv_kinematics.hpp"
+#include "black_mouth_kinematics/msg/body_leg_ik.hpp"
 
 #include <chrono>
 #include <cstdlib>
@@ -18,65 +19,65 @@ int main(int argc, char **argv)
 
   auto request = std::make_shared<black_mouth_kinematics::srv::InvKinematics::Request>();
 
-  request->body_position.x = 0.0;
-  request->body_position.y = 0.0;
-  request->body_position.z = 0.025;
-  request->body_rotation.x = 0.0;
-  request->body_rotation.y = 0.0;
-  request->body_rotation.z = M_PI/8;
+  request->body_leg_ik.body_position.x = 0.0;
+  request->body_leg_ik.body_position.y = 0.0;
+  request->body_leg_ik.body_position.z = 0.025;
+  request->body_leg_ik.body_rotation.x = 0.0;
+  request->body_leg_ik.body_rotation.y = 0.0;
+  request->body_leg_ik.body_rotation.z = M_PI/8;
 
-  // request->reference_link = black_mouth_kinematics::srv::InvKinematics::Request::BASE_LINK_AS_REFERENCE;
-  // request->front_right_leg.x = 0.115;
-  // request->front_right_leg.y = -0.118;
-  // request->front_right_leg.z = -0.170;
+  // request->body_leg_ik.reference_link = black_mouth_kinematics::msg::BodyLegIK::BASE_LINK_AS_REFERENCE;
+  // request->body_leg_ik.leg_points.front_right_leg.x = 0.115;
+  // request->body_leg_ik.leg_points.front_right_leg.y = -0.118;
+  // request->body_leg_ik.leg_points.front_right_leg.z = -0.170;
 
-  // request->front_left_leg.x = 0.115;
-  // request->front_left_leg.y = 0.118;
-  // request->front_left_leg.z = -0.170;
+  // request->body_leg_ik.leg_points.front_left_leg.x = 0.115;
+  // request->body_leg_ik.leg_points.front_left_leg.y = 0.118;
+  // request->body_leg_ik.leg_points.front_left_leg.z = -0.170;
 
-  // request->back_left_leg.x = -0.115;
-  // request->back_left_leg.y = 0.118;
-  // request->back_left_leg.z = -0.170;
+  // request->body_leg_ik.leg_points.back_left_leg.x = -0.115;
+  // request->body_leg_ik.leg_points.back_left_leg.y = 0.118;
+  // request->body_leg_ik.leg_points.back_left_leg.z = -0.170;
 
-  // request->back_right_leg.x = -0.115;
-  // request->back_right_leg.y = -0.118;
-  // request->back_right_leg.z = -0.170;
-
-
-  request->reference_link = black_mouth_kinematics::srv::InvKinematics::Request::FOOT_LINK_AS_REFERENCE;
-  request->front_right_leg.x = 0.0;
-  request->front_right_leg.y = 0.0;
-  request->front_right_leg.z = 0.0;
-
-  request->front_left_leg.x = 0.0;
-  request->front_left_leg.y = 0.0;
-  request->front_left_leg.z = 0.0;
-
-  request->back_left_leg.x = 0.0;
-  request->back_left_leg.y = 0.0;
-  request->back_left_leg.z = 0.0;
-
-  request->back_right_leg.x = 0.0;
-  request->back_right_leg.y = 0.0;
-  request->back_right_leg.z = 0.0;
+  // request->body_leg_ik.leg_points.back_right_leg.x = -0.115;
+  // request->body_leg_ik.leg_points.back_right_leg.y = -0.118;
+  // request->body_leg_ik.leg_points.back_right_leg.z = -0.170;
 
 
-  // request->reference_link = black_mouth_kinematics::srv::InvKinematics::Request::HIP_LINK_AS_REFERENCE;
-  // request->front_right_leg.x = 0.0;
-  // request->front_right_leg.y = -0.048;
-  // request->front_right_leg.z = -0.170;
+  request->body_leg_ik.reference_link = black_mouth_kinematics::msg::BodyLegIK::FOOT_LINK_AS_REFERENCE;
+  request->body_leg_ik.leg_points.front_right_leg.x = 0.0;
+  request->body_leg_ik.leg_points.front_right_leg.y = 0.0;
+  request->body_leg_ik.leg_points.front_right_leg.z = 0.0;
 
-  // request->front_left_leg.x = 0.0;
-  // request->front_left_leg.y = 0.048;
-  // request->front_left_leg.z = -0.170;
+  request->body_leg_ik.leg_points.front_left_leg.x = 0.0;
+  request->body_leg_ik.leg_points.front_left_leg.y = 0.0;
+  request->body_leg_ik.leg_points.front_left_leg.z = 0.0;
 
-  // request->back_left_leg.x = 0.0;
-  // request->back_left_leg.y = 0.048;
-  // request->back_left_leg.z = -0.170;
+  request->body_leg_ik.leg_points.back_left_leg.x = 0.0;
+  request->body_leg_ik.leg_points.back_left_leg.y = 0.0;
+  request->body_leg_ik.leg_points.back_left_leg.z = 0.0;
 
-  // request->back_right_leg.x = 0.0;
-  // request->back_right_leg.y = -0.048;
-  // request->back_right_leg.z = -0.170;
+  request->body_leg_ik.leg_points.back_right_leg.x = 0.0;
+  request->body_leg_ik.leg_points.back_right_leg.y = 0.0;
+  request->body_leg_ik.leg_points.back_right_leg.z = 0.0;
+
+
+  // request->body_leg_ik.reference_link = black_mouth_kinematics::msg::BodyLegIK::HIP_LINK_AS_REFERENCE;
+  // request->body_leg_ik.leg_points.front_right_leg.x = 0.0;
+  // request->body_leg_ik.leg_points.front_right_leg.y = -0.048;
+  // request->body_leg_ik.leg_points.front_right_leg.z = -0.170;
+
+  // request->body_leg_ik.leg_points.front_left_leg.x = 0.0;
+  // request->body_leg_ik.leg_points.front_left_leg.y = 0.048;
+  // request->body_leg_ik.leg_points.front_left_leg.z = -0.170;
+
+  // request->body_leg_ik.leg_points.back_left_leg.x = 0.0;
+  // request->body_leg_ik.leg_points.back_left_leg.y = 0.048;
+  // request->body_leg_ik.leg_points.back_left_leg.z = -0.170;
+
+  // request->body_leg_ik.leg_points.back_right_leg.x = 0.0;
+  // request->body_leg_ik.leg_points.back_right_leg.y = -0.048;
+  // request->body_leg_ik.leg_points.back_right_leg.z = -0.170;
 
 
   while(!client->wait_for_service(1s))

@@ -26,6 +26,8 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/LegJoints.msg"
   "msg/AllLegJoints.msg"
+  "msg/AllLegPoints.msg"
+  "msg/BodyLegIK.msg"
   "srv/InvKinematics.srv"
   DEPENDENCIES geometry_msgs
 )
