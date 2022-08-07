@@ -10,7 +10,4 @@ geometry_msgs/Point front_left_leg
 geometry_msgs/Point back_left_leg
 geometry_msgs/Point back_right_leg
 ---
-black_mouth_kinematics/LegJoints front_right_leg
-black_mouth_kinematics/LegJoints front_left_leg
-black_mouth_kinematics/LegJoints back_left_leg
-black_mouth_kinematics/LegJoints back_right_leg
+black_mouth_kinematics/AllLegJoints leg_joints

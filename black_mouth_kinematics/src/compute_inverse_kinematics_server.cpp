@@ -135,10 +135,10 @@ void computeInvKinematics(const std::shared_ptr<black_mouth_kinematics::srv::Inv
   geometry_msgs::msg::Point back_left_point   = tf2::toMsg(Eigen::Vector3d(back_left_IK.head(3)));
   geometry_msgs::msg::Point back_right_point  = tf2::toMsg(Eigen::Vector3d(back_right_IK.head(3)));
 
-  responde->front_right_leg = getLegIK(front_right_point, false);
-  responde->front_left_leg  = getLegIK(front_left_point, true);
-  responde->back_left_leg   = getLegIK(back_left_point, true);
-  responde->back_right_leg  = getLegIK(back_right_point, false);
+  responde->leg_joints.front_right_leg = getLegIK(front_right_point, false);
+  responde->leg_joints.front_left_leg  = getLegIK(front_left_point, true);
+  responde->leg_joints.back_left_leg   = getLegIK(back_left_point, true);
+  responde->leg_joints.back_right_leg  = getLegIK(back_right_point, false);
 
 }
 

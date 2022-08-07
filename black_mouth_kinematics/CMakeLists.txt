@@ -25,6 +25,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/LegJoints.msg"
+  "msg/AllLegJoints.msg"
   "srv/InvKinematics.srv"
   DEPENDENCIES geometry_msgs
 )
@@ -32,16 +33,23 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 ament_export_dependencies(rosidl_default_runtime)
 
 add_executable(inv_kinematics_server src/compute_inverse_kinematics_server.cpp)
-ament_target_dependencies(inv_kinematics_server rclcpp)
+ament_target_dependencies(inv_kinematics_server rclcpp geometry_msgs tf2_eigen)
 
 add_executable(inv_kinematics_client test/compute_inverse_kinematics_client.cpp)
 ament_target_dependencies(inv_kinematics_client rclcpp)
+
+add_executable(inv_kinematics_node src/InverseKinematics.cpp)
+ament_target_dependencies(inv_kinematics_node rclcpp)
 
 rosidl_target_interfaces(inv_kinematics_server
   ${PROJECT_NAME} "rosidl_typesupport_cpp"
 )
 
 rosidl_target_interfaces(inv_kinematics_client
+  ${PROJECT_NAME} "rosidl_typesupport_cpp"
+)
+
+rosidl_target_interfaces(inv_kinematics_node
   ${PROJECT_NAME} "rosidl_typesupport_cpp"
 )
 
@@ -57,6 +65,7 @@ if(BUILD_TESTING)
 endif()
 
 include_directories(${EIGEN3_INCLUDE_DIR})
+include_directories(include)
 
 install(
   DIRECTORY launch rviz
@@ -67,6 +76,7 @@ install(
   TARGETS
   inv_kinematics_server
   inv_kinematics_client
+  inv_kinematics_node
   DESTINATION 
   lib/${PROJECT_NAME}
 )
