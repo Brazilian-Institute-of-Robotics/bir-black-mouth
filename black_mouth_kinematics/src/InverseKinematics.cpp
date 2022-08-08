@@ -29,9 +29,9 @@ InverseKinematics::InverseKinematics() : Node("inverse_kinematics_node")
   {
     if(!rclcpp::ok())
     {
-      RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for the service. Exiting.");
+      RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Interrupted while waiting for the IK service. Exiting.");
     }
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "service not available, waiting again...");
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "IK service not available, waiting again...");
   }
 }
 
@@ -43,8 +43,12 @@ void InverseKinematics::IKCallback(const black_mouth_kinematics::msg::BodyLegIK:
 {
   this->_cmd_ik_msg = *msg;
 
+  this->computeIKAndPublishJoints();
+}
+
+void InverseKinematics::computeIKAndPublishJoints()
+{
   this->computeIK();
-  // TODO: Remove from CB
   this->checkJointAngles();
   this->publishAllJoints();
 }
@@ -58,9 +62,8 @@ void InverseKinematics::computeIK()
   
   auto result = this->_ik_client->async_send_request(request);
   std::future_status status = result.wait_for(3ms);
-  if (status == std::future_status::ready) {
+  if (status == std::future_status::ready)
     _all_leg_joints = result.get()->leg_joints;
-  }
   else
     RCLCPP_INFO(rclcpp::get_logger("ik_client"), "Failed to comput leg joints, timeout");
 
@@ -71,9 +74,35 @@ void InverseKinematics::computeIK()
 
 }
 
-void InverseKinematics::checkJointAngles()
+bool InverseKinematics::checkJointAngles()
 {
 
+  if (abs(_all_leg_joints.front_right_leg.hip_roll_joint) > _hip_roll_limit ||
+      abs(_all_leg_joints.front_left_leg.hip_roll_joint)  > _hip_roll_limit ||
+      abs(_all_leg_joints.back_left_leg.hip_roll_joint)   > _hip_roll_limit ||
+      abs(_all_leg_joints.back_right_leg.hip_roll_joint)  > _hip_roll_limit)
+  {
+    RCLCPP_WARN(rclcpp::get_logger("ik_node"), "Hip roll joint angle out of range");
+    return false;
+  }
+  if (abs(_all_leg_joints.front_right_leg.hip_pitch_joint) > _hip_pitch_limit ||
+      abs(_all_leg_joints.front_left_leg.hip_pitch_joint)  > _hip_pitch_limit ||
+      abs(_all_leg_joints.back_left_leg.hip_pitch_joint)   > _hip_pitch_limit ||
+      abs(_all_leg_joints.back_right_leg.hip_pitch_joint)  > _hip_pitch_limit)
+  {
+    RCLCPP_WARN(rclcpp::get_logger("ik_node"), "Hip pitch joint angle out of range");
+    return false;
+  }
+  if (abs(_all_leg_joints.front_right_leg.elbow_joint) > _elbow_limit ||
+      abs(_all_leg_joints.front_left_leg.elbow_joint)  > _elbow_limit ||
+      abs(_all_leg_joints.back_left_leg.elbow_joint)   > _elbow_limit ||
+      abs(_all_leg_joints.back_right_leg.elbow_joint)  > _elbow_limit)
+  {
+    RCLCPP_WARN(rclcpp::get_logger("ik_node"), "Elbow joint angle out of range");
+    return false;
+  }
+
+  return true;
 }
 
 void InverseKinematics::publishAllJoints()
