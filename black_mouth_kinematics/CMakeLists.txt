@@ -21,6 +21,7 @@ find_package(Eigen3 REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(trajectory_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -41,7 +42,7 @@ add_executable(inv_kinematics_client test/compute_inverse_kinematics_client.cpp)
 ament_target_dependencies(inv_kinematics_client rclcpp)
 
 add_executable(inv_kinematics_node src/InverseKinematics.cpp)
-ament_target_dependencies(inv_kinematics_node rclcpp)
+ament_target_dependencies(inv_kinematics_node rclcpp trajectory_msgs)
 
 rosidl_target_interfaces(inv_kinematics_server
   ${PROJECT_NAME} "rosidl_typesupport_cpp"

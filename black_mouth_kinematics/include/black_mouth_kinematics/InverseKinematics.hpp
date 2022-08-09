@@ -1,7 +1,8 @@
 #include "rclcpp/rclcpp.hpp"
+#include "black_mouth_kinematics/msg/body_leg_ik.hpp"
 #include "black_mouth_kinematics/msg/all_leg_joints.hpp"
-#include "black_mouth_kinematics/msg/all_leg_points.hpp"
 #include "black_mouth_kinematics/srv/inv_kinematics.hpp"
+#include "trajectory_msgs/msg/joint_trajectory.hpp"
 
 #include <memory>
 
@@ -24,8 +25,10 @@ private:
 
   rclcpp::Subscription<black_mouth_kinematics::msg::BodyLegIK>::SharedPtr _cmd_subscriber;
 
-  // This publisher will not exist. It will be the 4 publishers for each leg controller instead
-  rclcpp::Publisher<black_mouth_kinematics::msg::AllLegJoints>::SharedPtr _publisher;
+  rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr _front_right_trajectory_publisher;
+  rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr _front_left_trajectory_publisher;
+  rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr _back_left_trajectory_publisher;
+  rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr _back_right_trajectory_publisher;
 
   rclcpp::Client<black_mouth_kinematics::srv::InvKinematics>::SharedPtr _ik_client;
 
