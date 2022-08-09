@@ -80,35 +80,35 @@ def generate_launch_description():
 
     # Load controller to publish joint data
     load_joint_state_broadcaster = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start',
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
              'joint_state_broadcaster'],
         output='screen'
     )
 
     # Load controller of the front left leg joints
     load_front_left_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start',
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
              'front_left_joint_trajectory_controller'],
         output='screen'
     )
 
     # Load controller of the front right leg joints
     load_front_right_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start',
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
              'front_right_joint_trajectory_controller'],
         output='screen'
     )
 
     # Load controller of the back left leg joints
     load_back_left_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start',
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
              'back_left_joint_trajectory_controller'],
         output='screen'
     )
 
     # Load controller of the back right leg joints
     load_back_right_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start',
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
              'back_right_joint_trajectory_controller'],
         output='screen'
     )
@@ -129,7 +129,7 @@ def generate_launch_description():
         node_robot_state_publisher,
         # joint_state_publisher,
         spawn_robot,
-        rviz,
+        # rviz,
         load_joint_state_broadcaster,
         load_front_left_joint_trajectory_controller,
         load_front_right_joint_trajectory_controller,

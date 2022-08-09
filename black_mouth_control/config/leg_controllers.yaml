@@ -31,22 +31,29 @@ front_left_joint_trajectory_controller:
       - front_left_elbow_joint
 
     command_interfaces:
-      - position
+      - effort
 
     state_interfaces:
       - position
+      - velocity
 
-    state_publish_rate: 50.0
-    action_monitor_rate: 20.0
+    # state_publish_rate: 50.0
+    # action_monitor_rate: 20.0
 
-    allow_partial_joints_goal: true
-    open_loop_control: true
-    constraints:
-      stopped_velocity_tolerance: 0.01
-      goal_time: 0.0  # 0.0 (not checked)
-      # joint1:
-      #   trajectory: 0.05
-      #   goal: 0.03
+    # allow_partial_joints_goal: true
+    # open_loop_control: true
+    # constraints:
+    #   stopped_velocity_tolerance: 0.01
+    #   goal_time: 0.0  # 0.0 (not checked)
+    #   # joint1:
+    #   #   trajectory: 0.05
+    #   #   goal: 0.03
+    
+    gains: 
+      front_left_hip_roll_joint: {p: 100.0, i: 1.0, d: 10.0, i_clamp: 1 }
+      front_left_hip_pitch_joint: {p: 1.0, i: 1.0, d: 1.0, i_clamp: 0.1 }
+      front_left_elbow_joint: {p: 1.0, i: 1.0, d: 1.0, i_clamp: 0.1 }
+
 
 front_right_joint_trajectory_controller:
   ros__parameters:
@@ -57,10 +64,12 @@ front_right_joint_trajectory_controller:
       - front_right_elbow_joint
 
     command_interfaces:
-      - position
+      - effort
 
     state_interfaces:
       - position
+      - velocity
+
 
     state_publish_rate: 50.0
     action_monitor_rate: 20.0
@@ -73,6 +82,11 @@ front_right_joint_trajectory_controller:
       # joint1:
       #   trajectory: 0.05
       #   goal: 0.03
+
+    gains: 
+      front_right_hip_roll_joint: {p: 1.0, i: 1.0, d: 1.0, i_clamp: 0.0 }
+      front_right_hip_pitch_joint: {p: 1.0, i: 1.0, d: 1.0, i_clamp: 0.0 }
+      front_right_elbow_joint: {p: 1.0, i: 1.0, d: 1.0, i_clamp: 0.0 }
 
 back_left_joint_trajectory_controller:
   ros__parameters:
@@ -83,10 +97,12 @@ back_left_joint_trajectory_controller:
       - back_left_elbow_joint
 
     command_interfaces:
-      - position
+      - effort
 
     state_interfaces:
       - position
+      - velocity
+
 
     state_publish_rate: 50.0
     action_monitor_rate: 20.0
@@ -99,6 +115,10 @@ back_left_joint_trajectory_controller:
       # joint1:
       #   trajectory: 0.05
       #   goal: 0.03
+    gains: 
+      back_left_hip_roll_joint: {p: 1.0, i: 1.0, d: 1.0, i_clamp: 0.0 }
+      back_left_hip_pitch_joint: {p: 1.0, i: 1.0, d: 1.0, i_clamp: 0.0 }
+      back_left_elbow_joint: {p: 1.0, i: 1.0, d: 1.0, i_clamp: 0.0 }
 
 back_right_joint_trajectory_controller:
   ros__parameters:
@@ -109,10 +129,11 @@ back_right_joint_trajectory_controller:
       - back_right_elbow_joint
 
     command_interfaces:
-      - position
+      - effort
 
     state_interfaces: 
       - position
+      - velocity
 
     state_publish_rate: 50.0
     action_monitor_rate: 20.0
@@ -125,3 +146,8 @@ back_right_joint_trajectory_controller:
       # joint1:
       #   trajectory: 0.05
       #   goal: 0.03
+
+    gains: 
+      back_right_hip_roll_joint: {p: 1.0, i: 1.0, d: 1.0, i_clamp: 0.0 }
+      back_right_hip_pitch_joint: {p: 1.0, i: 1.0, d: 1.0, i_clamp: 0.0 }
+      back_right_elbow_joint: {p: 1.0, i: 1.0, d: 1.0, i_clamp: 0.0 }
