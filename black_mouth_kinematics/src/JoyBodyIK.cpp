@@ -19,6 +19,12 @@ JoyBodyIK::JoyBodyIK() : Node("joy_body_ik_node")
 
   _timer = this->create_wall_timer(50ms, std::bind(&JoyBodyIK::publishIK, this));
 
+  _move_linear_x      = this->declare_parameter<int>("_move_linear_x", 1);
+  _move_linear_y      = this->declare_parameter<int>("_move_linear_y", 0);
+  _move_linear_z      = this->declare_parameter<int>("_move_linear_z", 2);
+  _move_angular_yaw   = this->declare_parameter<int>("_move_angular_yaw", 3);
+  _move_angular_roll  = this->declare_parameter<int>("_move_angular_roll", 4);
+  _move_angular_pitch = this->declare_parameter<int>("_move_angular_pitch", 5);
 }
 
 JoyBodyIK::~JoyBodyIK()
@@ -27,6 +33,16 @@ JoyBodyIK::~JoyBodyIK()
 
 void JoyBodyIK::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
+  _ik_msg.reference_link = black_mouth_kinematics::msg::BodyLegIK::FOOT_LINK_AS_REFERENCE;
+  
+  // TODO: Add more parameters and improve roll and pitch
+  _ik_msg.body_position.x = 0.05*msg->axes[_move_linear_x];
+  _ik_msg.body_position.y = 0.05*msg->axes[_move_linear_y];
+  _ik_msg.body_position.z = 0.04*msg->axes[_move_linear_z];
+
+  _ik_msg.body_rotation.x = 0.2*msg->axes[_move_angular_roll];
+  _ik_msg.body_rotation.y = 0.2*msg->axes[_move_angular_pitch];
+  _ik_msg.body_rotation.z = 0.5*msg->axes[_move_angular_yaw];
 
 }
 

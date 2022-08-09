@@ -31,7 +31,7 @@ def generate_launch_description():
     ]
   )
 
-
+  # TODO: Wait before run joy_body_ik
   return launch.LaunchDescription([
     joy_node,
     joy_body_ik

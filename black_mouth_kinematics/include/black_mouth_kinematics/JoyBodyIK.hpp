@@ -20,4 +20,11 @@ private:
 
   black_mouth_kinematics::msg::BodyLegIK _ik_msg;
 
+  double _move_linear_x;
+  double _move_linear_y;
+  double _move_linear_z;
+  double _move_angular_yaw;
+  int    _move_angular_roll;
+  int    _move_angular_pitch;
+
 };
