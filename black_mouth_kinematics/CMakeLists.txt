@@ -20,6 +20,7 @@ find_package(ament_cmake REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(tf2_eigen REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
@@ -44,6 +45,9 @@ ament_target_dependencies(inv_kinematics_client rclcpp)
 add_executable(inv_kinematics_node src/InverseKinematics.cpp)
 ament_target_dependencies(inv_kinematics_node rclcpp trajectory_msgs)
 
+add_executable(joy_body_ik src/JoyBodyIK.cpp)
+ament_target_dependencies(joy_body_ik rclcpp sensor_msgs)
+
 rosidl_target_interfaces(inv_kinematics_server
   ${PROJECT_NAME} "rosidl_typesupport_cpp"
 )
@@ -53,6 +57,10 @@ rosidl_target_interfaces(inv_kinematics_client
 )
 
 rosidl_target_interfaces(inv_kinematics_node
+  ${PROJECT_NAME} "rosidl_typesupport_cpp"
+)
+
+rosidl_target_interfaces(joy_body_ik
   ${PROJECT_NAME} "rosidl_typesupport_cpp"
 )
 
@@ -80,6 +88,7 @@ install(
   inv_kinematics_server
   inv_kinematics_client
   inv_kinematics_node
+  joy_body_ik
   DESTINATION 
   lib/${PROJECT_NAME}
 )

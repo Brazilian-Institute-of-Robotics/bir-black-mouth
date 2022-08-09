@@ -78,8 +78,8 @@ void InverseKinematics::computeIK()
 
 bool InverseKinematics::checkJointAngles()
 {
-  // TO-DO: Check if nan
-  
+  // TODO: Check if nan
+
   if (abs(_all_leg_joints.front_right_leg.hip_roll_joint) > _hip_roll_limit ||
       abs(_all_leg_joints.front_left_leg.hip_roll_joint)  > _hip_roll_limit ||
       abs(_all_leg_joints.back_left_leg.hip_roll_joint)   > _hip_roll_limit ||
