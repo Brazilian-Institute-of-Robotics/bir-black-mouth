@@ -1,6 +1,6 @@
 import os
 import launch
-from launch.actions import IncludeLaunchDescription, ExecuteProcess
+from launch.actions import IncludeLaunchDescription, ExecuteProcess, DeclareLaunchArgument
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -12,6 +12,7 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
 
     pkg_description = get_package_share_directory('black_mouth_description')
+    pkg_share = get_package_share_directory('black_mouth_gazebo')
 
     default_model = os.path.join(
         pkg_description, "urdf", "black_mouth.urdf.xacro")
@@ -22,13 +23,13 @@ def generate_launch_description():
         pkg_description, 'rviz/urdf_config.rviz')
 
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-
-    # Gazebo server
+    
     gzserver = ExecuteProcess(
         cmd=['gzserver',
              '-s', 'libgazebo_ros_init.so',
              '-s', 'libgazebo_ros_factory.so',
              '-u',
+             '/home/devel_ws/bm/src/bir-black-mouth/black_mouth_gazebo/worlds/empty.world'
              ''],
         output='screen',
     )
@@ -114,14 +115,14 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        launch.actions.DeclareLaunchArgument(
+        DeclareLaunchArgument(
             'use_sim_time', default_value='false', description='Use simulation (Gazebo) clock if true'),
-        launch.actions.DeclareLaunchArgument(name='gui', default_value='True',
+        DeclareLaunchArgument(name='gui', default_value='True',
                                              description='Flag to enable joint_state_publisher_gui'),
-        launch.actions.DeclareLaunchArgument(
+        DeclareLaunchArgument(
             name='model', default_value=default_model, description='Absolute path to robot urdf file'),
 
-        launch.actions.DeclareLaunchArgument(name='rviz_config', default_value=default_rviz_config_path,
+        DeclareLaunchArgument(name='rviz_config', default_value=default_rviz_config_path,
                                              description='Absolute path to rviz config file'),
         gzserver,
         gzclient,
