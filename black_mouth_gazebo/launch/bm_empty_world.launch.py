@@ -61,7 +61,12 @@ def generate_launch_description():
         executable='spawn_entity.py',
         name='urdf_spawner',
         output='screen',
-        arguments=['-entity', 'quadruped', '-topic', '/robot_description'],
+        arguments=['-entity','quadruped',
+                     '-topic', '/robot_description',
+                     '-x', '0',
+                     '-y', '0',
+                     '-z', '0.0'
+                     ],
     )
 
     joint_state_publisher_gui = Node(
