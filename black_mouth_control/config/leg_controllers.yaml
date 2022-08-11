@@ -31,7 +31,7 @@ front_left_joint_trajectory_controller:
       - front_left_elbow_joint
 
     command_interfaces:
-      - effort
+      - velocity
 
     state_interfaces:
       - position
@@ -64,7 +64,7 @@ front_right_joint_trajectory_controller:
       - front_right_elbow_joint
 
     command_interfaces:
-      - effort
+      - velocity
 
     state_interfaces:
       - position
@@ -97,7 +97,7 @@ back_left_joint_trajectory_controller:
       - back_left_elbow_joint
 
     command_interfaces:
-      - effort
+      - velocity
 
     state_interfaces:
       - position
@@ -129,7 +129,7 @@ back_right_joint_trajectory_controller:
       - back_right_elbow_joint
 
     command_interfaces:
-      - effort
+      - velocity
 
     state_interfaces: 
       - position

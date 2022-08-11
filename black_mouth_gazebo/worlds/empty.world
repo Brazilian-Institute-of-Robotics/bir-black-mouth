@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <sdf version="1.5">
   <world name="default">
-    <gravity>0.0 0.0 0.0</gravity>
+    <gravity>0.0 0.0 -9.8</gravity>
     <scene>
       <shadows>false</shadows>
     </scene>
