@@ -4,6 +4,7 @@
 #include <memory>
 #include <chrono>
 #include <cstdlib>
+#include <cmath>
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -82,7 +83,22 @@ void InverseKinematics::computeIK()
 
 bool InverseKinematics::checkJointAngles()
 {
-  // TODO: Check if nan
+  if (std::isnan(_all_leg_joints.front_right_leg.hip_roll_joint) ||
+      std::isnan(_all_leg_joints.front_right_leg.hip_pitch_joint) ||
+      std::isnan(_all_leg_joints.front_right_leg.elbow_joint) ||
+      std::isnan(_all_leg_joints.front_left_leg.hip_roll_joint) ||
+      std::isnan(_all_leg_joints.front_left_leg.hip_pitch_joint) ||
+      std::isnan(_all_leg_joints.front_left_leg.elbow_joint) ||
+      std::isnan(_all_leg_joints.back_left_leg.hip_roll_joint) ||
+      std::isnan(_all_leg_joints.back_left_leg.hip_pitch_joint) ||
+      std::isnan(_all_leg_joints.back_left_leg.elbow_joint) ||
+      std::isnan(_all_leg_joints.back_right_leg.hip_roll_joint) ||
+      std::isnan(_all_leg_joints.back_right_leg.hip_pitch_joint) ||
+      std::isnan(_all_leg_joints.back_right_leg.elbow_joint))
+  {
+    RCLCPP_WARN(rclcpp::get_logger("ik_node"), "NaN value computed, impossible to set IK");
+    return false;
+  }
 
   if (abs(_all_leg_joints.front_right_leg.hip_roll_joint) > _joint_limits["hip_roll_limit"] ||
       abs(_all_leg_joints.front_left_leg.hip_roll_joint)  > _joint_limits["hip_roll_limit"] ||
