@@ -1,0 +1,4 @@
+black_mouth_kinematics/LegJoints front_right_leg
+black_mouth_kinematics/LegJoints front_left_leg
+black_mouth_kinematics/LegJoints back_left_leg
+black_mouth_kinematics/LegJoints back_right_leg

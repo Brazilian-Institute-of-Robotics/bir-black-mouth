@@ -1,0 +1,3 @@
+float64 hip_roll_joint
+float64 hip_pitch_joint
+float64 elbow_joint

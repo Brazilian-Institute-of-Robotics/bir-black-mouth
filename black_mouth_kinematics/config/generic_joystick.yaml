@@ -1,0 +1,12 @@
+joy_body_ik_node:
+  ros__parameters:
+    axis_linear:
+      x: 1
+      y: 0
+      z: 2
+    axis_angular:
+      roll: 4
+      pitch: 5
+      yaw: 3
+    lock: 2
+    reset: 3
