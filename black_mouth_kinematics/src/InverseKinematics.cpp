@@ -26,6 +26,10 @@ InverseKinematics::InverseKinematics() : Node("inverse_kinematics_node")
   _ik_client = this->create_client<black_mouth_kinematics::srv::InvKinematics>("compute_inverse_kinematics", 
                                                                                 rmw_qos_profile_services_default, 
                                                                                 _callback_group);
+
+  _default_joint_limits = { {"hip_roll_limit", 0.785}, {"hip_pitch_limit", 0.785}, {"elbow_limit", 0.785} };
+  this->declare_parameters("joint_limits", _default_joint_limits);
+  this->get_parameters("joint_limits", _joint_limits);
   
   while(!_ik_client->wait_for_service(1s))
   {
@@ -80,26 +84,26 @@ bool InverseKinematics::checkJointAngles()
 {
   // TODO: Check if nan
 
-  if (abs(_all_leg_joints.front_right_leg.hip_roll_joint) > _hip_roll_limit ||
-      abs(_all_leg_joints.front_left_leg.hip_roll_joint)  > _hip_roll_limit ||
-      abs(_all_leg_joints.back_left_leg.hip_roll_joint)   > _hip_roll_limit ||
-      abs(_all_leg_joints.back_right_leg.hip_roll_joint)  > _hip_roll_limit)
+  if (abs(_all_leg_joints.front_right_leg.hip_roll_joint) > _joint_limits["hip_roll_limit"] ||
+      abs(_all_leg_joints.front_left_leg.hip_roll_joint)  > _joint_limits["hip_roll_limit"] ||
+      abs(_all_leg_joints.back_left_leg.hip_roll_joint)   > _joint_limits["hip_roll_limit"] ||
+      abs(_all_leg_joints.back_right_leg.hip_roll_joint)  > _joint_limits["hip_roll_limit"])
   {
     RCLCPP_WARN(rclcpp::get_logger("ik_node"), "Hip roll joint angle out of range");
     return false;
   }
-  if (abs(_all_leg_joints.front_right_leg.hip_pitch_joint) > _hip_pitch_limit ||
-      abs(_all_leg_joints.front_left_leg.hip_pitch_joint)  > _hip_pitch_limit ||
-      abs(_all_leg_joints.back_left_leg.hip_pitch_joint)   > _hip_pitch_limit ||
-      abs(_all_leg_joints.back_right_leg.hip_pitch_joint)  > _hip_pitch_limit)
+  if (abs(_all_leg_joints.front_right_leg.hip_pitch_joint) > _joint_limits["hip_pitch_limit"] ||
+      abs(_all_leg_joints.front_left_leg.hip_pitch_joint)  > _joint_limits["hip_pitch_limit"] ||
+      abs(_all_leg_joints.back_left_leg.hip_pitch_joint)   > _joint_limits["hip_pitch_limit"] ||
+      abs(_all_leg_joints.back_right_leg.hip_pitch_joint)  > _joint_limits["hip_pitch_limit"])
   {
     RCLCPP_WARN(rclcpp::get_logger("ik_node"), "Hip pitch joint angle out of range");
     return false;
   }
-  if (abs(_all_leg_joints.front_right_leg.elbow_joint) > _elbow_limit ||
-      abs(_all_leg_joints.front_left_leg.elbow_joint)  > _elbow_limit ||
-      abs(_all_leg_joints.back_left_leg.elbow_joint)   > _elbow_limit ||
-      abs(_all_leg_joints.back_right_leg.elbow_joint)  > _elbow_limit)
+  if (abs(_all_leg_joints.front_right_leg.elbow_joint) > _joint_limits["elbow_limit"] ||
+      abs(_all_leg_joints.front_left_leg.elbow_joint)  > _joint_limits["elbow_limit"] ||
+      abs(_all_leg_joints.back_left_leg.elbow_joint)   > _joint_limits["elbow_limit"] ||
+      abs(_all_leg_joints.back_right_leg.elbow_joint)  > _joint_limits["elbow_limit"])
   {
     RCLCPP_WARN(rclcpp::get_logger("ik_node"), "Elbow joint angle out of range");
     return false;

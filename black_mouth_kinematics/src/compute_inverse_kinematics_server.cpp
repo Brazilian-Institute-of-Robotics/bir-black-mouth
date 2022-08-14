@@ -7,14 +7,8 @@
 #include <memory>
 #include <cmath>
 
-// TODO: Put these values in a .yaml config file
-float L = 0.2291;
-float W = 0.140;
-float W_HIP = 0.048;
-float H = 0.170;
-float L1 = 0.0483;
-float L2 = 0.120;
-float L3 = 0.120;
+std::map<std::string, double> body_dimensions;
+std::map<std::string, double> leg_dimensions;
 
 struct legsEigenTransformations
 {
@@ -23,6 +17,16 @@ struct legsEigenTransformations
   Eigen::Matrix4d Tm_back_left;
   Eigen::Matrix4d Tm_back_right;
 };
+
+void getQuadrupedParameters(rclcpp::Node::SharedPtr node)
+{
+  std::map<std::string, double> default_body_dimensions{ {"L", 0.2}, {"W", 0.15}, {"H", 0.15} };
+  std::map<std::string, double> default_leg_dimensions{ {"L1", 0.05}, {"L2", 0.10}, {"L3", 0.10} };
+  node->declare_parameters("body_dimensions", default_body_dimensions);
+  node->declare_parameters("leg_dimensions", default_leg_dimensions);
+  node->get_parameters("body_dimensions", body_dimensions);
+  node->get_parameters("leg_dimensions", leg_dimensions);
+}
 
 Eigen::Matrix4d getTranslationMatrix(const float x, const float y, const float z)
 {
@@ -59,10 +63,10 @@ legsEigenTransformations getBodyIK(const geometry_msgs::msg::Vector3 body_positi
 {
   Eigen::Matrix4d Tm = getTransformationMatrix(body_position, body_rotation);
 
-  Eigen::Matrix4d T_front_right = getTranslationMatrix( L/2, -W/2, 0.0);
-  Eigen::Matrix4d T_front_left  = getTranslationMatrix( L/2,  W/2, 0.0);
-  Eigen::Matrix4d T_back_left   = getTranslationMatrix(-L/2,  W/2, 0.0);
-  Eigen::Matrix4d T_back_right  = getTranslationMatrix(-L/2, -W/2, 0.0);
+  Eigen::Matrix4d T_front_right = getTranslationMatrix( body_dimensions["L"]/2, -body_dimensions["W"]/2, 0.0);
+  Eigen::Matrix4d T_front_left  = getTranslationMatrix( body_dimensions["L"]/2,  body_dimensions["W"]/2, 0.0);
+  Eigen::Matrix4d T_back_left   = getTranslationMatrix(-body_dimensions["L"]/2,  body_dimensions["W"]/2, 0.0);
+  Eigen::Matrix4d T_back_right  = getTranslationMatrix(-body_dimensions["L"]/2, -body_dimensions["W"]/2, 0.0);
 
   legsEigenTransformations transformations;
   transformations.Tm_front_right = Tm*T_front_right;
@@ -77,11 +81,11 @@ black_mouth_kinematics::msg::LegJoints getLegIK(const geometry_msgs::msg::Point 
 {
   int reflect = left ? 1 : -1;
 
-  float a = sqrt(pow(point.y, 2) + pow(point.z, 2) - pow(L1, 2));
-  float A = (pow(a, 2) + pow(point.x, 2) + pow(L2, 2) - pow(L3, 2)) / (2*L2*sqrt(pow(a,2) + pow(point.x, 2)));
-  float B = (pow(a, 2) + pow(point.x, 2) - pow(L2, 2) - pow(L3, 2)) / (2*L2*L3);
+  float a = sqrt(pow(point.y, 2) + pow(point.z, 2) - pow(leg_dimensions["L1"], 2));
+  float A = (pow(a, 2) + pow(point.x, 2) + pow(leg_dimensions["L2"], 2) - pow(leg_dimensions["L3"], 2)) / (2*leg_dimensions["L2"]*sqrt(pow(a,2) + pow(point.x, 2)));
+  float B = (pow(a, 2) + pow(point.x, 2) - pow(leg_dimensions["L2"], 2) - pow(leg_dimensions["L3"], 2)) / (2*leg_dimensions["L2"]*leg_dimensions["L3"]);
 
-  float theta1 = atan2(point.y, -point.z) - atan2(reflect*L1, a);
+  float theta1 = atan2(point.y, -point.z) - atan2(reflect*leg_dimensions["L1"], a);
   float theta2 = M_PI_2 - atan2(a, point.x) - atan2(sqrt(1 - pow(A, 2)), A);
   float theta3 = atan2(sqrt(1 - pow(B, 2)), B);
 
@@ -111,17 +115,17 @@ void computeInvKinematics(const std::shared_ptr<black_mouth_kinematics::srv::Inv
 
   if (request->body_leg_ik.reference_link == black_mouth_kinematics::msg::BodyLegIK::FOOT_LINK_AS_REFERENCE)
   {
-    front_right_foot = (getTranslationMatrix( L/2, -(W/2+W_HIP), -H)*front_right_foot.homogeneous()).head<3>();
-    front_left_foot  = (getTranslationMatrix( L/2,  (W/2+W_HIP), -H)*front_left_foot.homogeneous()).head<3>();
-    back_left_foot   = (getTranslationMatrix(-L/2,  (W/2+W_HIP), -H)*back_left_foot.homogeneous()).head<3>();
-    back_right_foot  = (getTranslationMatrix(-L/2, -(W/2+W_HIP), -H)*back_right_foot.homogeneous()).head<3>();
+    front_right_foot = (getTranslationMatrix( body_dimensions["L"]/2, -(body_dimensions["W"]/2+leg_dimensions["L1"]), -body_dimensions["H"])*front_right_foot.homogeneous()).head<3>();
+    front_left_foot  = (getTranslationMatrix( body_dimensions["L"]/2,  (body_dimensions["W"]/2+leg_dimensions["L1"]), -body_dimensions["H"])*front_left_foot.homogeneous()).head<3>();
+    back_left_foot   = (getTranslationMatrix(-body_dimensions["L"]/2,  (body_dimensions["W"]/2+leg_dimensions["L1"]), -body_dimensions["H"])*back_left_foot.homogeneous()).head<3>();
+    back_right_foot  = (getTranslationMatrix(-body_dimensions["L"]/2, -(body_dimensions["W"]/2+leg_dimensions["L1"]), -body_dimensions["H"])*back_right_foot.homogeneous()).head<3>();
   }
   else if (request->body_leg_ik.reference_link == black_mouth_kinematics::msg::BodyLegIK::HIP_LINK_AS_REFERENCE)
   {
-    front_right_foot = (getTranslationMatrix( L/2, -W/2, 0.0)*front_right_foot.homogeneous()).head<3>();
-    front_left_foot  = (getTranslationMatrix( L/2,  W/2, 0.0)*front_left_foot.homogeneous()).head<3>();
-    back_left_foot   = (getTranslationMatrix(-L/2,  W/2, 0.0)*back_left_foot.homogeneous()).head<3>();
-    back_right_foot  = (getTranslationMatrix(-L/2, -W/2, 0.0)*back_right_foot.homogeneous()).head<3>();
+    front_right_foot = (getTranslationMatrix( body_dimensions["L"]/2, -body_dimensions["W"]/2, 0.0)*front_right_foot.homogeneous()).head<3>();
+    front_left_foot  = (getTranslationMatrix( body_dimensions["L"]/2,  body_dimensions["W"]/2, 0.0)*front_left_foot.homogeneous()).head<3>();
+    back_left_foot   = (getTranslationMatrix(-body_dimensions["L"]/2,  body_dimensions["W"]/2, 0.0)*back_left_foot.homogeneous()).head<3>();
+    back_right_foot  = (getTranslationMatrix(-body_dimensions["L"]/2, -body_dimensions["W"]/2, 0.0)*back_right_foot.homogeneous()).head<3>();
   }
 
   legsEigenTransformations bodyIK = getBodyIK(request->body_leg_ik.body_position, request->body_leg_ik.body_rotation);
@@ -148,6 +152,8 @@ int main(int argc, char **argv)
   rclcpp::init(argc, argv);
 
   std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("compute_inverse_kinematics_server");
+  
+  getQuadrupedParameters(node);
   
   rclcpp::Service<black_mouth_kinematics::srv::InvKinematics>::SharedPtr service = 
     node->create_service<black_mouth_kinematics::srv::InvKinematics>("compute_inverse_kinematics", &computeInvKinematics);

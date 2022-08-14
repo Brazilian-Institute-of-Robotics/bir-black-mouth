@@ -35,9 +35,7 @@ private:
   black_mouth_kinematics::msg::BodyLegIK _cmd_ik_msg;
   black_mouth_kinematics::msg::AllLegJoints _all_leg_joints;
 
-  // TODO: Put these values in a config file
-  float _hip_roll_limit  = M_PI/6;
-  float _hip_pitch_limit = M_PI/4;
-  float _elbow_limit     = M_PI/5;
+  std::map<std::string, double> _default_joint_limits;
+  std::map<std::string, double> _joint_limits;
 
 };
