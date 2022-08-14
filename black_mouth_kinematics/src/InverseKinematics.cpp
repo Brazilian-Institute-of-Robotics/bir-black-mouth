@@ -48,9 +48,16 @@ InverseKinematics::~InverseKinematics()
 
 void InverseKinematics::IKCallback(const black_mouth_kinematics::msg::BodyLegIK::SharedPtr msg)
 {
+  // auto start = std::chrono::steady_clock::now();
+
   this->_cmd_ik_msg = *msg;
 
   this->computeIKAndPublishJoints();
+
+  // auto end = std::chrono::steady_clock::now();
+  // std::cout << "Elapsed time in microseconds: "
+            // << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+            // << " µs" << std::endl;
 }
 
 void InverseKinematics::computeIKAndPublishJoints()
@@ -62,23 +69,15 @@ void InverseKinematics::computeIKAndPublishJoints()
 
 void InverseKinematics::computeIK()
 {
-  // auto start = std::chrono::steady_clock::now();
-
   auto request = std::make_shared<black_mouth_kinematics::srv::InvKinematics::Request>();
   request->body_leg_ik = this->_cmd_ik_msg;
   
   auto result = this->_ik_client->async_send_request(request);
-  std::future_status status = result.wait_for(3ms);
+  std::future_status status = result.wait_for(1.5ms);
   if (status == std::future_status::ready)
     _all_leg_joints = result.get()->leg_joints;
   else
     RCLCPP_WARN(rclcpp::get_logger("ik_client"), "Failed to comput leg joints, timeout");
-
-  // auto end = std::chrono::steady_clock::now();
-  // std::cout << "Elapsed time in microseconds: "
-            // << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
-            // << " µs" << std::endl;
-
 }
 
 bool InverseKinematics::checkJointAngles()
