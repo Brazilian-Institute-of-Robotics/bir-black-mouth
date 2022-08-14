@@ -19,12 +19,21 @@ JoyBodyIK::JoyBodyIK() : Node("joy_body_ik_node")
 
   _timer = this->create_wall_timer(50ms, std::bind(&JoyBodyIK::publishIK, this));
 
-  _move_linear_x      = this->declare_parameter<int>("_move_linear_x", 1);
-  _move_linear_y      = this->declare_parameter<int>("_move_linear_y", 0);
-  _move_linear_z      = this->declare_parameter<int>("_move_linear_z", 2);
-  _move_angular_yaw   = this->declare_parameter<int>("_move_angular_yaw", 3);
-  _move_angular_roll  = this->declare_parameter<int>("_move_angular_roll", 4);
-  _move_angular_pitch = this->declare_parameter<int>("_move_angular_pitch", 5);
+  _locked = false;
+
+  _default_axis_linear_map  = { {"x", 1},    {"y", 0},     {"z", 2},   };
+  _default_axis_angular_map = { {"roll", 4}, {"pitch", 5}, {"yaw", 3}, };
+
+  this->declare_parameters("axis_linear", _default_axis_linear_map);
+  this->declare_parameters("axis_angular", _default_axis_angular_map);
+  this->declare_parameter("lock", 2);
+  this->declare_parameter("reset", 3);
+
+  this->get_parameters("axis_linear", _axis_linear_map);
+  this->get_parameters("axis_angular", _axis_angular_map);
+  this->get_parameter("lock", _lock_button);
+  this->get_parameter("reset", _reset_button);
+
 }
 
 JoyBodyIK::~JoyBodyIK()
@@ -35,14 +44,45 @@ void JoyBodyIK::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
   _ik_msg.reference_link = black_mouth_kinematics::msg::BodyLegIK::FOOT_LINK_AS_REFERENCE;
   
-  // TODO: Add more parameters and improve roll and pitch
-  _ik_msg.body_position.x = 0.05*msg->axes[_move_linear_x];
-  _ik_msg.body_position.y = 0.05*msg->axes[_move_linear_y];
-  _ik_msg.body_position.z = 0.04*msg->axes[_move_linear_z];
+  if (msg->buttons[_lock_button])
+  {
+    _locked = !_locked;
+    if (_locked)
+      RCLCPP_INFO(rclcpp::get_logger("joy_body_ik"), "Body locked");
+    else
+      RCLCPP_INFO(rclcpp::get_logger("joy_body_ik"), "Body unlocked");
+  }
 
-  _ik_msg.body_rotation.x = 0.2*msg->axes[_move_angular_roll];
-  _ik_msg.body_rotation.y = 0.2*msg->axes[_move_angular_pitch];
-  _ik_msg.body_rotation.z = 0.5*msg->axes[_move_angular_yaw];
+  if (!_locked)
+  {
+    _ik_msg.body_position.x = 0.05*msg->axes[_axis_linear_map["x"]];
+    _ik_msg.body_position.y = 0.05*msg->axes[_axis_linear_map["y"]];
+    _ik_msg.body_position.z = 0.04*msg->axes[_axis_linear_map["z"]];
+
+    _ik_msg.body_rotation.z = 0.5*msg->axes[_axis_angular_map["yaw"]];
+
+    if (msg->axes[_axis_angular_map["roll"]] == 1 && _ik_msg.body_rotation.x < 0.2)
+      _ik_msg.body_rotation.x += 0.05;
+    else if (msg->axes[_axis_angular_map["roll"]] == -1 && _ik_msg.body_rotation.x > -0.2)
+      _ik_msg.body_rotation.x -= 0.05;
+
+    if (msg->axes[_axis_angular_map["pitch"]] == 1 && _ik_msg.body_rotation.y < 0.2)
+      _ik_msg.body_rotation.y += 0.05;
+    else if (msg->axes[_axis_angular_map["pitch"]] == -1 && _ik_msg.body_rotation.y > -0.2)
+      _ik_msg.body_rotation.y -= 0.05;
+  }
+
+  if (msg->buttons[_reset_button])
+  {
+    RCLCPP_INFO(rclcpp::get_logger("joy_body_ik"), "Reset body position");
+    _ik_msg.body_position.x = 0.0;
+    _ik_msg.body_position.y = 0.0;
+    _ik_msg.body_position.z = 0.0;
+
+    _ik_msg.body_rotation.x = 0.0;
+    _ik_msg.body_rotation.y = 0.0;
+    _ik_msg.body_rotation.z = 0.0;
+  }
 
 }
 

@@ -1,3 +1,6 @@
+#ifndef JOY_BODY_IK_HPP
+#define JOY_BODY_IK_HPP
+
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joy.hpp"
 #include "black_mouth_kinematics/msg/body_leg_ik.hpp"
@@ -20,11 +23,17 @@ private:
 
   black_mouth_kinematics::msg::BodyLegIK _ik_msg;
 
-  double _move_linear_x;
-  double _move_linear_y;
-  double _move_linear_z;
-  double _move_angular_yaw;
-  int    _move_angular_roll;
-  int    _move_angular_pitch;
+  std::map<std::string, int8_t> _axis_linear_map;
+  std::map<std::string, int8_t> _axis_angular_map;
+
+  std::map<std::string, int8_t> _default_axis_linear_map;
+  std::map<std::string, int8_t> _default_axis_angular_map;
+
+  int8_t _lock_button;
+  int8_t _reset_button;
+
+  bool _locked;
 
 };
+
+#endif // JOY_BODY_IK_HPP

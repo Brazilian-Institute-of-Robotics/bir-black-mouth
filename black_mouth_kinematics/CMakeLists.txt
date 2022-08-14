@@ -79,7 +79,7 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(include)
 
 install(
-  DIRECTORY launch rviz
+  DIRECTORY launch rviz config
   DESTINATION share/${PROJECT_NAME}
 )
   

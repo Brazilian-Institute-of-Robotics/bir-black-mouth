@@ -67,7 +67,7 @@ void InverseKinematics::computeIK()
   if (status == std::future_status::ready)
     _all_leg_joints = result.get()->leg_joints;
   else
-    RCLCPP_INFO(rclcpp::get_logger("ik_client"), "Failed to comput leg joints, timeout");
+    RCLCPP_WARN(rclcpp::get_logger("ik_client"), "Failed to comput leg joints, timeout");
 
   // auto end = std::chrono::steady_clock::now();
   // std::cout << "Elapsed time in microseconds: "

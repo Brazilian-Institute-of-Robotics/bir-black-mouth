@@ -4,20 +4,21 @@ from launch.actions import IncludeLaunchDescription, ExecuteProcess
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from ament_index_python.packages import get_package_share_directory
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
 
-    pkg_description = get_package_share_directory('black_mouth_description')
+    pkg_description = FindPackageShare('black_mouth_description').find('black_mouth_description')
+
+    pkg_gazebo_ros = FindPackageShare('gazebo_ros').find('gazebo_ros')
+
+    inverse_kinematics_pkg_share = FindPackageShare('black_mouth_kinematics').find('black_mouth_kinematics')
 
     default_model = os.path.join(
         pkg_description, "urdf", "black_mouth.urdf.xacro")
-
-    pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
-
+        
     default_rviz_config_path = os.path.join(
         pkg_description, 'rviz/urdf_config.rviz')
 
@@ -113,6 +114,13 @@ def generate_launch_description():
         output='screen'
     )
 
+    inverse_kinematics = IncludeLaunchDescription(
+              PythonLaunchDescriptionSource(
+                os.path.join(inverse_kinematics_pkg_share, 'launch', 'kinematics.launch.py')),
+            #   launch_arguments={'': ''}.items(),
+  )
+
+
     return LaunchDescription([
         launch.actions.DeclareLaunchArgument(
             'use_sim_time', default_value='false', description='Use simulation (Gazebo) clock if true'),
@@ -134,5 +142,6 @@ def generate_launch_description():
         load_front_left_joint_trajectory_controller,
         load_front_right_joint_trajectory_controller,
         load_back_left_joint_trajectory_controller,
-        load_back_right_joint_trajectory_controller
+        load_back_right_joint_trajectory_controller,
+        inverse_kinematics
     ])
