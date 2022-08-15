@@ -172,21 +172,25 @@ void InverseKinematics::publishAllJoints()
     front_right_msg.points[i].positions[0] = _all_leg_joints[i].front_right_leg.hip_roll_joint;
     front_right_msg.points[i].positions[1] = _all_leg_joints[i].front_right_leg.hip_pitch_joint;
     front_right_msg.points[i].positions[2] = _all_leg_joints[i].front_right_leg.elbow_joint;
+    front_right_msg.points[i].time_from_start = _cmd_ik_msg.time_from_start[i];
 
     front_left_msg.points[i].positions.resize(3);
     front_left_msg.points[i].positions[0] = _all_leg_joints[i].front_left_leg.hip_roll_joint;
     front_left_msg.points[i].positions[1] = _all_leg_joints[i].front_left_leg.hip_pitch_joint;
     front_left_msg.points[i].positions[2] = _all_leg_joints[i].front_left_leg.elbow_joint;
+    front_left_msg.points[i].time_from_start = _cmd_ik_msg.time_from_start[i];
     
     back_left_msg.points[i].positions.resize(3);
     back_left_msg.points[i].positions[0] = _all_leg_joints[i].back_left_leg.hip_roll_joint;
     back_left_msg.points[i].positions[1] = _all_leg_joints[i].back_left_leg.hip_pitch_joint;
     back_left_msg.points[i].positions[2] = _all_leg_joints[i].back_left_leg.elbow_joint;
+    back_left_msg.points[i].time_from_start = _cmd_ik_msg.time_from_start[i];
 
     back_right_msg.points[i].positions.resize(3);
     back_right_msg.points[i].positions[0] = _all_leg_joints[i].back_right_leg.hip_roll_joint;
     back_right_msg.points[i].positions[1] = _all_leg_joints[i].back_right_leg.hip_pitch_joint;
     back_right_msg.points[i].positions[2] = _all_leg_joints[i].back_right_leg.elbow_joint;
+    back_right_msg.points[i].time_from_start = _cmd_ik_msg.time_from_start[i];
   }
 
   _front_right_trajectory_publisher->publish(front_right_msg);

@@ -22,6 +22,7 @@ JoyBodyIK::JoyBodyIK() : Node("joy_body_ik_node")
   _locked = false;
 
   _ik_msg.body_leg_ik_trajectory.resize(1);
+  _ik_msg.time_from_start.resize(1);
 
   _default_axis_linear_map  = { {"x", 1},    {"y", 0},     {"z", 2},   };
   _default_axis_angular_map = { {"roll", 4}, {"pitch", 5}, {"yaw", 3}, };
