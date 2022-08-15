@@ -46,6 +46,9 @@ ament_target_dependencies(inv_kinematics_client rclcpp)
 add_executable(inv_kinematics_node src/InverseKinematics.cpp)
 ament_target_dependencies(inv_kinematics_node rclcpp trajectory_msgs)
 
+add_executable(inv_kinematics_trajectory test/publish_ik_trajectory.cpp)
+ament_target_dependencies(inv_kinematics_trajectory rclcpp)
+
 add_executable(joy_body_ik src/JoyBodyIK.cpp)
 ament_target_dependencies(joy_body_ik rclcpp sensor_msgs)
 
@@ -58,6 +61,10 @@ rosidl_target_interfaces(inv_kinematics_client
 )
 
 rosidl_target_interfaces(inv_kinematics_node
+  ${PROJECT_NAME} "rosidl_typesupport_cpp"
+)
+
+rosidl_target_interfaces(inv_kinematics_trajectory
   ${PROJECT_NAME} "rosidl_typesupport_cpp"
 )
 
@@ -89,6 +96,7 @@ install(
   inv_kinematics_server
   inv_kinematics_client
   inv_kinematics_node
+  inv_kinematics_trajectory
   joy_body_ik
   DESTINATION 
   lib/${PROJECT_NAME}
