@@ -26,7 +26,7 @@ int main(int argc, char **argv)
   request->body_leg_ik.body_rotation.y = 0.0;
   request->body_leg_ik.body_rotation.z = M_PI/8;
 
-  // request->body_leg_ik.reference_link = black_mouth_kinematics::msg::BodyLegIK::BASE_LINK_AS_REFERENCE;
+  // request->body_leg_ik.leg_points.reference_link = black_mouth_kinematics::msg::AllLegPoints::BASE_LINK_AS_REFERENCE;
   // request->body_leg_ik.leg_points.front_right_leg.x = 0.115;
   // request->body_leg_ik.leg_points.front_right_leg.y = -0.118;
   // request->body_leg_ik.leg_points.front_right_leg.z = -0.170;
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
   // request->body_leg_ik.leg_points.back_right_leg.z = -0.170;
 
 
-  request->body_leg_ik.reference_link = black_mouth_kinematics::msg::BodyLegIK::FOOT_LINK_AS_REFERENCE;
+  request->body_leg_ik.leg_points.reference_link = black_mouth_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
   request->body_leg_ik.leg_points.front_right_leg.x = 0.0;
   request->body_leg_ik.leg_points.front_right_leg.y = 0.0;
   request->body_leg_ik.leg_points.front_right_leg.z = 0.0;
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
   request->body_leg_ik.leg_points.back_right_leg.z = 0.0;
 
 
-  // request->body_leg_ik.reference_link = black_mouth_kinematics::msg::BodyLegIK::HIP_LINK_AS_REFERENCE;
+  // request->body_leg_ik.leg_points.reference_link = black_mouth_kinematics::msg::AllLegPoints::HIP_LINK_AS_REFERENCE;
   // request->body_leg_ik.leg_points.front_right_leg.x = 0.0;
   // request->body_leg_ik.leg_points.front_right_leg.y = -0.048;
   // request->body_leg_ik.leg_points.front_right_leg.z = -0.170;

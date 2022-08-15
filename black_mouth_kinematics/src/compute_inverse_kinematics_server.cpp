@@ -113,14 +113,14 @@ void computeInvKinematics(const std::shared_ptr<black_mouth_kinematics::srv::Inv
   tf2::fromMsg(request->body_leg_ik.leg_points.back_left_leg, back_left_foot);
   tf2::fromMsg(request->body_leg_ik.leg_points.back_right_leg, back_right_foot);
 
-  if (request->body_leg_ik.reference_link == black_mouth_kinematics::msg::BodyLegIK::FOOT_LINK_AS_REFERENCE)
+  if (request->body_leg_ik.leg_points.reference_link == black_mouth_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE)
   {
     front_right_foot = (getTranslationMatrix( body_dimensions["L"]/2, -(body_dimensions["W"]/2+leg_dimensions["L1"]), -body_dimensions["H"])*front_right_foot.homogeneous()).head<3>();
     front_left_foot  = (getTranslationMatrix( body_dimensions["L"]/2,  (body_dimensions["W"]/2+leg_dimensions["L1"]), -body_dimensions["H"])*front_left_foot.homogeneous()).head<3>();
     back_left_foot   = (getTranslationMatrix(-body_dimensions["L"]/2,  (body_dimensions["W"]/2+leg_dimensions["L1"]), -body_dimensions["H"])*back_left_foot.homogeneous()).head<3>();
     back_right_foot  = (getTranslationMatrix(-body_dimensions["L"]/2, -(body_dimensions["W"]/2+leg_dimensions["L1"]), -body_dimensions["H"])*back_right_foot.homogeneous()).head<3>();
   }
-  else if (request->body_leg_ik.reference_link == black_mouth_kinematics::msg::BodyLegIK::HIP_LINK_AS_REFERENCE)
+  else if (request->body_leg_ik.leg_points.reference_link == black_mouth_kinematics::msg::AllLegPoints::HIP_LINK_AS_REFERENCE)
   {
     front_right_foot = (getTranslationMatrix( body_dimensions["L"]/2, -body_dimensions["W"]/2, 0.0)*front_right_foot.homogeneous()).head<3>();
     front_left_foot  = (getTranslationMatrix( body_dimensions["L"]/2,  body_dimensions["W"]/2, 0.0)*front_left_foot.homogeneous()).head<3>();

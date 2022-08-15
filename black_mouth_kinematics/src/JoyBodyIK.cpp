@@ -42,7 +42,7 @@ JoyBodyIK::~JoyBodyIK()
 
 void JoyBodyIK::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
-  _ik_msg.reference_link = black_mouth_kinematics::msg::BodyLegIK::FOOT_LINK_AS_REFERENCE;
+  _ik_msg.leg_points.reference_link = black_mouth_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
   
   if (msg->buttons[_lock_button])
   {
