@@ -16,7 +16,7 @@ InverseKinematics::InverseKinematics() : Node("inverse_kinematics_node")
   _callback_group = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
   _sub_options.callback_group = _callback_group;
 
-  _cmd_subscriber = this->create_subscription<black_mouth_kinematics::msg::BodyLegIK>("cmd_ik", 10, 
+  _cmd_subscriber = this->create_subscription<black_mouth_kinematics::msg::BodyLegIKTrajectory>("cmd_ik", 10, 
                           std::bind(&InverseKinematics::IKCallback, this, _1), _sub_options);
 
   _front_right_trajectory_publisher = this->create_publisher<trajectory_msgs::msg::JointTrajectory>("front_right_joint_trajectory_controller/joint_trajectory", 10);
@@ -46,7 +46,7 @@ InverseKinematics::~InverseKinematics()
 {
 }
 
-void InverseKinematics::IKCallback(const black_mouth_kinematics::msg::BodyLegIK::SharedPtr msg)
+void InverseKinematics::IKCallback(const black_mouth_kinematics::msg::BodyLegIKTrajectory::SharedPtr msg)
 {
   // auto start = std::chrono::steady_clock::now();
 
@@ -70,60 +70,68 @@ void InverseKinematics::computeIKAndPublishJoints()
 void InverseKinematics::computeIK()
 {
   auto request = std::make_shared<black_mouth_kinematics::srv::InvKinematics::Request>();
-  request->body_leg_ik = this->_cmd_ik_msg;
+
+  _all_leg_joints.resize(_cmd_ik_msg.body_leg_ik_trajectory.size());
   
-  auto result = this->_ik_client->async_send_request(request);
-  std::future_status status = result.wait_for(1.5ms);
-  if (status == std::future_status::ready)
-    _all_leg_joints = result.get()->leg_joints;
-  else
-    RCLCPP_WARN(rclcpp::get_logger("ik_client"), "Failed to comput leg joints, timeout");
+  for (int i=0; i<(int)_cmd_ik_msg.body_leg_ik_trajectory.size(); i++)
+  {
+    request->body_leg_ik = this->_cmd_ik_msg.body_leg_ik_trajectory.at(i);  
+    auto result = this->_ik_client->async_send_request(request);
+    std::future_status status = result.wait_for(1.5ms);
+    
+    if (status == std::future_status::ready)
+      _all_leg_joints.at(i) = result.get()->leg_joints;
+    else
+      RCLCPP_WARN(rclcpp::get_logger("ik_client"), "Failed to comput leg joints, timeout");
+  }
 }
 
 bool InverseKinematics::checkJointAngles()
 {
-  if (std::isnan(_all_leg_joints.front_right_leg.hip_roll_joint) ||
-      std::isnan(_all_leg_joints.front_right_leg.hip_pitch_joint) ||
-      std::isnan(_all_leg_joints.front_right_leg.elbow_joint) ||
-      std::isnan(_all_leg_joints.front_left_leg.hip_roll_joint) ||
-      std::isnan(_all_leg_joints.front_left_leg.hip_pitch_joint) ||
-      std::isnan(_all_leg_joints.front_left_leg.elbow_joint) ||
-      std::isnan(_all_leg_joints.back_left_leg.hip_roll_joint) ||
-      std::isnan(_all_leg_joints.back_left_leg.hip_pitch_joint) ||
-      std::isnan(_all_leg_joints.back_left_leg.elbow_joint) ||
-      std::isnan(_all_leg_joints.back_right_leg.hip_roll_joint) ||
-      std::isnan(_all_leg_joints.back_right_leg.hip_pitch_joint) ||
-      std::isnan(_all_leg_joints.back_right_leg.elbow_joint))
+  for (auto leg_joints : _all_leg_joints)
   {
-    RCLCPP_WARN(rclcpp::get_logger("ik_node"), "NaN value computed, impossible to set IK");
-    return false;
-  }
+    if (std::isnan(leg_joints.front_right_leg.hip_roll_joint) ||
+        std::isnan(leg_joints.front_right_leg.hip_pitch_joint) ||
+        std::isnan(leg_joints.front_right_leg.elbow_joint) ||
+        std::isnan(leg_joints.front_left_leg.hip_roll_joint) ||
+        std::isnan(leg_joints.front_left_leg.hip_pitch_joint) ||
+        std::isnan(leg_joints.front_left_leg.elbow_joint) ||
+        std::isnan(leg_joints.back_left_leg.hip_roll_joint) ||
+        std::isnan(leg_joints.back_left_leg.hip_pitch_joint) ||
+        std::isnan(leg_joints.back_left_leg.elbow_joint) ||
+        std::isnan(leg_joints.back_right_leg.hip_roll_joint) ||
+        std::isnan(leg_joints.back_right_leg.hip_pitch_joint) ||
+        std::isnan(leg_joints.back_right_leg.elbow_joint))
+    {
+      RCLCPP_WARN(rclcpp::get_logger("ik_node"), "NaN value computed, impossible to set IK");
+      return false;
+    }
 
-  if (abs(_all_leg_joints.front_right_leg.hip_roll_joint) > _joint_limits["hip_roll_limit"] ||
-      abs(_all_leg_joints.front_left_leg.hip_roll_joint)  > _joint_limits["hip_roll_limit"] ||
-      abs(_all_leg_joints.back_left_leg.hip_roll_joint)   > _joint_limits["hip_roll_limit"] ||
-      abs(_all_leg_joints.back_right_leg.hip_roll_joint)  > _joint_limits["hip_roll_limit"])
-  {
-    RCLCPP_WARN(rclcpp::get_logger("ik_node"), "Hip roll joint angle out of range");
-    return false;
+    if (abs(leg_joints.front_right_leg.hip_roll_joint) > _joint_limits["hip_roll_limit"] ||
+        abs(leg_joints.front_left_leg.hip_roll_joint)  > _joint_limits["hip_roll_limit"] ||
+        abs(leg_joints.back_left_leg.hip_roll_joint)   > _joint_limits["hip_roll_limit"] ||
+        abs(leg_joints.back_right_leg.hip_roll_joint)  > _joint_limits["hip_roll_limit"])
+    {
+      RCLCPP_WARN(rclcpp::get_logger("ik_node"), "Hip roll joint angle out of range");
+      return false;
+    }
+    if (abs(leg_joints.front_right_leg.hip_pitch_joint) > _joint_limits["hip_pitch_limit"] ||
+        abs(leg_joints.front_left_leg.hip_pitch_joint)  > _joint_limits["hip_pitch_limit"] ||
+        abs(leg_joints.back_left_leg.hip_pitch_joint)   > _joint_limits["hip_pitch_limit"] ||
+        abs(leg_joints.back_right_leg.hip_pitch_joint)  > _joint_limits["hip_pitch_limit"])
+    {
+      RCLCPP_WARN(rclcpp::get_logger("ik_node"), "Hip pitch joint angle out of range");
+      return false;
+    }
+    if (abs(leg_joints.front_right_leg.elbow_joint) > _joint_limits["elbow_limit"] ||
+        abs(leg_joints.front_left_leg.elbow_joint)  > _joint_limits["elbow_limit"] ||
+        abs(leg_joints.back_left_leg.elbow_joint)   > _joint_limits["elbow_limit"] ||
+        abs(leg_joints.back_right_leg.elbow_joint)  > _joint_limits["elbow_limit"])
+    {
+      RCLCPP_WARN(rclcpp::get_logger("ik_node"), "Elbow joint angle out of range");
+      return false;
+    }
   }
-  if (abs(_all_leg_joints.front_right_leg.hip_pitch_joint) > _joint_limits["hip_pitch_limit"] ||
-      abs(_all_leg_joints.front_left_leg.hip_pitch_joint)  > _joint_limits["hip_pitch_limit"] ||
-      abs(_all_leg_joints.back_left_leg.hip_pitch_joint)   > _joint_limits["hip_pitch_limit"] ||
-      abs(_all_leg_joints.back_right_leg.hip_pitch_joint)  > _joint_limits["hip_pitch_limit"])
-  {
-    RCLCPP_WARN(rclcpp::get_logger("ik_node"), "Hip pitch joint angle out of range");
-    return false;
-  }
-  if (abs(_all_leg_joints.front_right_leg.elbow_joint) > _joint_limits["elbow_limit"] ||
-      abs(_all_leg_joints.front_left_leg.elbow_joint)  > _joint_limits["elbow_limit"] ||
-      abs(_all_leg_joints.back_left_leg.elbow_joint)   > _joint_limits["elbow_limit"] ||
-      abs(_all_leg_joints.back_right_leg.elbow_joint)  > _joint_limits["elbow_limit"])
-  {
-    RCLCPP_WARN(rclcpp::get_logger("ik_node"), "Elbow joint angle out of range");
-    return false;
-  }
-
   return true;
 }
 
@@ -138,41 +146,48 @@ void InverseKinematics::publishAllJoints()
   front_right_msg.joint_names[0] = "front_right_hip_roll_joint";
   front_right_msg.joint_names[1] = "front_right_hip_pitch_joint";
   front_right_msg.joint_names[2] = "front_right_elbow_joint";
-  front_right_msg.points.resize(1);
-  front_right_msg.points[0].positions.resize(3);
-  front_right_msg.points[0].positions[0] = _all_leg_joints.front_right_leg.hip_roll_joint;
-  front_right_msg.points[0].positions[1] = _all_leg_joints.front_right_leg.hip_pitch_joint;
-  front_right_msg.points[0].positions[2] = _all_leg_joints.front_right_leg.elbow_joint;
+  front_right_msg.points.resize(_all_leg_joints.size());
 
   front_left_msg.joint_names.resize(3);
   front_left_msg.joint_names[0] = "front_left_hip_roll_joint";
   front_left_msg.joint_names[1] = "front_left_hip_pitch_joint";
   front_left_msg.joint_names[2] = "front_left_elbow_joint";
-  front_left_msg.points.resize(1);
-  front_left_msg.points[0].positions.resize(3);
-  front_left_msg.points[0].positions[0] = _all_leg_joints.front_left_leg.hip_roll_joint;
-  front_left_msg.points[0].positions[1] = _all_leg_joints.front_left_leg.hip_pitch_joint;
-  front_left_msg.points[0].positions[2] = _all_leg_joints.front_left_leg.elbow_joint;
-
+  front_left_msg.points.resize(_all_leg_joints.size());
+  
   back_left_msg.joint_names.resize(3);
   back_left_msg.joint_names[0] = "back_left_hip_roll_joint";
   back_left_msg.joint_names[1] = "back_left_hip_pitch_joint";
   back_left_msg.joint_names[2] = "back_left_elbow_joint";
-  back_left_msg.points.resize(1);
-  back_left_msg.points[0].positions.resize(3);
-  back_left_msg.points[0].positions[0] = _all_leg_joints.back_left_leg.hip_roll_joint;
-  back_left_msg.points[0].positions[1] = _all_leg_joints.back_left_leg.hip_pitch_joint;
-  back_left_msg.points[0].positions[2] = _all_leg_joints.back_left_leg.elbow_joint;
-
+  back_left_msg.points.resize(_all_leg_joints.size());
+  
   back_right_msg.joint_names.resize(3);
   back_right_msg.joint_names[0] = "back_right_hip_roll_joint";
   back_right_msg.joint_names[1] = "back_right_hip_pitch_joint";
   back_right_msg.joint_names[2] = "back_right_elbow_joint";
-  back_right_msg.points.resize(1);
-  back_right_msg.points[0].positions.resize(3);
-  back_right_msg.points[0].positions[0] = _all_leg_joints.back_right_leg.hip_roll_joint;
-  back_right_msg.points[0].positions[1] = _all_leg_joints.back_right_leg.hip_pitch_joint;
-  back_right_msg.points[0].positions[2] = _all_leg_joints.back_right_leg.elbow_joint;
+  back_right_msg.points.resize(_all_leg_joints.size());
+
+  for (int i=0; i<(int)_all_leg_joints.size(); i++)
+  {
+    front_right_msg.points[i].positions.resize(3);
+    front_right_msg.points[i].positions[0] = _all_leg_joints[i].front_right_leg.hip_roll_joint;
+    front_right_msg.points[i].positions[1] = _all_leg_joints[i].front_right_leg.hip_pitch_joint;
+    front_right_msg.points[i].positions[2] = _all_leg_joints[i].front_right_leg.elbow_joint;
+
+    front_left_msg.points[i].positions.resize(3);
+    front_left_msg.points[i].positions[0] = _all_leg_joints[i].front_left_leg.hip_roll_joint;
+    front_left_msg.points[i].positions[1] = _all_leg_joints[i].front_left_leg.hip_pitch_joint;
+    front_left_msg.points[i].positions[2] = _all_leg_joints[i].front_left_leg.elbow_joint;
+    
+    back_left_msg.points[i].positions.resize(3);
+    back_left_msg.points[i].positions[0] = _all_leg_joints[i].back_left_leg.hip_roll_joint;
+    back_left_msg.points[i].positions[1] = _all_leg_joints[i].back_left_leg.hip_pitch_joint;
+    back_left_msg.points[i].positions[2] = _all_leg_joints[i].back_left_leg.elbow_joint;
+
+    back_right_msg.points[i].positions.resize(3);
+    back_right_msg.points[i].positions[0] = _all_leg_joints[i].back_right_leg.hip_roll_joint;
+    back_right_msg.points[i].positions[1] = _all_leg_joints[i].back_right_leg.hip_pitch_joint;
+    back_right_msg.points[i].positions[2] = _all_leg_joints[i].back_right_leg.elbow_joint;
+  }
 
   _front_right_trajectory_publisher->publish(front_right_msg);
   _front_left_trajectory_publisher->publish(front_left_msg);

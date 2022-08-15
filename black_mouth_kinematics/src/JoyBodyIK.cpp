@@ -13,13 +13,15 @@ JoyBodyIK::JoyBodyIK() : Node("joy_body_ik_node")
 {
   RCLCPP_INFO(this->get_logger(), "Joy Body IK Node initialized");
 
-  _ik_publisher = this->create_publisher<black_mouth_kinematics::msg::BodyLegIK>("cmd_ik", 10);
+  _ik_publisher = this->create_publisher<black_mouth_kinematics::msg::BodyLegIKTrajectory>("cmd_ik", 10);
   _joy_subscriber = this->create_subscription<sensor_msgs::msg::Joy>("joy", 10, 
                           std::bind(&JoyBodyIK::joyCallback, this, _1));
 
   _timer = this->create_wall_timer(50ms, std::bind(&JoyBodyIK::publishIK, this));
 
   _locked = false;
+
+  _ik_msg.body_leg_ik_trajectory.resize(1);
 
   _default_axis_linear_map  = { {"x", 1},    {"y", 0},     {"z", 2},   };
   _default_axis_angular_map = { {"roll", 4}, {"pitch", 5}, {"yaw", 3}, };
@@ -42,7 +44,7 @@ JoyBodyIK::~JoyBodyIK()
 
 void JoyBodyIK::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
-  _ik_msg.leg_points.reference_link = black_mouth_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
+  _ik_msg.body_leg_ik_trajectory.at(0).leg_points.reference_link = black_mouth_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
   
   if (msg->buttons[_lock_button])
   {
@@ -55,33 +57,33 @@ void JoyBodyIK::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 
   if (!_locked)
   {
-    _ik_msg.body_position.x = 0.05*msg->axes[_axis_linear_map["x"]];
-    _ik_msg.body_position.y = 0.05*msg->axes[_axis_linear_map["y"]];
-    _ik_msg.body_position.z = 0.04*msg->axes[_axis_linear_map["z"]];
+    _ik_msg.body_leg_ik_trajectory.at(0).body_position.x = 0.05*msg->axes[_axis_linear_map["x"]];
+    _ik_msg.body_leg_ik_trajectory.at(0).body_position.y = 0.05*msg->axes[_axis_linear_map["y"]];
+    _ik_msg.body_leg_ik_trajectory.at(0).body_position.z = 0.04*msg->axes[_axis_linear_map["z"]];
 
-    _ik_msg.body_rotation.z = 0.5*msg->axes[_axis_angular_map["yaw"]];
+    _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.z = 0.5*msg->axes[_axis_angular_map["yaw"]];
 
-    if (msg->axes[_axis_angular_map["roll"]] == 1 && _ik_msg.body_rotation.x < 0.2)
-      _ik_msg.body_rotation.x += 0.05;
-    else if (msg->axes[_axis_angular_map["roll"]] == -1 && _ik_msg.body_rotation.x > -0.2)
-      _ik_msg.body_rotation.x -= 0.05;
+    if (msg->axes[_axis_angular_map["roll"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x < 0.2)
+      _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x += 0.05;
+    else if (msg->axes[_axis_angular_map["roll"]] == -1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x > -0.2)
+      _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x -= 0.05;
 
-    if (msg->axes[_axis_angular_map["pitch"]] == 1 && _ik_msg.body_rotation.y < 0.2)
-      _ik_msg.body_rotation.y += 0.05;
-    else if (msg->axes[_axis_angular_map["pitch"]] == -1 && _ik_msg.body_rotation.y > -0.2)
-      _ik_msg.body_rotation.y -= 0.05;
+    if (msg->axes[_axis_angular_map["pitch"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y < 0.2)
+      _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y += 0.05;
+    else if (msg->axes[_axis_angular_map["pitch"]] == -1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y > -0.2)
+      _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y -= 0.05;
   }
 
   if (msg->buttons[_reset_button])
   {
     RCLCPP_INFO(rclcpp::get_logger("joy_body_ik"), "Reset body position");
-    _ik_msg.body_position.x = 0.0;
-    _ik_msg.body_position.y = 0.0;
-    _ik_msg.body_position.z = 0.0;
+    _ik_msg.body_leg_ik_trajectory.at(0).body_position.x = 0.0;
+    _ik_msg.body_leg_ik_trajectory.at(0).body_position.y = 0.0;
+    _ik_msg.body_leg_ik_trajectory.at(0).body_position.z = 0.0;
 
-    _ik_msg.body_rotation.x = 0.0;
-    _ik_msg.body_rotation.y = 0.0;
-    _ik_msg.body_rotation.z = 0.0;
+    _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x = 0.0;
+    _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y = 0.0;
+    _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.z = 0.0;
   }
 
 }

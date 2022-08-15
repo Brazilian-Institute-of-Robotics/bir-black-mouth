@@ -30,8 +30,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/AllLegJoints.msg"
   "msg/AllLegPoints.msg"
   "msg/BodyLegIK.msg"
+  "msg/BodyLegIKTrajectory.msg"
   "srv/InvKinematics.srv"
-  DEPENDENCIES geometry_msgs
+  DEPENDENCIES geometry_msgs builtin_interfaces
 )
 
 ament_export_dependencies(rosidl_default_runtime)

@@ -3,7 +3,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joy.hpp"
-#include "black_mouth_kinematics/msg/body_leg_ik.hpp"
+#include "black_mouth_kinematics/msg/body_leg_ik_trajectory.hpp"
 
 #include <memory>
 
@@ -18,10 +18,10 @@ private:
   void publishIK();
 
   rclcpp::TimerBase::SharedPtr _timer;
-  rclcpp::Publisher<black_mouth_kinematics::msg::BodyLegIK>::SharedPtr _ik_publisher;
+  rclcpp::Publisher<black_mouth_kinematics::msg::BodyLegIKTrajectory>::SharedPtr _ik_publisher;
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr _joy_subscriber;
 
-  black_mouth_kinematics::msg::BodyLegIK _ik_msg;
+  black_mouth_kinematics::msg::BodyLegIKTrajectory _ik_msg;
 
   std::map<std::string, int8_t> _axis_linear_map;
   std::map<std::string, int8_t> _axis_angular_map;
