@@ -1,0 +1,17 @@
+compute_ik_server:
+  ros__parameters:
+    body_dimensions:
+      L: 0.2291
+      W: 0.140
+      H: 0.170
+    leg_dimensions:
+      L1: 0.048
+      L2: 0.120
+      L3: 0.120
+
+ik_node:
+  ros__parameters:
+    joint_limits:
+      hip_roll_limit: 0.52359877559
+      hip_pitch_limit: 0.78539816339
+      elbow_limit: 0.62831853071
