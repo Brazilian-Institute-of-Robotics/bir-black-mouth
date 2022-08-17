@@ -1,6 +1,6 @@
 import os
 import launch
-from launch.actions import IncludeLaunchDescription, ExecuteProcess
+from launch.actions import IncludeLaunchDescription, ExecuteProcess, DeclareLaunchArgument
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -10,7 +10,7 @@ from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
 
-    pkg_description = FindPackageShare('black_mouth_description').find('black_mouth_description')
+    pkg_description = get_package_share_directory('black_mouth_description')
 
     pkg_gazebo_ros = FindPackageShare('gazebo_ros').find('gazebo_ros')
 
@@ -23,13 +23,13 @@ def generate_launch_description():
         pkg_description, 'rviz/urdf_config.rviz')
 
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-
-    # Gazebo server
+    
     gzserver = ExecuteProcess(
         cmd=['gzserver',
              '-s', 'libgazebo_ros_init.so',
              '-s', 'libgazebo_ros_factory.so',
              '-u',
+             '/home/devel_ws/bm/src/bir-black-mouth/black_mouth_gazebo/worlds/empty.world'
              ''],
         output='screen',
     )
@@ -61,7 +61,12 @@ def generate_launch_description():
         executable='spawn_entity.py',
         name='urdf_spawner',
         output='screen',
-        arguments=['-entity', 'quadruped', '-topic', '/robot_description'],
+        arguments=['-entity','quadruped',
+                     '-topic', '/robot_description',
+                     '-x', '0',
+                     '-y', '0',
+                     '-z', '0.0'
+                     ],
     )
 
     joint_state_publisher_gui = Node(
@@ -81,35 +86,35 @@ def generate_launch_description():
 
     # Load controller to publish joint data
     load_joint_state_broadcaster = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start',
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
              'joint_state_broadcaster'],
         output='screen'
     )
 
     # Load controller of the front left leg joints
     load_front_left_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start',
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
              'front_left_joint_trajectory_controller'],
         output='screen'
     )
 
     # Load controller of the front right leg joints
     load_front_right_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start',
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
              'front_right_joint_trajectory_controller'],
         output='screen'
     )
 
     # Load controller of the back left leg joints
     load_back_left_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start',
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
              'back_left_joint_trajectory_controller'],
         output='screen'
     )
 
     # Load controller of the back right leg joints
     load_back_right_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start',
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
              'back_right_joint_trajectory_controller'],
         output='screen'
     )
@@ -122,14 +127,14 @@ def generate_launch_description():
 
 
     return LaunchDescription([
-        launch.actions.DeclareLaunchArgument(
+        DeclareLaunchArgument(
             'use_sim_time', default_value='false', description='Use simulation (Gazebo) clock if true'),
-        launch.actions.DeclareLaunchArgument(name='gui', default_value='True',
+        DeclareLaunchArgument(name='gui', default_value='True',
                                              description='Flag to enable joint_state_publisher_gui'),
-        launch.actions.DeclareLaunchArgument(
+        DeclareLaunchArgument(
             name='model', default_value=default_model, description='Absolute path to robot urdf file'),
 
-        launch.actions.DeclareLaunchArgument(name='rviz_config', default_value=default_rviz_config_path,
+        DeclareLaunchArgument(name='rviz_config', default_value=default_rviz_config_path,
                                              description='Absolute path to rviz config file'),
         gzserver,
         gzclient,
@@ -137,7 +142,7 @@ def generate_launch_description():
         node_robot_state_publisher,
         # joint_state_publisher,
         spawn_robot,
-        rviz,
+        # rviz,
         load_joint_state_broadcaster,
         load_front_left_joint_trajectory_controller,
         load_front_right_joint_trajectory_controller,

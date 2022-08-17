@@ -31,22 +31,35 @@ front_left_joint_trajectory_controller:
       - front_left_elbow_joint
 
     command_interfaces:
-      - position
+      - effort
 
     state_interfaces:
       - position
+      - velocity
 
     state_publish_rate: 50.0
     action_monitor_rate: 20.0
 
-    allow_partial_joints_goal: true
-    open_loop_control: true
+    # allow_partial_joints_goal: true
+    # open_loop_control: true
     constraints:
       stopped_velocity_tolerance: 0.01
       goal_time: 0.0  # 0.0 (not checked)
-      # joint1:
-      #   trajectory: 0.05
-      #   goal: 0.03
+      front_left_hip_roll_joint:
+        trajectory: 0.05
+        goal: 0.05
+      front_left_hip_pitch_joint:
+        trajectory: 0.05
+        goal: 0.05
+      front_left_elbow_joint:
+        trajectory: 0.05
+        goal: 0.05
+    
+    gains: 
+      front_left_hip_roll_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 10.0 }
+      front_left_hip_pitch_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 10.0 }
+      front_left_elbow_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 10.0 }
+
 
 front_right_joint_trajectory_controller:
   ros__parameters:
@@ -57,22 +70,35 @@ front_right_joint_trajectory_controller:
       - front_right_elbow_joint
 
     command_interfaces:
-      - position
+      - effort
 
     state_interfaces:
       - position
+      - velocity
+
 
     state_publish_rate: 50.0
     action_monitor_rate: 20.0
 
     allow_partial_joints_goal: true
-    open_loop_control: true
+    # open_loop_control: true
     constraints:
       stopped_velocity_tolerance: 0.01
       goal_time: 0.0  # 0.0 (not checked)
-      # joint1:
-      #   trajectory: 0.05
-      #   goal: 0.03
+      front_right_hip_roll_joint:
+        trajectory: 0.05
+        goal: 0.05
+      front_right_hip_pitch_joint:
+        trajectory: 0.05
+        goal: 0.05
+      front_right_elbow_joint:
+        trajectory: 0.05
+        goal: 0.05
+
+    gains: 
+      front_right_hip_roll_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 10.0 }
+      front_right_hip_pitch_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 10.0 }
+      front_right_elbow_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 10.0 }
 
 back_left_joint_trajectory_controller:
   ros__parameters:
@@ -83,22 +109,34 @@ back_left_joint_trajectory_controller:
       - back_left_elbow_joint
 
     command_interfaces:
-      - position
+      - effort
 
     state_interfaces:
       - position
+      - velocity
+
 
     state_publish_rate: 50.0
     action_monitor_rate: 20.0
 
-    allow_partial_joints_goal: true
-    open_loop_control: true
+    # allow_partial_joints_goal: true
+    # open_loop_control: true
     constraints:
       stopped_velocity_tolerance: 0.01
       goal_time: 0.0  # 0.0 (not checked)
-      # joint1:
-      #   trajectory: 0.05
-      #   goal: 0.03
+      back_left_hip_roll_joint:
+        trajectory: 0.05
+        goal: 0.05
+      back_left_hip_pitch_joint:
+        trajectory: 0.05
+        goal: 0.05
+      back_left_elbow_joint:
+        trajectory: 0.05
+        goal: 0.05
+    gains: 
+      back_left_hip_roll_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 10.0 }
+      back_left_hip_pitch_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 10.0 }
+      back_left_elbow_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 10.0 }
 
 back_right_joint_trajectory_controller:
   ros__parameters:
@@ -109,19 +147,31 @@ back_right_joint_trajectory_controller:
       - back_right_elbow_joint
 
     command_interfaces:
-      - position
+      - effort
 
     state_interfaces: 
       - position
+      - velocity
 
     state_publish_rate: 50.0
     action_monitor_rate: 20.0
 
-    allow_partial_joints_goal: true
-    open_loop_control: true
+    # allow_partial_joints_goal: true
+    # open_loop_control: true
     constraints:
       stopped_velocity_tolerance: 0.01
       goal_time: 0.0  # 0.0 (not checked)
-      # joint1:
-      #   trajectory: 0.05
-      #   goal: 0.03
+      back_right_hip_roll_joint:
+        trajectory: 0.05
+        goal: 0.05
+      back_right_hip_pitch_joint:
+        trajectory: 0.05
+        goal: 0.05
+      back_right_elbow_joint:
+        trajectory: 0.05
+        goal: 0.05
+
+    gains: 
+      back_right_hip_roll_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 10.0 }
+      back_right_hip_pitch_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 10.0 }
+      back_right_elbow_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 10.0 }
