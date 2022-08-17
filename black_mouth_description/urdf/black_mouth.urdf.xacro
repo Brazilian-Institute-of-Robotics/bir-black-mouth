@@ -20,7 +20,7 @@
     <xacro:property name="effort_limit" value="2"/>
 
 
-    <xacro:macro name="leg" params="prefix left icont *joint_pose">
+    <xacro:macro name="leg" params="prefix left front *joint_pose">
 
         <link name="${prefix}_hip_fixed">
             <collision>

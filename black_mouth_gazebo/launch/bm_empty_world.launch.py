@@ -10,7 +10,7 @@ from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
 
-    pkg_description = get_package_share_directory('black_mouth_description')
+    pkg_description = FindPackageShare('black_mouth_description').find('black_mouth_description')
 
     pkg_gazebo_ros = FindPackageShare('gazebo_ros').find('gazebo_ros')
 
