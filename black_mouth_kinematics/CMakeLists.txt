@@ -20,6 +20,7 @@ find_package(ament_cmake REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(tf2_eigen REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
@@ -32,7 +33,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/BodyLegIK.msg"
   "msg/BodyLegIKTrajectory.msg"
   "srv/InvKinematics.srv"
-  DEPENDENCIES geometry_msgs builtin_interfaces
+  DEPENDENCIES std_msgs geometry_msgs trajectory_msgs builtin_interfaces
 )
 
 ament_export_dependencies(rosidl_default_runtime)
@@ -44,7 +45,7 @@ add_executable(inv_kinematics_client test/compute_inverse_kinematics_client.cpp)
 ament_target_dependencies(inv_kinematics_client rclcpp)
 
 add_executable(inv_kinematics_node src/InverseKinematics.cpp)
-ament_target_dependencies(inv_kinematics_node rclcpp trajectory_msgs)
+ament_target_dependencies(inv_kinematics_node rclcpp std_msgs trajectory_msgs)
 
 add_executable(inv_kinematics_trajectory test/publish_ik_trajectory.cpp)
 ament_target_dependencies(inv_kinematics_trajectory rclcpp)

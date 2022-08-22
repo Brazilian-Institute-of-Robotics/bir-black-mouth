@@ -1,5 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "black_mouth_kinematics/InverseKinematics.hpp"
+#include "geometry_msgs/msg/vector3.hpp"
+#include "geometry_msgs/msg/point.hpp"
 
 #include <memory>
 #include <chrono>
@@ -18,6 +20,8 @@ InverseKinematics::InverseKinematics() : Node("inverse_kinematics_node")
 
   _cmd_subscriber = this->create_subscription<black_mouth_kinematics::msg::BodyLegIKTrajectory>("cmd_ik", 10, 
                           std::bind(&InverseKinematics::IKCallback, this, _1), _sub_options);
+  _default_pose_subscriber = this->create_subscription<std_msgs::msg::Empty>("cmd_default_pose", 10,
+                                  std::bind(&InverseKinematics::defaultPoseCallback, this, _1), _sub_options);
 
   _front_right_trajectory_publisher = this->create_publisher<trajectory_msgs::msg::JointTrajectory>("front_right_joint_trajectory_controller/joint_trajectory", 10);
   _front_left_trajectory_publisher  = this->create_publisher<trajectory_msgs::msg::JointTrajectory>("front_left_joint_trajectory_controller/joint_trajectory", 10);
@@ -58,6 +62,24 @@ void InverseKinematics::IKCallback(const black_mouth_kinematics::msg::BodyLegIKT
   // std::cout << "Elapsed time in microseconds: "
             // << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
             // << " µs" << std::endl;
+}
+
+void InverseKinematics::defaultPoseCallback(const std_msgs::msg::Empty::SharedPtr msg)
+{
+  (void) msg;
+  this->_cmd_ik_msg.body_leg_ik_trajectory.resize(1);
+  this->_cmd_ik_msg.time_from_start.resize(1);
+  this->_cmd_ik_msg.time_from_start.at(0).sec     = 1.0;
+  this->_cmd_ik_msg.time_from_start.at(0).nanosec = 0.0;
+  this->_cmd_ik_msg.body_leg_ik_trajectory.at(0).body_position = geometry_msgs::msg::Vector3();
+  this->_cmd_ik_msg.body_leg_ik_trajectory.at(0).body_rotation = geometry_msgs::msg::Vector3();
+  this->_cmd_ik_msg.body_leg_ik_trajectory.at(0).leg_points.reference_link  = black_mouth_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
+  this->_cmd_ik_msg.body_leg_ik_trajectory.at(0).leg_points.front_right_leg = geometry_msgs::msg::Point();
+  this->_cmd_ik_msg.body_leg_ik_trajectory.at(0).leg_points.front_left_leg  = geometry_msgs::msg::Point();
+  this->_cmd_ik_msg.body_leg_ik_trajectory.at(0).leg_points.back_left_leg   = geometry_msgs::msg::Point();
+  this->_cmd_ik_msg.body_leg_ik_trajectory.at(0).leg_points.back_right_leg  = geometry_msgs::msg::Point();
+  
+  this->computeIKAndPublishJoints();
 }
 
 void InverseKinematics::computeIKAndPublishJoints()

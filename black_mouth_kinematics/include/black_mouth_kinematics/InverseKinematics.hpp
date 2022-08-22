@@ -3,6 +3,7 @@
 #include "black_mouth_kinematics/msg/all_leg_joints.hpp"
 #include "black_mouth_kinematics/srv/inv_kinematics.hpp"
 #include "trajectory_msgs/msg/joint_trajectory.hpp"
+#include "std_msgs/msg/empty.hpp"
 
 #include <memory>
 
@@ -14,6 +15,7 @@ public:
 
 private:
   void IKCallback(const black_mouth_kinematics::msg::BodyLegIKTrajectory::SharedPtr msg);
+  void defaultPoseCallback(const std_msgs::msg::Empty::SharedPtr msg);
   void publishAllJoints();
   
   void computeIK();
@@ -24,6 +26,7 @@ private:
   rclcpp::SubscriptionOptions _sub_options;
 
   rclcpp::Subscription<black_mouth_kinematics::msg::BodyLegIKTrajectory>::SharedPtr _cmd_subscriber;
+  rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr _default_pose_subscriber;
 
   rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr _front_right_trajectory_publisher;
   rclcpp::Publisher<trajectory_msgs::msg::JointTrajectory>::SharedPtr _front_left_trajectory_publisher;
