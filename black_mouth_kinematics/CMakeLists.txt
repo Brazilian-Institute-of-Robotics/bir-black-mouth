@@ -53,25 +53,13 @@ ament_target_dependencies(inv_kinematics_trajectory rclcpp)
 add_executable(joy_body_ik src/JoyBodyIK.cpp)
 ament_target_dependencies(joy_body_ik rclcpp sensor_msgs)
 
-rosidl_target_interfaces(inv_kinematics_server
-  ${PROJECT_NAME} "rosidl_typesupport_cpp"
-)
+rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
 
-rosidl_target_interfaces(inv_kinematics_client
-  ${PROJECT_NAME} "rosidl_typesupport_cpp"
-)
-
-rosidl_target_interfaces(inv_kinematics_node
-  ${PROJECT_NAME} "rosidl_typesupport_cpp"
-)
-
-rosidl_target_interfaces(inv_kinematics_trajectory
-  ${PROJECT_NAME} "rosidl_typesupport_cpp"
-)
-
-rosidl_target_interfaces(joy_body_ik
-  ${PROJECT_NAME} "rosidl_typesupport_cpp"
-)
+target_link_libraries(inv_kinematics_server "${cpp_typesupport_target}")
+target_link_libraries(inv_kinematics_client "${cpp_typesupport_target}")
+target_link_libraries(inv_kinematics_node "${cpp_typesupport_target}")
+target_link_libraries(inv_kinematics_trajectory "${cpp_typesupport_target}")
+target_link_libraries(joy_body_ik "${cpp_typesupport_target}")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
