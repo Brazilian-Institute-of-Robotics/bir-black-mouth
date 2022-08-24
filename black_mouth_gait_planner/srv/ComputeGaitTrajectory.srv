@@ -1,0 +1,8 @@
+geometry_msgs/Vector3 initial_point
+geometry_msgs/Vector3 landing_point
+float64 period
+float64 height
+int32 resolution
+---
+geometry_msgs/Vector3[] points
+builtin_interfaces/Duration[] time_from_start
