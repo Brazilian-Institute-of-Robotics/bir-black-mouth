@@ -41,9 +41,11 @@ ament_export_dependencies(rosidl_default_runtime)
 add_executable(gait_traj_server src/compute_gait_trajectory.cpp)
 ament_target_dependencies(gait_traj_server ${dependencies})
 
-rosidl_target_interfaces(gait_traj_server
-  ${PROJECT_NAME} "rosidl_typesupport_cpp"
+rosidl_get_typesupport_target(cpp_typesupport_target
+  "${PROJECT_NAME}" "rosidl_typesupport_cpp"
 )
+target_link_libraries(gait_traj_server "${cpp_typesupport_target}")
+
 
 include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(include)
