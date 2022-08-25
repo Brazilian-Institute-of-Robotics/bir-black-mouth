@@ -7,7 +7,7 @@
 #include <chrono>
 
 #include "builtin_interfaces/msg/duration.hpp"
-#include "geometry_msgs/msg/vector3.hpp"
+#include "geometry_msgs/msg/point.hpp"
 
 void computeGaitTrajectory(
     const std::shared_ptr<
@@ -16,7 +16,8 @@ void computeGaitTrajectory(
     std::shared_ptr<
         black_mouth_gait_planner::srv::ComputeGaitTrajectory::Response>
         response) {
-    auto start = std::chrono::steady_clock::now();
+
+    //auto start = std::chrono::steady_clock::now();
     auto time =
         Eigen::ArrayXd::LinSpaced(request->resolution, 0.0, request->period)
             .transpose();
@@ -31,32 +32,20 @@ void computeGaitTrajectory(
     auto z_axis =
         request->height * (1 - k.cos()) / 2 + request->initial_point.z;
 
-    std::vector<geometry_msgs::msg::Vector3> points;
-    points.resize(request->resolution);
-    std::vector<builtin_interfaces::msg::Duration> time_from_start;
-    time_from_start.resize(request->resolution);
+    response->points.resize(request->resolution);
+    response->time_from_start.resize(request->resolution);
 
     for (int i = 0; i < request->resolution; i++) {
-        geometry_msgs::msg::Vector3 point;
-        point.x = x_axis[i];
-        point.y = y_axis[i];
-        point.z = z_axis[i];
-        points[i] = point;
-        time_from_start[i] = rclcpp::Duration::from_seconds(time[i]);
+        response->points[i].x = x_axis[i];
+        response->points[i].y = y_axis[i];
+        response->points[i].z = z_axis[i];
+        response->time_from_start[i] = rclcpp::Duration::from_seconds(time[i]);
     }
 
-    response->points = points;
-    response->time_from_start = time_from_start;
-
-    auto end = std::chrono::steady_clock::now();
-    std::cout << "Elapsed time in microseconds: "
-        << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
-        << " µs" << std::endl;
-
-    // std::cout << "X: " << x_axis << std::endl;
-    // std::cout << "Y: " << y_axis << std::endl;
-    // std::cout << "Z: " << z_axis << std::endl;
-    // std::cout << "T: " << time << std::endl;
+    // auto end = std::chrono::steady_clock::now();
+    // std::cout << "Elapsed time in microseconds: "
+    //     << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
+    //     << " µs" << std::endl;
 }
 
 int main(int argc, char **argv) {
