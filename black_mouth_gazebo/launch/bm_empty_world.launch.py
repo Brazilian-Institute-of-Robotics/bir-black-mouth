@@ -91,6 +91,36 @@ def generate_launch_description():
         output='screen'
     )
 
+    robot_description_content = Command(
+        [
+            PathJoinSubstitution([FindExecutable(name="xacro")]),
+            " ",
+            PathJoinSubstitution(
+                [
+                    FindPackageShare("black_mouth_description"),
+                    "urdf",
+                    "black_mouth.urdf.xacro",
+                ]
+            ),
+        ]
+    )
+    robot_description2 = {"robot_description": robot_description_content}
+
+    robot_controllers = PathJoinSubstitution(
+        [
+            FindPackageShare("black_mouth_control"),
+            "config",
+            "leg_controllers.yaml",
+        ]
+    )
+
+    control_node = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[robot_description2, robot_controllers],
+        output="both",
+    )
+
     # Load controller of the front left leg joints
     load_front_left_joint_trajectory_controller = ExecuteProcess(
         cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
@@ -143,6 +173,7 @@ def generate_launch_description():
         # joint_state_publisher,
         spawn_robot,
         # rviz,
+        control_node,
         load_joint_state_broadcaster,
         load_front_left_joint_trajectory_controller,
         load_front_right_joint_trajectory_controller,
