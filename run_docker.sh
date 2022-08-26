@@ -30,8 +30,6 @@ while getopts "d:hp:t:u:x" OPT; do
     esac
 done
 
-# PROJECT_PATH=${PROJECT_PATH-"$HOME/workspace/${PROJECT}_${ROSDISTRO}"}
-
 if [ ! -d "${PROJECT_PATH}" ]; then
     mkdir -p "${PROJECT_PATH}"
 
