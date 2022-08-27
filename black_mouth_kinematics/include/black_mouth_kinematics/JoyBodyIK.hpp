@@ -4,6 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joy.hpp"
 #include "black_mouth_kinematics/msg/body_leg_ik_trajectory.hpp"
+#include "black_mouth_kinematics/EMAFilter.hpp"
 
 #include <memory>
 
@@ -15,6 +16,7 @@ public:
   
 private:
   void joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg);
+  void filterIK();
   void publishIK();
 
   rclcpp::TimerBase::SharedPtr _timer;

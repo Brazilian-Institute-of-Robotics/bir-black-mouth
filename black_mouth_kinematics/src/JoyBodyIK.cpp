@@ -89,8 +89,14 @@ void JoyBodyIK::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 
 }
 
+void JoyBodyIK::filterIK()
+{
+
+}
+
 void JoyBodyIK::publishIK()
 {
+  this->filterIK();
   _ik_publisher->publish(_ik_msg);
 }
 
