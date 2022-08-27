@@ -24,6 +24,14 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr _joy_subscriber;
 
   black_mouth_kinematics::msg::BodyLegIKTrajectory _ik_msg;
+  black_mouth_kinematics::msg::BodyLegIKTrajectory _ik_msg_filtered;
+
+  EMAFilter _body_position_x_filter;
+  EMAFilter _body_position_y_filter;
+  EMAFilter _body_position_z_filter;
+  EMAFilter _body_rotation_x_filter;
+  EMAFilter _body_rotation_y_filter;
+  EMAFilter _body_rotation_z_filter;
 
   std::map<std::string, int8_t> _axis_linear_map;
   std::map<std::string, int8_t> _axis_angular_map;

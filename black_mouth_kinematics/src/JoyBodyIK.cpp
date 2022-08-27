@@ -37,6 +37,14 @@ JoyBodyIK::JoyBodyIK() : Node("joy_body_ik_node")
   this->get_parameter("lock", _lock_button);
   this->get_parameter("reset", _reset_button);
 
+  // TODO: Get parameters for filters
+
+  _body_position_x_filter.setFilterAlpha(0.9);
+  _body_position_y_filter.setFilterAlpha(0.9);
+  _body_position_z_filter.setFilterAlpha(0.9);
+  _body_rotation_x_filter.setFilterAlpha(0.9);
+  _body_rotation_y_filter.setFilterAlpha(0.9);
+  _body_rotation_z_filter.setFilterAlpha(0.9);
 }
 
 JoyBodyIK::~JoyBodyIK()
@@ -64,14 +72,14 @@ void JoyBodyIK::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 
     _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.z = 0.5*msg->axes[_axis_angular_map["yaw"]];
 
-    if (msg->axes[_axis_angular_map["roll"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x < 0.2)
+    if (msg->axes[_axis_angular_map["roll"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x < 0.35)
       _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x += 0.05;
-    else if (msg->axes[_axis_angular_map["roll"]] == -1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x > -0.2)
+    else if (msg->axes[_axis_angular_map["roll"]] == -1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x > -0.35)
       _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x -= 0.05;
 
-    if (msg->axes[_axis_angular_map["pitch"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y < 0.2)
+    if (msg->axes[_axis_angular_map["pitch"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y < 0.35)
       _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y += 0.05;
-    else if (msg->axes[_axis_angular_map["pitch"]] == -1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y > -0.2)
+    else if (msg->axes[_axis_angular_map["pitch"]] == -1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y > -0.35)
       _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y -= 0.05;
   }
 
@@ -91,13 +99,19 @@ void JoyBodyIK::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 
 void JoyBodyIK::filterIK()
 {
-
+  _ik_msg_filtered = _ik_msg;
+  _ik_msg_filtered.body_leg_ik_trajectory.at(0).body_position.x = _body_position_x_filter.filterData(_ik_msg.body_leg_ik_trajectory.at(0).body_position.x);
+  _ik_msg_filtered.body_leg_ik_trajectory.at(0).body_position.y = _body_position_y_filter.filterData(_ik_msg.body_leg_ik_trajectory.at(0).body_position.y);
+  _ik_msg_filtered.body_leg_ik_trajectory.at(0).body_position.z = _body_position_z_filter.filterData(_ik_msg.body_leg_ik_trajectory.at(0).body_position.z);
+  _ik_msg_filtered.body_leg_ik_trajectory.at(0).body_rotation.x = _body_rotation_x_filter.filterData(_ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x);
+  _ik_msg_filtered.body_leg_ik_trajectory.at(0).body_rotation.y = _body_rotation_y_filter.filterData(_ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y);
+  _ik_msg_filtered.body_leg_ik_trajectory.at(0).body_rotation.z = _body_rotation_z_filter.filterData(_ik_msg.body_leg_ik_trajectory.at(0).body_rotation.z);
 }
 
 void JoyBodyIK::publishIK()
 {
   this->filterIK();
-  _ik_publisher->publish(_ik_msg);
+  _ik_publisher->publish(_ik_msg_filtered);
 }
 
 

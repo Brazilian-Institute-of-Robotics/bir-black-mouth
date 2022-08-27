@@ -11,8 +11,6 @@ public:
   EMAFilter(double alpha);
   ~EMAFilter();
 
-private:
-
   double filterData(double data);
   void setStartVal(double data);
 
@@ -22,8 +20,9 @@ private:
   double getFilterAlpha();
   void setFilterAlpha(double alpha);
 
-  int _filter_size;
+private:
   int _num_observations;
+  int _filter_size;
   double _alpha;
 
   double _previous_data_filtered;
@@ -38,17 +37,15 @@ EMAFilter::EMAFilter()
   this->_num_observations = 0;
 }
 
-EMAFilter::EMAFilter(int filter_size)
+EMAFilter::EMAFilter(int filter_size) : _filter_size(filter_size)
 {
-  this->_filter_size = filter_size;
   this->_alpha = 1.0 - 1.0/filter_size;
   this->_previous_data_filtered = 0.0;
   this->_num_observations = 0;
 }
 
-EMAFilter::EMAFilter(double alpha)
+EMAFilter::EMAFilter(double alpha) : _alpha(alpha)
 {
-  this->_alpha = alpha;
   this->_filter_size = (int) (1.0/(1.0-alpha));
   this->_previous_data_filtered = 0.0;
   this->_num_observations = 0;
@@ -74,6 +71,7 @@ int EMAFilter::getFilterSize()
 void EMAFilter::setFilterSize(int filter_size)
 {
   this->_filter_size = filter_size;
+  this->_alpha = 1.0 - 1.0/filter_size;
 }
 
 double EMAFilter::getFilterAlpha()
@@ -84,6 +82,7 @@ double EMAFilter::getFilterAlpha()
 void EMAFilter::setFilterAlpha(double alpha)
 {
   this->_alpha = alpha;
+  this->_filter_size = (int) (1.0/(1.0-alpha));
 }
 
 double EMAFilter::filterData(double data)
@@ -94,7 +93,7 @@ double EMAFilter::filterData(double data)
   this->_filtered_data = _alpha*_previous_data_filtered + (1.0-_alpha)*_raw_data;
   this->_previous_data_filtered = _filtered_data;
 
-  if (_num_observations < _filter_size) this->_filter_size /= (1.0 - pow(_alpha, _num_observations));
+  if (_num_observations < _filter_size) this->_filtered_data /= (1.0 - pow(_alpha, _num_observations));
 
   return this->_filtered_data;
 }
