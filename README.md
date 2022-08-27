@@ -5,6 +5,7 @@
 $ mkdir -p ~/workspaces/black_mouth_humble/src/
 $ cd ~/workspaces/black_mouth_humble/src/
 $ git clone git@github.com:Brazilian-Institute-of-Robotics/bir-black-mouth.git
+$ cd bir-black-mouth
 $ . build_docker.sh
 ```
 
