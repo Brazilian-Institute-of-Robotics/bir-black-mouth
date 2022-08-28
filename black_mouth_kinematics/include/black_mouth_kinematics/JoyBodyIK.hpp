@@ -39,6 +39,8 @@ private:
   std::map<std::string, int8_t> _default_axis_linear_map;
   std::map<std::string, int8_t> _default_axis_angular_map;
 
+  std::string _joy_type;
+
   int8_t _lock_button;
   int8_t _reset_button;
 

@@ -1,14 +1,16 @@
 joy_body_ik_node:
   ros__parameters:
     filter_alpha: 0.9
-    joy_type: x360
+    joy_type: ps4
     axis_linear:
       x: 0
       y: 1
       z: 2
     axis_angular:
-      roll: 5
-      pitch: 4
+      roll_inc: 0
+      roll_dec: 1
+      pitch_inc: 2
+      pitch_dec: 3
       yaw: 3
-    lock: 2
-    reset: 3
+    lock: 4
+    reset: 5
