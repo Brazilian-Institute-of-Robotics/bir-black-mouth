@@ -1,5 +1,6 @@
 joy_body_ik_node:
   ros__parameters:
+    filter_alpha: 0.9
     axis_linear:
       x: 1
       y: 0

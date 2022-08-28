@@ -31,20 +31,22 @@ JoyBodyIK::JoyBodyIK() : Node("joy_body_ik_node")
   this->declare_parameters("axis_angular", _default_axis_angular_map);
   this->declare_parameter("lock", 2);
   this->declare_parameter("reset", 3);
+  this->declare_parameter("filter_alpha", 0.0);
 
   this->get_parameters("axis_linear", _axis_linear_map);
   this->get_parameters("axis_angular", _axis_angular_map);
   this->get_parameter("lock", _lock_button);
   this->get_parameter("reset", _reset_button);
+  this->get_parameter("filter_alpha", _filter_alpha);
 
-  // TODO: Get parameters for filters
+  _use_filter = _filter_alpha > 0.0; 
 
-  _body_position_x_filter.setFilterAlpha(0.9);
-  _body_position_y_filter.setFilterAlpha(0.9);
-  _body_position_z_filter.setFilterAlpha(0.9);
-  _body_rotation_x_filter.setFilterAlpha(0.9);
-  _body_rotation_y_filter.setFilterAlpha(0.9);
-  _body_rotation_z_filter.setFilterAlpha(0.9);
+  _body_position_x_filter.setFilterAlpha(_filter_alpha);
+  _body_position_y_filter.setFilterAlpha(_filter_alpha);
+  _body_position_z_filter.setFilterAlpha(_filter_alpha);
+  _body_rotation_x_filter.setFilterAlpha(_filter_alpha);
+  _body_rotation_y_filter.setFilterAlpha(_filter_alpha);
+  _body_rotation_z_filter.setFilterAlpha(_filter_alpha);
 }
 
 JoyBodyIK::~JoyBodyIK()
@@ -110,8 +112,13 @@ void JoyBodyIK::filterIK()
 
 void JoyBodyIK::publishIK()
 {
-  this->filterIK();
-  _ik_publisher->publish(_ik_msg_filtered);
+  if (_use_filter)
+  {
+    this->filterIK();
+    _ik_publisher->publish(_ik_msg_filtered);
+  }
+  else
+    _ik_publisher->publish(_ik_msg);
 }
 
 

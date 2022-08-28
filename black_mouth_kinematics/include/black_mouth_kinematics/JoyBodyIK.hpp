@@ -43,6 +43,9 @@ private:
   int8_t _reset_button;
 
   bool _locked;
+  
+  bool _use_filter;
+  double _filter_alpha;
 
 };
 
