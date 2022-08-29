@@ -1,11 +1,11 @@
 import os
-import launch
-from launch.actions import IncludeLaunchDescription, ExecuteProcess, DeclareLaunchArgument
 from launch import LaunchDescription
-from launch_ros.actions import Node
+from launch.actions import IncludeLaunchDescription, ExecuteProcess, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration
+from launch.conditions import IfCondition
 from launch_ros.substitutions import FindPackageShare
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
@@ -14,11 +14,9 @@ def generate_launch_description():
 
     pkg_gazebo_ros = FindPackageShare('gazebo_ros').find('gazebo_ros')
 
-    default_model = os.path.join(
-        bm_description_pkg_share, "urdf", "black_mouth.urdf.xacro")
+    default_model = os.path.join(bm_description_pkg_share, "urdf", "black_mouth.urdf.xacro")
         
-    default_rviz_config_path = os.path.join(
-        bm_description_pkg_share, 'rviz/urdf_config.rviz')
+    default_rviz_config_path = os.path.join(bm_description_pkg_share, 'rviz/urdf_config.rviz')
 
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
     
@@ -50,17 +48,17 @@ def generate_launch_description():
         name='urdf_spawner',
         output='screen',
         arguments=['-entity','quadruped',
-                     '-topic', '/robot_description',
-                     '-x', '0',
-                     '-y', '0',
-                     '-z', '0.0'],
+                   '-topic', '/robot_description',
+                   '-x', '0.0',
+                   '-y', '0.0',
+                   '-z', '0.0'],
     )
 
     joint_state_publisher_gui = Node(
         package='joint_state_publisher_gui',
         executable='joint_state_publisher_gui',
         name='joint_state_publisher_gui',
-        condition=launch.conditions.IfCondition(LaunchConfiguration('gui'))
+        condition=IfCondition(LaunchConfiguration('gui'))
     )
 
     rviz = Node(
@@ -69,36 +67,6 @@ def generate_launch_description():
         name='rviz2',
         output='screen',
         arguments=['-d', LaunchConfiguration('rviz_config')],
-    )
-
-    robot_description_content = Command(
-        [
-            PathJoinSubstitution([FindExecutable(name="xacro")]),
-            " ",
-            PathJoinSubstitution(
-                [
-                    FindPackageShare("black_mouth_description"),
-                    "urdf",
-                    "black_mouth.urdf.xacro",
-                ]
-            ),
-        ]
-    )
-    robot_description2 = {"robot_description": robot_description_content}
-
-    robot_controllers = PathJoinSubstitution(
-        [
-            FindPackageShare("black_mouth_control"),
-            "config",
-            "leg_controllers.yaml",
-        ]
-    )
-
-    control_node = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        parameters=[robot_description2, robot_controllers],
-        output="both",
     )
 
     start_robot = IncludeLaunchDescription(
@@ -120,6 +88,4 @@ def generate_launch_description():
         start_robot,
         spawn_robot,
         # rviz,
-        control_node,
-
     ])
