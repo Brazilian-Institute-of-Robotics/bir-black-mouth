@@ -1,8 +1,28 @@
-from launch.actions import ExecuteProcess
+import os 
 from launch import LaunchDescription
+from launch.actions import ExecuteProcess, DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration, Command
+from launch_ros.substitutions import FindPackageShare
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
+
+    bm_description_pkg_share = FindPackageShare('black_mouth_description').find('black_mouth_description')
+    bm_control_pkg_share = FindPackageShare('black_mouth_control').find('black_mouth_control')
+
+    default_controllers = os.path.join(bm_control_pkg_share, "config", "leg_controllers.yaml")
+    robot_controllers = LaunchConfiguration('controllers', default=default_controllers)
+
+    default_model = os.path.join(bm_description_pkg_share, "urdf", "black_mouth.urdf.xacro")    
+    robot_model = LaunchConfiguration('model', default=default_model)
+
+    control_node = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[{'robot_description': Command(['xacro ', robot_model])}, robot_controllers],
+        output="both",
+    )
 
     # Load controller to publish joint data
     load_joint_state_broadcaster = ExecuteProcess(
@@ -47,10 +67,15 @@ def generate_launch_description():
 
 
     return LaunchDescription([
+        DeclareLaunchArgument(name='model', default_value=default_model, 
+                              description='Absolute path to robot urdf file'),
+        DeclareLaunchArgument(name='controllers', default_value=default_controllers, 
+                              description='Absolute path to robot controllers file'),
         load_joint_state_broadcaster,
         load_front_left_joint_trajectory_controller,
         load_front_right_joint_trajectory_controller,
         load_back_left_joint_trajectory_controller,
         load_back_right_joint_trajectory_controller,
         # load_all_joint_trajectory_controller,
+        control_node
     ])
