@@ -1,5 +1,6 @@
 geometry_msgs/Point initial_point
 geometry_msgs/Point landing_point
+black_mouth_kinematics/AllLegPoints leg_points
 float64 period
 float64 height
 int32 resolution

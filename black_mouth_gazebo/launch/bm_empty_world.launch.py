@@ -28,7 +28,7 @@ def generate_launch_description():
         cmd=['gzserver',
              '-s', 'libgazebo_ros_init.so',
              '-s', 'libgazebo_ros_factory.so',
-             '/home/devel_ws/bm/src/bir-black-mouth/black_mouth_gazebo/worlds/empty.world'
+             '/home/workspaces/black_mouth_humble/src/bir-black-mouth/black_mouth_gazebo/worlds/empty.world'
              ''],
         output='screen',
     )
