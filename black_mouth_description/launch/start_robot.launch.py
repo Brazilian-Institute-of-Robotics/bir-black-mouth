@@ -33,16 +33,16 @@ def generate_launch_description():
     )
     
     bm_controllers = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                  os.path.join(bm_control_pkg_share, 'launch', 'bm_load_controller.launch.py')),
-                launch_arguments={'model': robot_model,
-                                  'controllers': robot_controllers}.items(),
+        PythonLaunchDescriptionSource(
+            os.path.join(bm_control_pkg_share, 'launch', 'bm_load_controller.launch.py')),
+        launch_arguments={'model': robot_model,
+                          'controllers': robot_controllers}.items(),
     )
 
     inverse_kinematics = IncludeLaunchDescription(
-                PythonLaunchDescriptionSource(
-                  os.path.join(bm_kinematics_pkg_share, 'launch', 'kinematics.launch.py')),
-                launch_arguments={'quadruped_config': quadruped_config}.items(),
+        PythonLaunchDescriptionSource(
+            os.path.join(bm_kinematics_pkg_share, 'launch', 'kinematics.launch.py')),
+        launch_arguments={'quadruped_config': quadruped_config}.items(),
     )
 
     return LaunchDescription([
