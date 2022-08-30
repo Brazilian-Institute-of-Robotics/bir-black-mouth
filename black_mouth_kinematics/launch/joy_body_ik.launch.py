@@ -36,7 +36,8 @@ def generate_launch_description():
     )
 
     return launch.LaunchDescription([
-        DeclareLaunchArgument('joy_type', default_value='generic', description='Set the joystick type (generic, x360 or ps4)'),
+        DeclareLaunchArgument(name='joy_type', default_value='generic', 
+                              description='Set the joystick type (generic, x360 or ps4)'),
         joy_node,
         TimerAction(period=3.0, actions=[joy_body_ik])
     ])

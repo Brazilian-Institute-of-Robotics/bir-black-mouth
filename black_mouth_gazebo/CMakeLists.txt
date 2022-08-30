@@ -16,7 +16,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 install(
-  DIRECTORY  launch
+  DIRECTORY launch worlds
   DESTINATION share/${PROJECT_NAME}
 )
 # find dependencies
