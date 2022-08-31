@@ -1,26 +1,29 @@
-import os
-import launch
-from launch.actions import IncludeLaunchDescription, ExecuteProcess, DeclareLaunchArgument
+import os 
 from launch import LaunchDescription
-from launch_ros.actions import Node
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
+from launch.actions import ExecuteProcess, DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration, Command
 from launch_ros.substitutions import FindPackageShare
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
 
-    pkg_description = FindPackageShare('black_mouth_description').find('black_mouth_description')
+    bm_description_pkg_share = FindPackageShare('black_mouth_description').find('black_mouth_description')
+    bm_control_pkg_share = FindPackageShare('black_mouth_control').find('black_mouth_control')
 
+    default_controllers = os.path.join(bm_control_pkg_share, "config", "leg_controllers.yaml")
+    robot_controllers = LaunchConfiguration('controllers', default=default_controllers)
 
-    inverse_kinematics_pkg_share = FindPackageShare('black_mouth_kinematics').find('black_mouth_kinematics')
+    default_model = os.path.join(bm_description_pkg_share, "urdf", "black_mouth.urdf.xacro")    
+    robot_model = LaunchConfiguration('model', default=default_model)
 
-    default_model = os.path.join(
-        pkg_description, "urdf", "black_mouth.urdf.xacro")
-        
-    default_rviz_config_path = os.path.join(
-        pkg_description, 'rviz/urdf_config.rviz')
-    
+    control_node = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[{'robot_description': Command(['xacro ', robot_model])}, robot_controllers],
+        output="both",
+    )
+
     # Load controller to publish joint data
     load_joint_state_broadcaster = ExecuteProcess(
         cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
@@ -62,30 +65,17 @@ def generate_launch_description():
         output='screen'
     )
 
-    inverse_kinematics = IncludeLaunchDescription(
-              PythonLaunchDescriptionSource(
-                os.path.join(inverse_kinematics_pkg_share, 'launch', 'kinematics.launch.py')),
-            #   launch_arguments={'': ''}.items(),
-  )
-
 
     return LaunchDescription([
-        DeclareLaunchArgument(
-            'use_sim_time', default_value='false', description='Use simulation (Gazebo) clock if true'),
-        DeclareLaunchArgument(name='gui', default_value='True',
-                                             description='Flag to enable joint_state_publisher_gui'),
-        DeclareLaunchArgument(
-            name='model', default_value=default_model, description='Absolute path to robot urdf file'),
-
-        DeclareLaunchArgument(name='rviz_config', default_value=default_rviz_config_path,
-                                             description='Absolute path to rviz config file'),
-
+        DeclareLaunchArgument(name='model', default_value=default_model, 
+                              description='Absolute path to robot urdf file'),
+        DeclareLaunchArgument(name='controllers', default_value=default_controllers, 
+                              description='Absolute path to robot controllers file'),
         load_joint_state_broadcaster,
         load_front_left_joint_trajectory_controller,
         load_front_right_joint_trajectory_controller,
         load_back_left_joint_trajectory_controller,
         load_back_right_joint_trajectory_controller,
         # load_all_joint_trajectory_controller,
-
-        inverse_kinematics
+        control_node
     ])
