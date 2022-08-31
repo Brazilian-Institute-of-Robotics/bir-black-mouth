@@ -1,59 +1,38 @@
 import os
-import launch
-from launch.actions import IncludeLaunchDescription, ExecuteProcess
 from launch import LaunchDescription
-from launch_ros.actions import Node
+from launch.actions import IncludeLaunchDescription, ExecuteProcess, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration
+from launch.conditions import IfCondition
 from launch_ros.substitutions import FindPackageShare
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
 
-    pkg_description = FindPackageShare('black_mouth_description').find('black_mouth_description')
-
-    pkg_gazebo_ros = FindPackageShare('gazebo_ros').find('gazebo_ros')
-
-    inverse_kinematics_pkg_share = FindPackageShare('black_mouth_kinematics').find('black_mouth_kinematics')
-
-    default_model = os.path.join(
-        pkg_description, "urdf", "black_mouth.urdf.xacro")
+    bm_gazebo_pkg_share = FindPackageShare('black_mouth_gazebo').find('black_mouth_gazebo')
+    bm_description_pkg_share = FindPackageShare('black_mouth_description').find('black_mouth_description')
+    bm_control_pkg_share = FindPackageShare('black_mouth_control').find('black_mouth_control')
+    bm_kinematics_pkg_share = FindPackageShare('black_mouth_kinematics').find('black_mouth_kinematics')
         
-    default_rviz_config_path = os.path.join(
-        pkg_description, 'rviz/urdf_config.rviz')
-
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-
-    # Gazebo server
+    default_world = os.path.join(bm_gazebo_pkg_share, 'worlds/empty.world')
+    default_rviz_config = os.path.join(bm_description_pkg_share, 'rviz/urdf_config.rviz')
+    default_model = os.path.join(bm_description_pkg_share, "urdf", "black_mouth.urdf.xacro")
+    default_controllers = os.path.join(bm_control_pkg_share, "config", "leg_controllers.yaml")
+    default_quadruped_config = os.path.join(bm_kinematics_pkg_share, 'config', 'quadruped.yaml')
+    
     gzserver = ExecuteProcess(
         cmd=['gzserver',
              '-s', 'libgazebo_ros_init.so',
              '-s', 'libgazebo_ros_factory.so',
-             '-u',
+             LaunchConfiguration('world'),
              ''],
         output='screen',
     )
 
-    # Gazebo client
     gzclient = ExecuteProcess(
         cmd=['gzclient'],
         output='screen',
-        # condition=IfCondition(LaunchConfiguration('gui')),
-    )
-
-    # Publish TF
-    node_robot_state_publisher = Node(
-        package="robot_state_publisher",
-        executable="robot_state_publisher",
-        output="screen",
-        parameters=[{'use_sim_time': use_sim_time,
-                     'robot_description': Command(['xacro ', default_model])}],
-    )
-
-    joint_state_publisher = Node(
-        package='joint_state_publisher',
-        executable='joint_state_publisher',
-        name='joint_state_publisher',
     )
 
     spawn_robot = Node(
@@ -61,14 +40,11 @@ def generate_launch_description():
         executable='spawn_entity.py',
         name='urdf_spawner',
         output='screen',
-        arguments=['-entity', 'quadruped', '-topic', '/robot_description'],
-    )
-
-    joint_state_publisher_gui = Node(
-        package='joint_state_publisher_gui',
-        executable='joint_state_publisher_gui',
-        name='joint_state_publisher_gui',
-        condition=launch.conditions.IfCondition(LaunchConfiguration('gui'))
+        arguments=['-entity','quadruped',
+                   '-topic', '/robot_description',
+                   '-x', '0.0',
+                   '-y', '0.0',
+                   '-z', '0.0'],
     )
 
     rviz = Node(
@@ -77,71 +53,38 @@ def generate_launch_description():
         name='rviz2',
         output='screen',
         arguments=['-d', LaunchConfiguration('rviz_config')],
+        condition=IfCondition(LaunchConfiguration('use_rviz'))
     )
 
-    # Load controller to publish joint data
-    load_joint_state_broadcaster = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start',
-             'joint_state_broadcaster'],
-        output='screen'
+    start_robot = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(bm_description_pkg_share, 'launch', 'start_robot.launch.py')),
+        launch_arguments={'use_sim_time': LaunchConfiguration('use_sim_time'),
+                          'model': LaunchConfiguration('model'),
+                          'controllers': LaunchConfiguration('controllers'),
+                          'quadruped_config': LaunchConfiguration('quadruped_config'),
+                          }.items(),
     )
-
-    # Load controller of the front left leg joints
-    load_front_left_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start',
-             'front_left_joint_trajectory_controller'],
-        output='screen'
-    )
-
-    # Load controller of the front right leg joints
-    load_front_right_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start',
-             'front_right_joint_trajectory_controller'],
-        output='screen'
-    )
-
-    # Load controller of the back left leg joints
-    load_back_left_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start',
-             'back_left_joint_trajectory_controller'],
-        output='screen'
-    )
-
-    # Load controller of the back right leg joints
-    load_back_right_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'start',
-             'back_right_joint_trajectory_controller'],
-        output='screen'
-    )
-
-    inverse_kinematics = IncludeLaunchDescription(
-              PythonLaunchDescriptionSource(
-                os.path.join(inverse_kinematics_pkg_share, 'launch', 'kinematics.launch.py')),
-            #   launch_arguments={'': ''}.items(),
-  )
 
 
     return LaunchDescription([
-        launch.actions.DeclareLaunchArgument(
-            'use_sim_time', default_value='false', description='Use simulation (Gazebo) clock if true'),
-        launch.actions.DeclareLaunchArgument(name='gui', default_value='True',
-                                             description='Flag to enable joint_state_publisher_gui'),
-        launch.actions.DeclareLaunchArgument(
-            name='model', default_value=default_model, description='Absolute path to robot urdf file'),
-
-        launch.actions.DeclareLaunchArgument(name='rviz_config', default_value=default_rviz_config_path,
-                                             description='Absolute path to rviz config file'),
+        DeclareLaunchArgument(name='use_sim_time', default_value='false', 
+                              description='Use simulation (Gazebo) clock if true'),
+        DeclareLaunchArgument(name='world', default_value=default_world, 
+                              description='Absolute path to world file'),
+        DeclareLaunchArgument(name='model', default_value=default_model, 
+                              description='Absolute path to robot urdf file'),
+        DeclareLaunchArgument(name='controllers', default_value=default_controllers, 
+                              description='Absolute path to robot controllers file'),
+        DeclareLaunchArgument(name='quadruped_config', default_value=default_quadruped_config, 
+                              description='Absolute path to quadruped config file'),
+        DeclareLaunchArgument(name='use_rviz', default_value='false', 
+                              description='Start rviz if true'),
+        DeclareLaunchArgument(name='rviz_config', default_value=default_rviz_config, 
+                              description='Absolute path to rviz config file'),
         gzserver,
         gzclient,
-        # joint_state_publisher_gui,
-        node_robot_state_publisher,
-        # joint_state_publisher,
         spawn_robot,
+        start_robot,
         rviz,
-        load_joint_state_broadcaster,
-        load_front_left_joint_trajectory_controller,
-        load_front_right_joint_trajectory_controller,
-        load_back_left_joint_trajectory_controller,
-        load_back_right_joint_trajectory_controller,
-        inverse_kinematics
     ])

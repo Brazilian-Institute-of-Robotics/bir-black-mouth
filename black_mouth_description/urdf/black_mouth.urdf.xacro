@@ -17,7 +17,7 @@
     <xacro:property name="leg_y_offset" value="0.07"/>
     <xacro:property name="leg_z_offset" value="0.0208"/>
 
-    <xacro:property name="effort_limit" value="0.01"/>
+    <xacro:property name="effort_limit" value="2"/>
 
 
     <xacro:macro name="leg" params="prefix left front *joint_pose">
@@ -101,7 +101,8 @@
             <child link="${prefix}_hip"/>
             <axis xyz="1 0 0"/>
             <limit lower="${-M_PI/6}" upper="${M_PI/6}" velocity="5.75" effort="${effort_limit}"/>
-            <!-- <dynamics damping="5.0" friction="5.0" /> -->
+            <xacro:insert_block name="joint_pose"/>
+            <dynamics damping="0.1" friction="0.01" /> 
         </joint>
 
 
@@ -159,7 +160,7 @@
             <child link="${prefix}_femur"/>
             <axis xyz="0 1 0"/>
             <limit lower="${-M_PI/4}" upper="${M_PI/4}" velocity="5.75" effort="${effort_limit}"/>
-            <!-- <dynamics damping="5.0" friction="5.0" /> -->
+            <dynamics damping="0.1" friction="0.01" /> 
         </joint>
 
         <link name="${prefix}_tibia">
@@ -203,7 +204,7 @@
             <child link="${prefix}_tibia"/>
             <axis xyz="0 1 0"/>
             <limit lower="${-M_PI/5}" upper="${M_PI/5}" velocity="5.75" effort="${effort_limit}"/>
-            <!-- <dynamics damping="5.0" friction="5.0" /> -->
+            <dynamics damping="0.00" friction="0.01" />
         </joint>
 
 
