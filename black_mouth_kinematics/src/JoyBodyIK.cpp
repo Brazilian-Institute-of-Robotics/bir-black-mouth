@@ -25,7 +25,9 @@ JoyBodyIK::JoyBodyIK() : Node("joy_body_ik_node")
   _ik_msg.time_from_start.resize(1);
 
   _default_axis_linear_map  = { {"x", 0},    {"y", 1},     {"z", 2},   };
-  _default_axis_angular_map = { {"roll", 3}, {"pitch", 4}, {"yaw", 5}, };
+  _default_axis_angular_map = { {"roll", 3}, {"pitch", 4}, {"yaw", 5},
+                                {"roll_inc", 6}, {"roll_dec", 7},
+                                {"pitch_inc", 6}, {"pitch_dec", 7} };
 
   this->declare_parameters("axis_linear", _default_axis_linear_map);
   this->declare_parameters("axis_angular", _default_axis_angular_map);
@@ -82,14 +84,14 @@ void JoyBodyIK::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
     
     if (_joy_type != "ps4")
     {
-      if (msg->axes[_axis_angular_map["roll"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x < 0.35)
+      if (msg->axes[_axis_angular_map["roll"]] == -1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x < 0.35)
         _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x += 0.05;
-      else if (msg->axes[_axis_angular_map["roll"]] == -1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x > -0.35)
+      else if (msg->axes[_axis_angular_map["roll"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x > -0.35)
         _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x -= 0.05;
 
-      if (msg->axes[_axis_angular_map["pitch"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y < 0.35)
+      if (msg->axes[_axis_angular_map["pitch"]] == -1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y < 0.35)
         _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y += 0.05;
-      else if (msg->axes[_axis_angular_map["pitch"]] == -1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y > -0.35)
+      else if (msg->axes[_axis_angular_map["pitch"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y > -0.35)
         _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y -= 0.05;
     }
     else

@@ -3,12 +3,12 @@ joy_body_ik_node:
     filter_alpha: 0.9
     joy_type: x360
     axis_linear:
-      x: 0
-      y: 1
-      z: 2
+      x: 1
+      y: 0
+      z: 4
     axis_angular:
-      roll: 5
-      pitch: 4
+      roll: 6
+      pitch: 7
       yaw: 3
-    lock: 2
-    reset: 3
+    lock: 0
+    reset: 2
