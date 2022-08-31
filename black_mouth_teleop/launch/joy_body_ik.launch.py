@@ -7,12 +7,10 @@ from launch.actions import DeclareLaunchArgument, TimerAction
 
 def generate_launch_description():
 
-    black_mouth_pkg_share = FindPackageShare('black_mouth_kinematics').find('black_mouth_kinematics')
+    bm_teleop_pkg_share = FindPackageShare('black_mouth_teleop').find('black_mouth_teleop')
 
-    # TODO: Fix config file for x360 joystick 
-    # TODO: Create config file for ps4 joystick
     joy_type = LaunchConfiguration('joy_type', default="generic")
-    joystick_config = [TextSubstitution(text=os.path.join(black_mouth_pkg_share, 'config', '')), 
+    joystick_config = [TextSubstitution(text=os.path.join(bm_teleop_pkg_share, 'config', '')), 
                        joy_type, TextSubstitution(text='_joystick.yaml')]
 
     joy_node = Node(
@@ -29,7 +27,7 @@ def generate_launch_description():
     )
 
     joy_body_ik = Node(
-        package='black_mouth_kinematics',
+        package='black_mouth_teleop',
         executable='joy_body_ik',
         name='joy_body_ik_node',
         parameters=[joystick_config]

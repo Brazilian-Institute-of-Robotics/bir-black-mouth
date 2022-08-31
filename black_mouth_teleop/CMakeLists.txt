@@ -17,9 +17,25 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in
-# further dependencies manually.
-# find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(black_mouth_kinematics REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/States.msg"
+  DEPENDENCIES std_msgs
+)
+
+ament_export_dependencies(rosidl_default_runtime)
+
+add_executable(joy_body_ik src/JoyBodyIK.cpp)
+ament_target_dependencies(joy_body_ik rclcpp sensor_msgs black_mouth_kinematics)
+
+rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
+
+target_link_libraries(joy_body_ik "${cpp_typesupport_target}")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -31,5 +47,19 @@ if(BUILD_TESTING)
   #set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+include_directories(include)
+
+install(
+  DIRECTORY launch config
+  DESTINATION share/${PROJECT_NAME}
+)
+
+install(
+  TARGETS
+  joy_body_ik
+  DESTINATION 
+  lib/${PROJECT_NAME}
+)
 
 ament_package()

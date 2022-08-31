@@ -4,7 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joy.hpp"
 #include "black_mouth_kinematics/msg/body_leg_ik_trajectory.hpp"
-#include "black_mouth_kinematics/EMAFilter.hpp"
+#include "black_mouth_teleop/EMAFilter.hpp"
 
 #include <memory>
 

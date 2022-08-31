@@ -1,6 +1,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joy.hpp"
-#include "black_mouth_kinematics/JoyBodyIK.hpp"
+#include "black_mouth_teleop/JoyBodyIK.hpp"
+#include "black_mouth_kinematics/msg/all_leg_points.hpp"
+#include "black_mouth_kinematics/msg/body_leg_ik_trajectory.hpp"
 
 #include <memory>
 #include <chrono>
