@@ -1,14 +1,14 @@
 joy_body_ik_node:
   ros__parameters:
     filter_alpha: 0.9
-    joy_type: generic
+    joy_type: x360
     axis_linear:
-      x: 1
-      y: 0
+      x: 0
+      y: 1
       z: 2
     axis_angular:
-      roll: 4
-      pitch: 5
+      roll: 5
+      pitch: 4
       yaw: 3
     lock: 2
     reset: 3
