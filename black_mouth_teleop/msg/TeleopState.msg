@@ -1,0 +1,7 @@
+uint8 INIT=0
+uint8 RESTING=1
+uint8 BODY_LOCKED=2
+uint8 CONTROLLING_BODY=3
+uint8 WALKING=4
+
+uint8 state

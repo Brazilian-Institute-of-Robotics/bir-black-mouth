@@ -1,3 +1,0 @@
-uint8 STATE0=0
-uint8 STATE1=0
-uint8 STATE2=0

@@ -24,17 +24,22 @@ find_package(black_mouth_kinematics REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/States.msg"
-  DEPENDENCIES std_msgs
+  "msg/TeleopState.msg"
+  "srv/SetTeleopState.srv"
+  "srv/GetTeleopState.srv"
 )
 
 ament_export_dependencies(rosidl_default_runtime)
+
+add_executable(teleop_state_server src/teleop_state_server.cpp)
+ament_target_dependencies(teleop_state_server rclcpp)
 
 add_executable(joy_body_ik src/JoyBodyIK.cpp)
 ament_target_dependencies(joy_body_ik rclcpp sensor_msgs black_mouth_kinematics)
 
 rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
 
+target_link_libraries(teleop_state_server "${cpp_typesupport_target}")
 target_link_libraries(joy_body_ik "${cpp_typesupport_target}")
 
 if(BUILD_TESTING)
@@ -57,6 +62,7 @@ install(
 
 install(
   TARGETS
+  teleop_state_server
   joy_body_ik
   DESTINATION 
   lib/${PROJECT_NAME}
