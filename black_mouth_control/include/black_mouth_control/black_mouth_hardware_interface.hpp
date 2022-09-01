@@ -1,14 +1,14 @@
 #ifndef BLACK_MOUTH_HARDWARE_INTERFACE_HPP_
 #define BLACK_MOUTH_HARDWARE_INTERFACE_HPP_
 
-#include <string>
-#include <vector>
-
 #include <hardware_interface/hardware_info.hpp>
 #include <hardware_interface/system_interface.hpp>
 #include <hardware_interface/types/hardware_interface_return_values.hpp>
+#include <rclcpp/macros.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
+#include <string>
+#include <vector>
 
 namespace black_mouth_control {
 
@@ -25,12 +25,12 @@ struct BMJointInfo {
     int16_t kp_gain{3000};
     int16_t ki_gain{0};
     int16_t kd_gain{500};
-    //TODO Check feedforward gains
+    // TODO Check feedforward gains
 };
 
 class BlackMouthHW : public hardware_interface::SystemInterface {
    public:
-    BlackMouthHW();
+    RCLCPP_SHARED_PTR_DEFINITIONS(BlackMouthHW);
 
     hardware_interface::CallbackReturn on_init(
         const hardware_interface::HardwareInfo& info) override;

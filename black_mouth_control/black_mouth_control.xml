@@ -1,0 +1,9 @@
+<library path="black_mouth_control">
+  <class name="black_mouth_control/BlackMouthHW"
+         type="black_mouth_control::BlackMouthHW"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      The interface between ros2_control and the Dynamixel motors of Black Mouth.
+    </description>
+  </class>
+</library>

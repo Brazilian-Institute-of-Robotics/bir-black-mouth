@@ -1,6 +1,7 @@
 #include "black_mouth_control/black_mouth_hardware_interface.hpp"
 
-#include "hardware_interface/types/hardware_interface_type_values.hpp"
+#include <hardware_interface/types/hardware_interface_type_values.hpp>
+#include <pluginlib/class_list_macros.hpp>
 
 namespace black_mouth_control {
 
@@ -67,7 +68,7 @@ hardware_interface::CallbackReturn BlackMouthHW::on_init(
                 "\n\tbaud_rate = %d"
                 "\n\tusb_port = %s"
                 "\n\treturn_delay_type = %d",
-                baud_rate_, usb_port_, return_delay_type_);
+                baud_rate_, usb_port_.c_str(), return_delay_type_);
 
     // Get joint parameters
     hw_joints_.resize(info_.joints.size());
@@ -97,7 +98,7 @@ hardware_interface::CallbackReturn BlackMouthHW::on_init(
                     "\n\tkp_gain = %d"
                     "\n\tki_gain = %d"
                     "\n\tkd_gain = %d",
-                    info_.joints[i].name, hw_joints_[i].id,
+                    info_.joints[i].name.c_str(), hw_joints_[i].id,
                     hw_joints_[i].drive_mode, hw_joints_[i].home_angle,
                     hw_joints_[i].min_pos_limit, hw_joints_[i].max_pos_limit,
                     hw_joints_[i].kp_gain, hw_joints_[i].ki_gain,
@@ -116,6 +117,90 @@ hardware_interface::CallbackReturn BlackMouthHW::on_configure(
         hw_states_[i] = 0;
         hw_commands_[i] = 0;
     }
+
+    return hardware_interface::CallbackReturn::SUCCESS;
+}
+
+std::vector<hardware_interface::StateInterface>
+BlackMouthHW::export_state_interfaces() {
+    std::vector<hardware_interface::StateInterface> state_interfaces;
+    for (uint i = 0; i < info_.joints.size(); i++) {
+        state_interfaces.emplace_back(hardware_interface::StateInterface(
+            info_.joints[i].name, hardware_interface::HW_IF_POSITION,
+            &hw_states_[i]));
+    }
+
+    return state_interfaces;
+}
+
+std::vector<hardware_interface::CommandInterface>
+BlackMouthHW::export_command_interfaces() {
+    std::vector<hardware_interface::CommandInterface> command_interfaces;
+    for (uint i = 0; i < info_.joints.size(); i++) {
+        command_interfaces.emplace_back(hardware_interface::CommandInterface(
+            info_.joints[i].name, hardware_interface::HW_IF_POSITION,
+            &hw_commands_[i]));
+    }
+
+    return command_interfaces;
+}
+
+hardware_interface::CallbackReturn BlackMouthHW::on_activate(
+    const rclcpp_lifecycle::State& /*previous_state*/) {
+    RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"),
+                "Activating ...please wait...");
+
+    // command and state should be equal when starting
+    for (uint i = 0; i < hw_states_.size(); i++) {
+        hw_commands_[i] = hw_states_[i];
+    }
+
+    RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"), "Successfully activated!");
+
+    return hardware_interface::CallbackReturn::SUCCESS;
+}
+
+hardware_interface::CallbackReturn BlackMouthHW::on_deactivate(
+    const rclcpp_lifecycle::State& /*previous_state*/) {
+    RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"),
+                "Deactivating ...please wait...");
+
+    return hardware_interface::CallbackReturn::SUCCESS;
+}
+
+hardware_interface::return_type BlackMouthHW::read(
+    const rclcpp::Time& time, const rclcpp::Duration& period) {
+    (void)period;
+    (void)time;
+
+    // RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"), "Reading...");
+
+    for (uint i = 0; i < hw_states_.size(); i++) {
+        // Simulate RRBot's movement
+        hw_states_[i] = 123.;
+        // RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"),
+        //             "Got state %.5f for joint %d!", hw_states_[i], i);
+    }
+
+    return hardware_interface::return_type::OK;
+}
+
+hardware_interface::return_type BlackMouthHW::write(
+    const rclcpp::Time& time, const rclcpp::Duration& period) {
+    (void)period;
+    (void)time;
+    // RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"), "Writing...");
+
+    for (uint i = 0; i < hw_commands_.size(); i++) {
+        // Simulate sending commands to the hardware
+        // RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"),
+        //             "Got command %.5f for joint %d!", hw_commands_[i], i);
+    }
+
+    return hardware_interface::return_type::OK;
 }
 
 }  // namespace black_mouth_control
+
+PLUGINLIB_EXPORT_CLASS(black_mouth_control::BlackMouthHW,
+                       hardware_interface::SystemInterface)

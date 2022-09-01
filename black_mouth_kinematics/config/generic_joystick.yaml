@@ -3,10 +3,10 @@ joy_body_ik_node:
     axis_linear:
       x: 1
       y: 0
-      z: 2
+      z: 3
     axis_angular:
-      roll: 4
-      pitch: 5
-      yaw: 3
+      roll: 6
+      pitch: 7
+      yaw: 4
     lock: 2
     reset: 3

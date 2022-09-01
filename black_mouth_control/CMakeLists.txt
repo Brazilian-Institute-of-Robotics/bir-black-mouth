@@ -30,21 +30,26 @@ endforeach()
 
 include_directories(include)
 
-add_library(black_mouth_hw SHARED src/black_mouth_hardware_interface.cpp)
-target_include_directories(black_mouth_hw PRIVATE include)
-ament_target_dependencies(black_mouth_hw ${dependencies})
+add_library(${PROJECT_NAME} 
+  SHARED 
+  src/black_mouth_hardware_interface.cpp
+  )
+target_include_directories(${PROJECT_NAME} PRIVATE include)
+ament_target_dependencies(${PROJECT_NAME} ${dependencies})
+
+# Export hardware pligins
+pluginlib_export_plugin_description_file(hardware_interface black_mouth_control.xml)
 
 install(
-  TARGETS
-  black_mouth_hw
-  DESTINATION 
-  lib/${PROJECT_NAME}
+  TARGETS ${PROJECT_NAME}
+  DESTINATION lib
 )
 
 install(
   DIRECTORY include/
   DESTINATION include
 )
+
 
 install(
   DIRECTORY urdf config launch
@@ -57,7 +62,7 @@ ament_export_include_directories(
 )
 
 ament_export_libraries(
-  black_mouth_hw
+  ${PROJECT_NAME}
 )
 
 ament_export_dependencies(${dependencies})

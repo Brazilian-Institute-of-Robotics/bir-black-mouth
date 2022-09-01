@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="quadruped">
+
+    <xacro:macro name="leg_joints" params="prefix leg_id">
+        <joint name="${prefix}_hip_roll_joint">
+            <param name="id">${leg_id}1</param>
+            <param name="drive_mode">0</param>
+            <param name="min_pos_limit">0</param>
+            <param name="max_pos_limit">3720</param>
+            <param name="home_angle">2048</param>
+            <param name="kp_gain">3000</param>
+            <param name="ki_gain">0</param>
+            <param name="kd_gain">500</param>
+            <command_interface name="position"/>
+            <state_interface name="position"/>
+        </joint>
+
+        <joint name="${prefix}_hip_pitch_joint">
+            <param name="id">${leg_id}2</param>
+            <param name="drive_mode">0</param>
+            <param name="min_pos_limit">0</param>
+            <param name="max_pos_limit">3800</param>
+            <param name="home_angle">2048</param>
+            <param name="kp_gain">3000</param>
+            <param name="ki_gain">0</param>
+            <param name="kd_gain">500</param>
+            <command_interface name="position"/>
+            <state_interface name="position"/>
+        </joint>
+
+        <joint name="${prefix}_elbow_joint">
+            <param name="id">${leg_id}3</param>
+            <param name="drive_mode">0</param>
+            <param name="min_pos_limit">0</param>
+            <param name="max_pos_limit">2700</param>
+            <param name="home_angle">2048</param>
+            <param name="kp_gain">3000</param>
+            <param name="ki_gain">0</param>
+            <param name="kd_gain">500</param>
+            <command_interface name="position"/>
+            <state_interface name="position"/>
+        </joint>
+    </xacro:macro>
+
+    <ros2_control name="BlackMouthSystem" type="system">
+        <hardware>
+            <plugin>black_mouth_control/BlackMouthHW</plugin>
+            <param name="baud_rate">4000000</param>
+            <param name="usb_port">/dev/ttyUSB0</param>
+            <param name="return_delay_type">100</param>
+        </hardware>
+        <xacro:leg_joints prefix="front_right" leg_id="1"/>
+        <xacro:leg_joints prefix="front_left" leg_id="2"/>
+        <xacro:leg_joints prefix="back_left" leg_id="3"/>
+        <xacro:leg_joints prefix="back_right" leg_id="4"/>
+    </ros2_control>
+</robot>
