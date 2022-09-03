@@ -10,5 +10,6 @@ joy_body_ik_node:
       roll: 4
       pitch: 5
       yaw: 3
+    rest: 3
     lock: 2
-    reset: 3
+    walk: 1

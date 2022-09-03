@@ -15,13 +15,17 @@ JoyBodyIK::JoyBodyIK() : Node("joy_body_ik_node")
 {
   RCLCPP_INFO(this->get_logger(), "Joy Body IK Node initialized");
 
+  _state.state = black_mouth_teleop::msg::TeleopState::INIT;
+
   _ik_publisher = this->create_publisher<black_mouth_kinematics::msg::BodyLegIKTrajectory>("cmd_ik", 10);
   _joy_subscriber = this->create_subscription<sensor_msgs::msg::Joy>("joy", 10, 
                           std::bind(&JoyBodyIK::joyCallback, this, _1));
 
+  _set_state_client = this->create_client<black_mouth_teleop::srv::SetTeleopState>("set_teleop_state");
+
   _timer = this->create_wall_timer(50ms, std::bind(&JoyBodyIK::publishIK, this));
 
-  _locked = false;
+  _resting = false;
 
   _ik_msg.body_leg_ik_trajectory.resize(1);
   _ik_msg.time_from_start.resize(1);
@@ -35,14 +39,16 @@ JoyBodyIK::JoyBodyIK() : Node("joy_body_ik_node")
   this->declare_parameters("axis_angular", _default_axis_angular_map);
   this->declare_parameter("joy_type", "generic");
   this->declare_parameter("lock", 0);
-  this->declare_parameter("reset", 1);
+  this->declare_parameter("rest", 1);
+  this->declare_parameter("walk", 2);
   this->declare_parameter("filter_alpha", 0.0);
 
   this->get_parameters("axis_linear", _axis_linear_map);
   this->get_parameters("axis_angular", _axis_angular_map);
   this->get_parameter("joy_type", _joy_type);
   this->get_parameter("lock", _lock_button);
-  this->get_parameter("reset", _reset_button);
+  this->get_parameter("rest", _rest_button);
+  this->get_parameter("walk", _walk_button);
   this->get_parameter("filter_alpha", _filter_alpha);
 
   _use_filter = _filter_alpha > 0.0;
@@ -57,6 +63,21 @@ JoyBodyIK::JoyBodyIK() : Node("joy_body_ik_node")
   _body_rotation_x_filter.setFilterAlpha(_filter_alpha);
   _body_rotation_y_filter.setFilterAlpha(_filter_alpha);
   _body_rotation_z_filter.setFilterAlpha(_filter_alpha);
+
+  while(!_set_state_client->wait_for_service(1s))
+  {
+    if(!rclcpp::ok())
+    {
+      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the set_teleop_state service. Exiting.");
+      return;
+    }
+    RCLCPP_INFO(this->get_logger(), "Set teleop state service not available, waiting again...");
+  }
+
+  auto request = std::make_shared<black_mouth_teleop::srv::SetTeleopState::Request>();
+  request->state = _state;
+  _set_state_client->async_send_request(request);
+
 }
 
 JoyBodyIK::~JoyBodyIK()
@@ -65,64 +86,152 @@ JoyBodyIK::~JoyBodyIK()
 
 void JoyBodyIK::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
-  _ik_msg.body_leg_ik_trajectory.at(0).leg_points.reference_link = black_mouth_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
-  
-  if (msg->buttons[_lock_button])
+
+  if (this->stateTransition(msg))
   {
-    _locked = !_locked;
-    if (_locked)
-      RCLCPP_INFO(this->get_logger(), "Body locked");
-    else
-      RCLCPP_INFO(this->get_logger(), "Body unlocked");
+    auto request = std::make_shared<black_mouth_teleop::srv::SetTeleopState::Request>();
+    request->state = _state;
+    _set_state_client->async_send_request(request);
   }
 
-  if (!_locked)
-  {
-    _ik_msg.body_leg_ik_trajectory.at(0).body_position.x = 0.05*msg->axes[_axis_linear_map["x"]];
-    _ik_msg.body_leg_ik_trajectory.at(0).body_position.y = 0.05*msg->axes[_axis_linear_map["y"]];
-    _ik_msg.body_leg_ik_trajectory.at(0).body_position.z = 0.04*msg->axes[_axis_linear_map["z"]];
-
-    _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.z = 0.5*msg->axes[_axis_angular_map["yaw"]];
-    
-    if (_joy_type != "ps4")
-    {
-      if (msg->axes[_axis_angular_map["roll"]] == -1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x < 0.35)
-        _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x += 0.05;
-      else if (msg->axes[_axis_angular_map["roll"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x > -0.35)
-        _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x -= 0.05;
-
-      if (msg->axes[_axis_angular_map["pitch"]] == -1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y < 0.35)
-        _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y += 0.05;
-      else if (msg->axes[_axis_angular_map["pitch"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y > -0.35)
-        _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y -= 0.05;
-    }
-    else
-    {
-      if (msg->buttons[_axis_angular_map["roll_inc"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x < 0.35)
-        _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x += 0.05;
-      if (msg->buttons[_axis_angular_map["roll_dec"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x > -0.35)
-        _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x -= 0.05;
-
-      if (msg->buttons[_axis_angular_map["pitch_inc"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y < 0.35)
-        _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y += 0.05;
-      if (msg->buttons[_axis_angular_map["pitch_dec"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y > -0.35)
-        _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y -= 0.05;
-    }
-  }
-
-  if (msg->buttons[_reset_button])
-  {
-    RCLCPP_INFO(this->get_logger(), "Reset body position");
-    _ik_msg.body_leg_ik_trajectory.at(0).body_position.x = 0.0;
-    _ik_msg.body_leg_ik_trajectory.at(0).body_position.y = 0.0;
-    _ik_msg.body_leg_ik_trajectory.at(0).body_position.z = 0.0;
-
-    _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x = 0.0;
-    _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y = 0.0;
-    _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.z = 0.0;
-  }
+  if (_state.state == black_mouth_teleop::msg::TeleopState::INIT)
+    this->initState();
+  else if (_state.state == black_mouth_teleop::msg::TeleopState::RESTING)
+    this->restingState();
+  else if (_state.state == black_mouth_teleop::msg::TeleopState::BODY_LOCKED)
+    this->bodyLockedState();
+  else if (_state.state == black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY)
+    this->controllingBodyState(msg);
+  else if (_state.state == black_mouth_teleop::msg::TeleopState::WALKING)
+    this->walkingState(msg);
+  else
+    RCLCPP_ERROR(this->get_logger(), "Invalid Teleop State");
 
 }
+
+
+bool JoyBodyIK::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
+{
+  auto last_state = _state.state;
+
+  if (msg->buttons[_rest_button])
+    _resting = true;
+
+  if (_state.state == black_mouth_teleop::msg::TeleopState::INIT)
+  {
+    if (msg->buttons[_rest_button])
+      _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
+  }
+
+  else if (_state.state == black_mouth_teleop::msg::TeleopState::RESTING)
+  {
+    if (!_resting)
+    {
+      if (msg->buttons[_lock_button])
+        _state.state = black_mouth_teleop::msg::TeleopState::BODY_LOCKED;
+      else if (msg->buttons[_walk_button])
+        _state.state = black_mouth_teleop::msg::TeleopState::WALKING;
+      else
+        _state.state = black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY;
+    }
+    else _resting = false;
+  }
+
+  else if (_state.state == black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY)
+  {
+    if (msg->buttons[_rest_button])
+      _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
+    else if (msg->buttons[_lock_button])
+      _state.state = black_mouth_teleop::msg::TeleopState::BODY_LOCKED;
+    else if (msg->buttons[_walk_button])
+      _state.state = black_mouth_teleop::msg::TeleopState::WALKING;
+  }
+
+  else if (_state.state == black_mouth_teleop::msg::TeleopState::BODY_LOCKED)
+  {
+    if (msg->buttons[_rest_button])
+      _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
+    else if (msg->buttons[_lock_button])
+      _state.state = black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY;
+  }
+
+  else if (_state.state == black_mouth_teleop::msg::TeleopState::WALKING)
+  {
+    if (msg->buttons[_rest_button])
+      _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
+    else if (msg->buttons[_walk_button])
+      _state.state = black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY;
+  }
+
+  return (last_state != _state.state);
+}
+
+
+void JoyBodyIK::initState()
+{
+  return;
+}
+
+void JoyBodyIK::restingState()
+{
+  _ik_msg.body_leg_ik_trajectory.at(0).leg_points.reference_link = black_mouth_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
+
+  _ik_msg.body_leg_ik_trajectory.at(0).body_position.x = 0.0;
+  _ik_msg.body_leg_ik_trajectory.at(0).body_position.y = 0.0;
+  _ik_msg.body_leg_ik_trajectory.at(0).body_position.z = 0.0;
+
+  _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x = 0.0;
+  _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y = 0.0;
+  _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.z = 0.0;
+}
+
+void JoyBodyIK::bodyLockedState()
+{
+  return;
+}
+
+void JoyBodyIK::controllingBodyState(const sensor_msgs::msg::Joy::SharedPtr msg)
+{
+  _ik_msg.body_leg_ik_trajectory.at(0).leg_points.reference_link = black_mouth_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
+
+  _ik_msg.body_leg_ik_trajectory.at(0).body_position.x = 0.05*msg->axes[_axis_linear_map["x"]];
+  _ik_msg.body_leg_ik_trajectory.at(0).body_position.y = 0.05*msg->axes[_axis_linear_map["y"]];
+  _ik_msg.body_leg_ik_trajectory.at(0).body_position.z = 0.04*msg->axes[_axis_linear_map["z"]];
+
+  _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.z = 0.5*msg->axes[_axis_angular_map["yaw"]];
+  
+  if (_joy_type != "ps4")
+  {
+    if (msg->axes[_axis_angular_map["roll"]] == -1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x < 0.35)
+      _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x += 0.05;
+    else if (msg->axes[_axis_angular_map["roll"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x > -0.35)
+      _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x -= 0.05;
+
+    if (msg->axes[_axis_angular_map["pitch"]] == -1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y < 0.35)
+      _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y += 0.05;
+    else if (msg->axes[_axis_angular_map["pitch"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y > -0.35)
+      _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y -= 0.05;
+  }
+  else
+  {
+    if (msg->buttons[_axis_angular_map["roll_inc"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x < 0.35)
+      _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x += 0.05;
+    if (msg->buttons[_axis_angular_map["roll_dec"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x > -0.35)
+      _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x -= 0.05;
+
+    if (msg->buttons[_axis_angular_map["pitch_inc"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y < 0.35)
+      _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y += 0.05;
+    if (msg->buttons[_axis_angular_map["pitch_dec"]] == 1 && _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y > -0.35)
+      _ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y -= 0.05;
+  }
+}
+
+void JoyBodyIK::walkingState(const sensor_msgs::msg::Joy::SharedPtr msg)
+{
+  (void) msg;
+  RCLCPP_INFO(this->get_logger(), "Calculating cmd_vel");
+}
+
 
 void JoyBodyIK::filterIK()
 {
@@ -137,13 +246,17 @@ void JoyBodyIK::filterIK()
 
 void JoyBodyIK::publishIK()
 {
-  if (_use_filter)
+  if (_state.state == black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY || 
+      _state.state == black_mouth_teleop::msg::TeleopState::RESTING)
   {
-    this->filterIK();
-    _ik_publisher->publish(_ik_msg_filtered);
+    if (_use_filter)
+    {
+      this->filterIK();
+      _ik_publisher->publish(_ik_msg_filtered);
+    }
+    else
+      _ik_publisher->publish(_ik_msg);
   }
-  else
-    _ik_publisher->publish(_ik_msg);
 }
 
 

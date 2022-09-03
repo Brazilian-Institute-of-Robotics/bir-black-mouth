@@ -20,10 +20,17 @@ def generate_launch_description():
         output='both',
         parameters=[{
           'deadzone': 0.05,
-          'autorepeat_rate': 1.0,
+          'autorepeat_rate': 0.0,
           'sticky_buttons': False,
           'coalesce_interval_ms': 1
         }],
+    )
+
+    teleop_state_server = Node(
+        package='black_mouth_teleop',
+        executable='teleop_state_server',
+        name='teleop_state_server',
+        output='both',
     )
 
     joy_body_ik = Node(
@@ -37,5 +44,6 @@ def generate_launch_description():
         DeclareLaunchArgument(name='joy_type', default_value='generic', 
                               description='Set the joystick type (generic, x360 or ps4)'),
         joy_node,
+        teleop_state_server,
         TimerAction(period=3.0, actions=[joy_body_ik])
     ])
