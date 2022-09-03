@@ -1,4 +1,4 @@
-joy_body_ik_node:
+joy_teleop_node:
   ros__parameters:
     filter_alpha: 0.9
     joy_type: x360

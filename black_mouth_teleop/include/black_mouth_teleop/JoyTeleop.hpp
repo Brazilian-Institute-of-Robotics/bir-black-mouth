@@ -1,5 +1,5 @@
-#ifndef JOY_BODY_IK_HPP
-#define JOY_BODY_IK_HPP
+#ifndef JOY_TELEOP_HPP
+#define JOY_TELEOP_HPP
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/empty.hpp"
@@ -12,11 +12,11 @@
 
 #include <memory>
 
-class JoyBodyIK : public rclcpp::Node
+class JoyTeleop : public rclcpp::Node
 {
 public:
-  JoyBodyIK();
-  ~JoyBodyIK();
+  JoyTeleop();
+  ~JoyTeleop();
   
 private:
   void joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg);
@@ -77,4 +77,4 @@ private:
 
 };
 
-#endif // JOY_BODY_IK_HPP
+#endif // JOY_TELEOP_HPP

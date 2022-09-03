@@ -33,10 +33,10 @@ def generate_launch_description():
         output='both',
     )
 
-    joy_body_ik = Node(
+    joy_teleop = Node(
         package='black_mouth_teleop',
-        executable='joy_body_ik',
-        name='joy_body_ik_node',
+        executable='joy_teleop',
+        name='joy_teleop_node',
         parameters=[joystick_config]
     )
 
@@ -45,5 +45,5 @@ def generate_launch_description():
                               description='Set the joystick type (generic, x360 or ps4)'),
         joy_node,
         teleop_state_server,
-        TimerAction(period=3.0, actions=[joy_body_ik])
+        TimerAction(period=3.0, actions=[joy_teleop])
     ])

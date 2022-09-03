@@ -35,13 +35,13 @@ ament_export_dependencies(rosidl_default_runtime)
 add_executable(teleop_state_server src/teleop_state_server.cpp)
 ament_target_dependencies(teleop_state_server rclcpp)
 
-add_executable(joy_body_ik src/JoyBodyIK.cpp)
-ament_target_dependencies(joy_body_ik rclcpp std_msgs sensor_msgs geometry_msgs black_mouth_kinematics)
+add_executable(joy_teleop src/JoyTeleop.cpp)
+ament_target_dependencies(joy_teleop rclcpp std_msgs sensor_msgs geometry_msgs black_mouth_kinematics)
 
 rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
 
 target_link_libraries(teleop_state_server "${cpp_typesupport_target}")
-target_link_libraries(joy_body_ik "${cpp_typesupport_target}")
+target_link_libraries(joy_teleop "${cpp_typesupport_target}")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -64,7 +64,7 @@ install(
 install(
   TARGETS
   teleop_state_server
-  joy_body_ik
+  joy_teleop
   DESTINATION 
   lib/${PROJECT_NAME}
 )
