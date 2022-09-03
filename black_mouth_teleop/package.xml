@@ -17,7 +17,9 @@
   <test_depend>ament_lint_common</test_depend>
 
   <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
   <depend>black_mouth_kinematics</depend>
   <depend>joy</depend> 
 

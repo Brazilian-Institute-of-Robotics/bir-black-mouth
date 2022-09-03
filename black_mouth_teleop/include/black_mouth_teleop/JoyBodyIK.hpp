@@ -2,7 +2,9 @@
 #define JOY_BODY_IK_HPP
 
 #include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/empty.hpp"
 #include "sensor_msgs/msg/joy.hpp"
+#include "geometry_msgs/msg/twist.hpp"
 #include "black_mouth_kinematics/msg/body_leg_ik_trajectory.hpp"
 #include "black_mouth_teleop/msg/teleop_state.hpp"
 #include "black_mouth_teleop/srv/set_teleop_state.hpp"
@@ -20,6 +22,8 @@ private:
   void joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg);
   void filterIK();
   void publishIK();
+  void publishVel();
+  void publishDefaultPose();
 
   bool stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg);
   void initState();
@@ -28,16 +32,24 @@ private:
   void controllingBodyState(const sensor_msgs::msg::Joy::SharedPtr msg);
   void walkingState(const sensor_msgs::msg::Joy::SharedPtr msg);
 
-  rclcpp::TimerBase::SharedPtr _timer;
+  rclcpp::TimerBase::SharedPtr _ik_timer;
+  rclcpp::TimerBase::SharedPtr _vel_timer;
+  rclcpp::TimerBase::SharedPtr _default_pose_timer;
+
   rclcpp::Publisher<black_mouth_kinematics::msg::BodyLegIKTrajectory>::SharedPtr _ik_publisher;
+  rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr _vel_publisher;
+  rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr _default_pose_publisher;
+
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr _joy_subscriber;
 
   rclcpp::Client<black_mouth_teleop::srv::SetTeleopState>::SharedPtr _set_state_client;
 
+  black_mouth_teleop::msg::TeleopState _state;
+
   black_mouth_kinematics::msg::BodyLegIKTrajectory _ik_msg;
   black_mouth_kinematics::msg::BodyLegIKTrajectory _ik_msg_filtered;
 
-  black_mouth_teleop::msg::TeleopState _state;
+  geometry_msgs::msg::Twist _vel_msg;
 
   EMAFilter _body_position_x_filter;
   EMAFilter _body_position_y_filter;

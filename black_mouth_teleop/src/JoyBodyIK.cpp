@@ -1,5 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/empty.hpp"
 #include "sensor_msgs/msg/joy.hpp"
+#include "geometry_msgs/msg/twist.hpp"
 #include "black_mouth_teleop/JoyBodyIK.hpp"
 #include "black_mouth_kinematics/msg/all_leg_points.hpp"
 #include "black_mouth_kinematics/msg/body_leg_ik_trajectory.hpp"
@@ -18,12 +20,17 @@ JoyBodyIK::JoyBodyIK() : Node("joy_body_ik_node")
   _state.state = black_mouth_teleop::msg::TeleopState::INIT;
 
   _ik_publisher = this->create_publisher<black_mouth_kinematics::msg::BodyLegIKTrajectory>("cmd_ik", 10);
+  _default_pose_publisher = this->create_publisher<std_msgs::msg::Empty>("cmd_default_pose", 10);
+  _vel_publisher = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
+
   _joy_subscriber = this->create_subscription<sensor_msgs::msg::Joy>("joy", 10, 
                           std::bind(&JoyBodyIK::joyCallback, this, _1));
 
   _set_state_client = this->create_client<black_mouth_teleop::srv::SetTeleopState>("set_teleop_state");
 
-  _timer = this->create_wall_timer(50ms, std::bind(&JoyBodyIK::publishIK, this));
+  _ik_timer = this->create_wall_timer(50ms,  std::bind(&JoyBodyIK::publishIK, this));
+  _vel_timer = this->create_wall_timer(200ms, std::bind(&JoyBodyIK::publishVel, this));
+  _default_pose_timer = this->create_wall_timer(30ms, std::bind(&JoyBodyIK::publishDefaultPose, this));
 
   _resting = false;
 
@@ -86,7 +93,6 @@ JoyBodyIK::~JoyBodyIK()
 
 void JoyBodyIK::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
-
   if (this->stateTransition(msg))
   {
     auto request = std::make_shared<black_mouth_teleop::srv::SetTeleopState::Request>();
@@ -115,7 +121,7 @@ bool JoyBodyIK::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
   auto last_state = _state.state;
 
   if (msg->buttons[_rest_button])
-    _resting = true;
+    _resting = false;
 
   if (_state.state == black_mouth_teleop::msg::TeleopState::INIT)
   {
@@ -125,7 +131,7 @@ bool JoyBodyIK::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 
   else if (_state.state == black_mouth_teleop::msg::TeleopState::RESTING)
   {
-    if (!_resting)
+    if (_resting)
     {
       if (msg->buttons[_lock_button])
         _state.state = black_mouth_teleop::msg::TeleopState::BODY_LOCKED;
@@ -134,7 +140,7 @@ bool JoyBodyIK::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       else
         _state.state = black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY;
     }
-    else _resting = false;
+    else _resting = true;
   }
 
   else if (_state.state == black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY)
@@ -228,8 +234,9 @@ void JoyBodyIK::controllingBodyState(const sensor_msgs::msg::Joy::SharedPtr msg)
 
 void JoyBodyIK::walkingState(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
-  (void) msg;
-  RCLCPP_INFO(this->get_logger(), "Calculating cmd_vel");
+  _vel_msg.linear.x = 0.05*msg->axes[_axis_linear_map["x"]];
+  _vel_msg.linear.y = 0.05*msg->axes[_axis_linear_map["y"]];
+  _vel_msg.angular.z = 0.5*msg->axes[_axis_angular_map["yaw"]];
 }
 
 
@@ -246,8 +253,7 @@ void JoyBodyIK::filterIK()
 
 void JoyBodyIK::publishIK()
 {
-  if (_state.state == black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY || 
-      _state.state == black_mouth_teleop::msg::TeleopState::RESTING)
+  if (_state.state == black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY)
   {
     if (_use_filter)
     {
@@ -256,6 +262,23 @@ void JoyBodyIK::publishIK()
     }
     else
       _ik_publisher->publish(_ik_msg);
+  }
+}
+
+void JoyBodyIK::publishVel()
+{
+  if (_state.state == black_mouth_teleop::msg::TeleopState::WALKING)
+    _vel_publisher->publish(_vel_msg);
+}
+
+void JoyBodyIK::publishDefaultPose()
+{
+  if (_state.state == black_mouth_teleop::msg::TeleopState::RESTING)
+  {
+    if (!_resting)
+      _default_pose_publisher->publish(std_msgs::msg::Empty());
+    if (_use_filter)
+      this->filterIK();
   }
 }
 

@@ -20,6 +20,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(black_mouth_kinematics REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
@@ -35,7 +36,7 @@ add_executable(teleop_state_server src/teleop_state_server.cpp)
 ament_target_dependencies(teleop_state_server rclcpp)
 
 add_executable(joy_body_ik src/JoyBodyIK.cpp)
-ament_target_dependencies(joy_body_ik rclcpp sensor_msgs black_mouth_kinematics)
+ament_target_dependencies(joy_body_ik rclcpp std_msgs sensor_msgs geometry_msgs black_mouth_kinematics)
 
 rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
 
