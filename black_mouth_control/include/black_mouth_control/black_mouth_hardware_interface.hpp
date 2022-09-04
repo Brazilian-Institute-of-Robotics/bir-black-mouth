@@ -1,6 +1,8 @@
 #ifndef BLACK_MOUTH_HARDWARE_INTERFACE_HPP_
 #define BLACK_MOUTH_HARDWARE_INTERFACE_HPP_
 
+#include "dynamixel_sdk/dynamixel_sdk.h"
+
 #include <hardware_interface/hardware_info.hpp>
 #include <hardware_interface/system_interface.hpp>
 #include <hardware_interface/types/hardware_interface_return_values.hpp>
@@ -9,6 +11,19 @@
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include <string>
 #include <vector>
+
+// Control table address for X series (except XL-320)
+#define ADDR_OPERATING_MODE 11
+#define ADDR_TORQUE_ENABLE 64
+#define ADDR_GOAL_POSITION 116
+#define ADDR_PRESENT_POSITION 132
+
+// Protocol version
+#define PROTOCOL_VERSION 2.0
+
+// Default setting
+#define BAUDRATE 4000000  // Port Baudrate
+#define DEVICE_NAME "/dev/ttyUSB0"
 
 namespace black_mouth_control {
 
@@ -30,7 +45,7 @@ struct BMJointInfo {
 
 class BlackMouthHW : public hardware_interface::SystemInterface {
    public:
-    RCLCPP_SHARED_PTR_DEFINITIONS(BlackMouthHW);
+    RCLCPP_SHARED_PTR_DEFINITIONS(BlackMouthHW)
 
     hardware_interface::CallbackReturn on_init(
         const hardware_interface::HardwareInfo& info) override;
@@ -66,6 +81,9 @@ class BlackMouthHW : public hardware_interface::SystemInterface {
     // Store the command and states
     std::vector<double> hw_commands_;
     std::vector<double> hw_states_;
+
+    // Dynamixel communication parameters
+    int dxl_comm_result_ = COMM_TX_FAIL;
 };
 
 }  // namespace black_mouth_control

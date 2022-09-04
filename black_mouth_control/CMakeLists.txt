@@ -21,6 +21,7 @@ set(dependencies
   hardware_interface
   pluginlib
   rclcpp_lifecycle
+  dynamixel_sdk
 )
 
 # find dependencies

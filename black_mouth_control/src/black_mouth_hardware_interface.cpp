@@ -5,6 +5,10 @@
 
 namespace black_mouth_control {
 
+// Dynamixel communication
+dynamixel::PacketHandler* packet_handler;
+dynamixel::PortHandler* port_handler;
+
 hardware_interface::CallbackReturn BlackMouthHW::on_init(
     const hardware_interface::HardwareInfo& info) {
     if (hardware_interface::SystemInterface::on_init(info) !=
@@ -116,6 +120,32 @@ hardware_interface::CallbackReturn BlackMouthHW::on_configure(
     for (uint i = 0; i < hw_states_.size(); i++) {
         hw_states_[i] = 0;
         hw_commands_[i] = 0;
+    }
+
+    port_handler = dynamixel::PortHandler::getPortHandler(DEVICE_NAME);
+    packet_handler =
+        dynamixel::PacketHandler::getPacketHandler(PROTOCOL_VERSION);
+
+    // Open Serial Port
+    dxl_comm_result_ = port_handler->openPort();
+    if (dxl_comm_result_ == false) {
+        RCLCPP_ERROR(rclcpp::get_logger("BlackMouthHW"),
+                     "Failed to open the port!");
+        return hardware_interface::CallbackReturn::FAILURE;
+    } else {
+        RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"),
+                    "Succeeded to open the port.");
+    }
+
+    // Set the baudrate of the serial port
+    dxl_comm_result_ = port_handler->setBaudRate(BAUDRATE);
+    if (dxl_comm_result_ == false) {
+        RCLCPP_ERROR(rclcpp::get_logger("BlackMouthHW"),
+                     "Failed to set the baudrate!");
+        return hardware_interface::CallbackReturn::FAILURE;
+    } else {
+        RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"),
+                    "Succeeded to set the baudrate.");
     }
 
     return hardware_interface::CallbackReturn::SUCCESS;
