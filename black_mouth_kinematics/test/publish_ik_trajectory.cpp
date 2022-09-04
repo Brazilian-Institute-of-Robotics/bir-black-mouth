@@ -11,66 +11,45 @@ int main(int argc, char **argv)
     node->create_publisher<black_mouth_kinematics::msg::BodyLegIKTrajectory>("cmd_ik", 10);
 
   auto msg = black_mouth_kinematics::msg::BodyLegIKTrajectory();
-  msg.body_leg_ik_trajectory.resize(8);
-  msg.time_from_start.resize(8);
+  msg.body_leg_ik_trajectory.resize(5);
+  msg.time_from_start.resize(5);
+
 
   msg.time_from_start[0].sec = 1.0;
+  msg.time_from_start[0].nanosec = 0;
   msg.body_leg_ik_trajectory[0].leg_points.reference_link = black_mouth_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
-  msg.body_leg_ik_trajectory[0].leg_points.front_right_leg.x = -0.01;
-  msg.body_leg_ik_trajectory[0].leg_points.front_right_leg.z = 0.01;
-  msg.body_leg_ik_trajectory[0].leg_points.back_left_leg.x   = -0.01;
-  msg.body_leg_ik_trajectory[0].leg_points.back_left_leg.z   = 0.01;
+  // msg.body_leg_ik_trajectory[0].body_position.x = -0.02;
+  msg.body_leg_ik_trajectory[0].body_position.y = 0.025;
 
-  msg.time_from_start[1].sec = 2.0;
+  msg.time_from_start[1].sec = 1.0;
+  msg.time_from_start[1].nanosec = 400000000;
+
   msg.body_leg_ik_trajectory[1].leg_points.reference_link = black_mouth_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
-  msg.body_leg_ik_trajectory[1].leg_points.front_right_leg.x = 0.025;
-  msg.body_leg_ik_trajectory[1].leg_points.front_right_leg.z = 0.025;
-  msg.body_leg_ik_trajectory[1].leg_points.back_left_leg.x   = 0.025;
-  msg.body_leg_ik_trajectory[1].leg_points.back_left_leg.z   = 0.025;
+  msg.body_leg_ik_trajectory[1].leg_points.front_right_leg.z = 0.03;
+  // msg.body_leg_ik_trajectory[1].body_position.x = -0.02;
+  msg.body_leg_ik_trajectory[1].body_position.y = 0.025;
 
-  msg.time_from_start[2].sec = 3.0;
+  msg.time_from_start[2].sec = 1.0;
+  msg.time_from_start[2].nanosec = 800000000;
   msg.body_leg_ik_trajectory[2].leg_points.reference_link = black_mouth_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
-  msg.body_leg_ik_trajectory[2].leg_points.front_right_leg.x = 0.05;
-  msg.body_leg_ik_trajectory[2].leg_points.front_right_leg.z = 0.01;
-  msg.body_leg_ik_trajectory[2].leg_points.back_left_leg.x   = 0.05;
-  msg.body_leg_ik_trajectory[2].leg_points.back_left_leg.z   = 0.01;
+  msg.body_leg_ik_trajectory[2].leg_points.front_right_leg.z = 0.04;
+  // msg.body_leg_ik_trajectory[2].body_position.x = -0.02;
+  msg.body_leg_ik_trajectory[2].body_position.y = 0.025;
 
-  msg.time_from_start[3].sec = 4.0;
+  msg.time_from_start[3].sec = 1.0;
+  msg.time_from_start[3].nanosec = 1200000000;
   msg.body_leg_ik_trajectory[3].leg_points.reference_link = black_mouth_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
-  msg.body_leg_ik_trajectory[3].leg_points.front_right_leg.x = 0.00;
-  msg.body_leg_ik_trajectory[3].leg_points.front_right_leg.z = 0.00;
-  msg.body_leg_ik_trajectory[3].leg_points.back_left_leg.x   = 0.00;
-  msg.body_leg_ik_trajectory[3].leg_points.back_left_leg.z   = 0.00;
+  msg.body_leg_ik_trajectory[3].leg_points.front_right_leg.z = 0.03;
+  // msg.body_leg_ik_trajectory[3].body_position.x = -0.02;
+  msg.body_leg_ik_trajectory[3].body_position.y = 0.025;
 
-  //
-  
-  msg.time_from_start[4].sec = 5.0;
+  msg.time_from_start[4].sec = 1.0;
+  msg.time_from_start[4].nanosec = 1600000000;
   msg.body_leg_ik_trajectory[4].leg_points.reference_link = black_mouth_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
-  msg.body_leg_ik_trajectory[4].leg_points.front_left_leg.x   = -0.01;
-  msg.body_leg_ik_trajectory[4].leg_points.front_left_leg.z   = 0.01;
-  msg.body_leg_ik_trajectory[4].leg_points.back_right_leg.x = -0.01;
-  msg.body_leg_ik_trajectory[4].leg_points.back_right_leg.z = 0.01;
+  msg.body_leg_ik_trajectory[4].leg_points.front_right_leg.z = 0.00;
+  // msg.body_leg_ik_trajectory[4].body_position.x = -0.02;
+  msg.body_leg_ik_trajectory[4].body_position.y = 0.025;
 
-  msg.time_from_start[5].sec = 6.0;
-  msg.body_leg_ik_trajectory[5].leg_points.reference_link = black_mouth_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
-  msg.body_leg_ik_trajectory[5].leg_points.front_left_leg.x   = 0.025;
-  msg.body_leg_ik_trajectory[5].leg_points.front_left_leg.z   = 0.025;
-  msg.body_leg_ik_trajectory[5].leg_points.back_right_leg.x = 0.025;
-  msg.body_leg_ik_trajectory[5].leg_points.back_right_leg.z = 0.025;
-
-  msg.time_from_start[6].sec = 7.0;
-  msg.body_leg_ik_trajectory[6].leg_points.reference_link = black_mouth_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
-  msg.body_leg_ik_trajectory[6].leg_points.front_left_leg.x   = 0.05;
-  msg.body_leg_ik_trajectory[6].leg_points.front_left_leg.z   = 0.01;
-  msg.body_leg_ik_trajectory[6].leg_points.back_right_leg.x = 0.05;
-  msg.body_leg_ik_trajectory[6].leg_points.back_right_leg.z = 0.01;
-
-  msg.time_from_start[7].sec = 8.0;
-  msg.body_leg_ik_trajectory[7].leg_points.reference_link = black_mouth_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
-  msg.body_leg_ik_trajectory[7].leg_points.front_left_leg.x   = 0.00;
-  msg.body_leg_ik_trajectory[7].leg_points.front_left_leg.z   = 0.00;
-  msg.body_leg_ik_trajectory[7].leg_points.back_right_leg.x = 0.00;
-  msg.body_leg_ik_trajectory[7].leg_points.back_right_leg.z = 0.00;
 
   publisher->publish(msg);
 
