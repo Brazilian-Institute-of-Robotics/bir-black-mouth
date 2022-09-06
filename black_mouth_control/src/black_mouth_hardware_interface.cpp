@@ -108,7 +108,7 @@ hardware_interface::CallbackReturn BlackMouthHW::on_configure(
 
     (void)previous_state;
 
-    port_handler_ = dynamixel::PortHandler::getPortHandler(DEVICE_NAME);
+    port_handler_ = dynamixel::PortHandler::getPortHandler(usb_port_.c_str());
     packet_handler_ =
         dynamixel::PacketHandler::getPacketHandler(PROTOCOL_VERSION);
 
@@ -124,7 +124,7 @@ hardware_interface::CallbackReturn BlackMouthHW::on_configure(
     }
 
     // Set the baudrate of the serial port
-    dxl_comm_result_ = port_handler_->setBaudRate(BAUDRATE);
+    dxl_comm_result_ = port_handler_->setBaudRate(baud_rate_);
     if (dxl_comm_result_ == false) {
         RCLCPP_ERROR(rclcpp::get_logger("BlackMouthHW"),
                      "Failed to set the baudrate!");
@@ -222,18 +222,24 @@ hardware_interface::CallbackReturn BlackMouthHW::on_configure(
             return hardware_interface::CallbackReturn::FAILURE;
         }
 
-        //TODO Create convert functions
-        // hw_joints_[i].write_convert_func = [&](double command) -> int32_t {
-        //     return (int32_t)(command*180/(3.14*0.088) + hw_joints_[i].home_angle);
-        // }
-        // hw_joints_[i].read_convert_func = [&](uint32_t present_position) -> double {
-        //     return (present_position - hw_joints_[i].home_angle)*(3.14*0.088)/180;
-        // }
-
+        // Add dynamixel to read present_position group
         presentPositionSyncRead_->addParam(hw_joints_[i].id);
-        // goalPositionSyncWrite_->addParam(
-        //     hw_joints_[i].id,
-        //     &hw_joints_[i].write_convert_func(hw_joints_[i].command))
+
+        // Add dynamixel to write goal position group
+        hw_joints_[i].goal_position =
+            write_convert(hw_joints_[i].command, hw_joints_[i].home_angle);
+
+        hw_joints_[i].write_goal_position[0] =
+            DXL_LOBYTE(DXL_LOWORD(hw_joints_[i].goal_position));
+        hw_joints_[i].write_goal_position[2] =
+            DXL_HIBYTE(DXL_LOWORD(hw_joints_[i].goal_position));
+        hw_joints_[i].write_goal_position[3] =
+            DXL_LOBYTE(DXL_HIWORD(hw_joints_[i].goal_position));
+        hw_joints_[i].write_goal_position[4] =
+            DXL_HIBYTE(DXL_HIWORD(hw_joints_[i].goal_position));
+
+        goalPositionSyncWrite_->addParam(hw_joints_[i].id,
+                                         hw_joints_[i].write_goal_position);
     }
 
     RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"),
@@ -276,6 +282,16 @@ hardware_interface::CallbackReturn BlackMouthHW::on_activate(
         hw_joints_[i].command = hw_joints_[i].state;
     }
 
+    // TURN ON TORQUE
+    dxl_comm_result_ = switch_dynamixel_torque(true);
+    if (dxl_comm_result_ != COMM_SUCCESS) {
+        RCLCPP_ERROR(rclcpp::get_logger("BlackMouthHW"),
+                     "Failed to TURN ON torque");
+        return hardware_interface::CallbackReturn::FAILURE;
+    }
+
+    RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"), "*** TORQUE IS ON ***");
+
     RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"), "Successfully activated!");
 
     return hardware_interface::CallbackReturn::SUCCESS;
@@ -286,6 +302,14 @@ hardware_interface::CallbackReturn BlackMouthHW::on_deactivate(
     RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"),
                 "Deactivating ...please wait...");
 
+    // TURN OFF TORQUE
+    dxl_comm_result_ = switch_dynamixel_torque(false);
+    if (dxl_comm_result_ != COMM_SUCCESS) {
+        RCLCPP_ERROR(rclcpp::get_logger("BlackMouthHW"),
+                     "Failed to TURN OFF torque");
+        return hardware_interface::CallbackReturn::FAILURE;
+    }
+
     return hardware_interface::CallbackReturn::SUCCESS;
 }
 
@@ -294,13 +318,23 @@ hardware_interface::return_type BlackMouthHW::read(
     (void)period;
     (void)time;
 
-    // RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"), "Reading...");
+    // Read data from dynamixels
+    dxl_comm_result_ = presentPositionSyncRead_->txRxPacket();
+    if (dxl_comm_result_ != COMM_SUCCESS) {
+        RCLCPP_ERROR(rclcpp::get_logger("BlackMouthHW"),
+                     "Failed to read from Dynamixel");
+        return hardware_interface::return_type::ERROR;
+    }
 
     for (uint i = 0; i < hw_joints_.size(); i++) {
-        // Simulate RRBot's movement
-        hw_joints_[i].state = 123.;
-        // RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"),
-        //             "Got state %.5f for joint %d!", hw_states_[i], i);
+        // Get data from each motor
+        hw_joints_[i].present_position = presentPositionSyncRead_->getData(
+            hw_joints_[i].id, ADDR_PRESENT_POSITION,
+            LEN_ADDR_PRESENT_POSITION);
+
+        // Convert byte data to radians
+        hw_joints_[i].state = read_convert(hw_joints_[i].present_position,
+                                           hw_joints_[i].home_angle);
     }
 
     return hardware_interface::return_type::OK;
@@ -310,12 +344,30 @@ hardware_interface::return_type BlackMouthHW::write(
     const rclcpp::Time& time, const rclcpp::Duration& period) {
     (void)period;
     (void)time;
-    // RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"), "Writing...");
 
     for (uint i = 0; i < hw_joints_.size(); i++) {
-        // Simulate sending commands to the hardware
-        // RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"),
-        //             "Got command %.5f for joint %d!", hw_commands_[i], i);
+        // Add dynamixel to write goal position group
+        hw_joints_[i].goal_position =
+            write_convert(hw_joints_[i].command, hw_joints_[i].home_angle);
+
+        hw_joints_[i].write_goal_position[0] =
+            DXL_LOBYTE(DXL_LOWORD(hw_joints_[i].goal_position));
+        hw_joints_[i].write_goal_position[2] =
+            DXL_HIBYTE(DXL_LOWORD(hw_joints_[i].goal_position));
+        hw_joints_[i].write_goal_position[3] =
+            DXL_LOBYTE(DXL_HIWORD(hw_joints_[i].goal_position));
+        hw_joints_[i].write_goal_position[4] =
+            DXL_HIBYTE(DXL_HIWORD(hw_joints_[i].goal_position));
+
+        goalPositionSyncWrite_->changeParam(hw_joints_[i].id,
+                                            hw_joints_[i].write_goal_position);
+    }
+
+    dxl_comm_result_ = goalPositionSyncWrite_->txPacket();
+    if (dxl_comm_result_ != COMM_SUCCESS) {
+        RCLCPP_ERROR(rclcpp::get_logger("BlackMouthHW"),
+                     "Failed to write to Dynamixel");
+        return hardware_interface::return_type::ERROR;
     }
 
     return hardware_interface::return_type::OK;
@@ -356,6 +408,14 @@ bool BlackMouthHW::check_comm_result(int dxl_comm_result, uint8_t dxl_error) {
         return false;
     }
     return true;
+}
+
+double BlackMouthHW::read_convert(int32_t present_pos, int32_t home_pos) {
+    return (present_pos - home_pos) * (3.14 * 0.088) / 180;
+}
+
+int32_t write_convert(double command, int32_t home_pos) {
+    return (int32_t)(command * 180 / (3.14 * 0.088) + home_pos);
 }
 
 }  // namespace black_mouth_control
