@@ -33,10 +33,6 @@
 // Protocol version
 #define PROTOCOL_VERSION 2.0
 
-// Default setting
-#define BAUDRATE 4000000  // Port Baudrate
-#define DEVICE_NAME "/dev/ttyUSB0"
-
 namespace black_mouth_control {
 
 struct BMJointInfo {
@@ -51,6 +47,7 @@ struct BMJointInfo {
     int16_t kp_gain{3000};
     int16_t ki_gain{0};
     int16_t kd_gain{500};
+    uint8_t write_goal_position[LEN_ADDR_GOAL_POSITION] = {0, 0, 0, 0};
     int32_t present_position{0};
     int32_t goal_position = home_angle;
     // TODO Check feedforward gains
@@ -96,6 +93,8 @@ class BlackMouthHW : public hardware_interface::SystemInterface {
     // Utils
     bool switch_dynamixel_torque(bool on = true);
     bool check_comm_result(int dxl_comm_result, uint8_t dxl_error);
+    double read_convert(int32_t present_pos, int32_t home_pos);
+    int32_t write_convert(double command, int32_t home_pos);
 
     // Hardware parameters
     uint8_t baud_rate_;
