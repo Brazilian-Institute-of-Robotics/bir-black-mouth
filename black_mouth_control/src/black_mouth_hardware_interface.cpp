@@ -346,9 +346,16 @@ hardware_interface::return_type BlackMouthHW::write(
     (void)time;
 
     for (uint i = 0; i < hw_joints_.size(); i++) {
-        // Add dynamixel to write goal position group
+        // Convert command to dynamixel byte data
         hw_joints_[i].goal_position =
             write_convert(hw_joints_[i].command, hw_joints_[i].home_angle);
+
+        // Apply goal position limits
+        if (hw_joints_[i].goal_position > hw_joints_[i].max_pos_limit) {
+            hw_joints_[i].goal_position = hw_joints_[i].max_pos_limit;
+        } else if (hw_joints_[i].goal_position < hw_joints_[i].min_pos_limit) {
+            hw_joints_[i].goal_position = hw_joints_[i].min_pos_limit;
+        }
 
         hw_joints_[i].write_goal_position[0] =
             DXL_LOBYTE(DXL_LOWORD(hw_joints_[i].goal_position));
@@ -411,11 +418,11 @@ bool BlackMouthHW::check_comm_result(int dxl_comm_result, uint8_t dxl_error) {
 }
 
 double BlackMouthHW::read_convert(int32_t present_pos, int32_t home_pos) {
-    return (present_pos - home_pos) * (3.14 * 0.088) / 180;
+    return (present_pos - home_pos) * (M_PI * 0.088) / 180;
 }
 
 int32_t write_convert(double command, int32_t home_pos) {
-    return (int32_t)(command * 180 / (3.14 * 0.088) + home_pos);
+    return (int32_t)(command * 180 / (M_PI * 0.088) + home_pos);
 }
 
 }  // namespace black_mouth_control
