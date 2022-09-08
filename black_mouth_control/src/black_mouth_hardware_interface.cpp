@@ -124,7 +124,7 @@ hardware_interface::CallbackReturn BlackMouthHW::on_configure(
     }
 
     // Set the baudrate of the serial port
-    dxl_comm_result_ = port_handler_->setBaudRate(baud_rate_);
+    dxl_comm_result_ = port_handler_->setBaudRate(4000000);
     if (dxl_comm_result_ == false) {
         RCLCPP_ERROR(rclcpp::get_logger("BlackMouthHW"),
                      "Failed to set the baudrate!");
@@ -135,15 +135,18 @@ hardware_interface::CallbackReturn BlackMouthHW::on_configure(
     }
 
     // Set Dynamixel group communication interfaces
-    *switchTorqueSyncWrite_ =
-        dynamixel::GroupSyncWrite(port_handler_, packet_handler_,
-                                  ADDR_TORQUE_ENABLE, LEN_ADDR_TORQUE_ENABLE);
-    *goalPositionSyncWrite_ =
-        dynamixel::GroupSyncWrite(port_handler_, packet_handler_,
-                                  ADDR_GOAL_POSITION, LEN_ADDR_GOAL_POSITION);
-    *presentPositionSyncRead_ = dynamixel::GroupSyncRead(
-        port_handler_, packet_handler_, ADDR_PRESENT_POSITION,
-        LEN_ADDR_PRESENT_POSITION);
+    switchTorqueSyncWrite_ =
+        (dynamixel::GroupSyncWrite*)(new dynamixel::GroupSyncWrite(
+            port_handler_, packet_handler_, ADDR_TORQUE_ENABLE,
+            LEN_ADDR_TORQUE_ENABLE));
+    goalPositionSyncWrite_ =
+        (dynamixel::GroupSyncWrite*)(new dynamixel::GroupSyncWrite(
+            port_handler_, packet_handler_, ADDR_GOAL_POSITION,
+            LEN_ADDR_GOAL_POSITION));
+    presentPositionSyncRead_ =
+        (dynamixel::GroupSyncRead*)(new dynamixel::GroupSyncRead(
+            port_handler_, packet_handler_, ADDR_PRESENT_POSITION,
+            LEN_ADDR_PRESENT_POSITION));
 
     // TURN OFF TORQUE
     dxl_comm_result_ = switch_dynamixel_torque(false);
@@ -231,11 +234,11 @@ hardware_interface::CallbackReturn BlackMouthHW::on_configure(
 
         hw_joints_[i].write_goal_position[0] =
             DXL_LOBYTE(DXL_LOWORD(hw_joints_[i].goal_position));
-        hw_joints_[i].write_goal_position[2] =
+        hw_joints_[i].write_goal_position[1] =
             DXL_HIBYTE(DXL_LOWORD(hw_joints_[i].goal_position));
-        hw_joints_[i].write_goal_position[3] =
+        hw_joints_[i].write_goal_position[2] =
             DXL_LOBYTE(DXL_HIWORD(hw_joints_[i].goal_position));
-        hw_joints_[i].write_goal_position[4] =
+        hw_joints_[i].write_goal_position[3] =
             DXL_HIBYTE(DXL_HIWORD(hw_joints_[i].goal_position));
 
         goalPositionSyncWrite_->addParam(hw_joints_[i].id,
@@ -315,6 +318,7 @@ hardware_interface::CallbackReturn BlackMouthHW::on_deactivate(
 
 hardware_interface::return_type BlackMouthHW::read(
     const rclcpp::Time& time, const rclcpp::Duration& period) {
+    // auto start = std::chrono::steady_clock::now();
     (void)period;
     (void)time;
 
@@ -337,11 +341,20 @@ hardware_interface::return_type BlackMouthHW::read(
                                            hw_joints_[i].home_angle);
     }
 
+    // auto end = std::chrono::steady_clock::now();
+    // std::cout << "READ: "
+    //           << std::chrono::duration_cast<std::chrono::microseconds>(end -
+    //                                                                    start)
+    //                  .count()
+    //           << " µs" << std::endl;
+
     return hardware_interface::return_type::OK;
 }
 
 hardware_interface::return_type BlackMouthHW::write(
     const rclcpp::Time& time, const rclcpp::Duration& period) {
+    // auto start = std::chrono::steady_clock::now();
+
     (void)period;
     (void)time;
 
@@ -359,11 +372,11 @@ hardware_interface::return_type BlackMouthHW::write(
 
         hw_joints_[i].write_goal_position[0] =
             DXL_LOBYTE(DXL_LOWORD(hw_joints_[i].goal_position));
-        hw_joints_[i].write_goal_position[2] =
+        hw_joints_[i].write_goal_position[1] =
             DXL_HIBYTE(DXL_LOWORD(hw_joints_[i].goal_position));
-        hw_joints_[i].write_goal_position[3] =
+        hw_joints_[i].write_goal_position[2] =
             DXL_LOBYTE(DXL_HIWORD(hw_joints_[i].goal_position));
-        hw_joints_[i].write_goal_position[4] =
+        hw_joints_[i].write_goal_position[3] =
             DXL_HIBYTE(DXL_HIWORD(hw_joints_[i].goal_position));
 
         goalPositionSyncWrite_->changeParam(hw_joints_[i].id,
@@ -376,6 +389,13 @@ hardware_interface::return_type BlackMouthHW::write(
                      "Failed to write to Dynamixel");
         return hardware_interface::return_type::ERROR;
     }
+
+    // auto end = std::chrono::steady_clock::now();
+    // std::cout << "WRITE: "
+    //           << std::chrono::duration_cast<std::chrono::microseconds>(end -
+    //                                                                    start)
+    //                  .count()
+    //           << " µs" << std::endl;
 
     return hardware_interface::return_type::OK;
 }
@@ -421,7 +441,7 @@ double BlackMouthHW::read_convert(int32_t present_pos, int32_t home_pos) {
     return (present_pos - home_pos) * (M_PI * 0.088) / 180;
 }
 
-int32_t write_convert(double command, int32_t home_pos) {
+int32_t BlackMouthHW::write_convert(double command, int32_t home_pos) {
     return (int32_t)(command * 180 / (M_PI * 0.088) + home_pos);
 }
 
