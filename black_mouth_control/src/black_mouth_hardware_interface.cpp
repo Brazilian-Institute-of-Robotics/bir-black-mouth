@@ -318,7 +318,7 @@ hardware_interface::CallbackReturn BlackMouthHW::on_deactivate(
 
 hardware_interface::return_type BlackMouthHW::read(
     const rclcpp::Time& time, const rclcpp::Duration& period) {
-    // auto start = std::chrono::steady_clock::now();
+    auto start = std::chrono::steady_clock::now();
     (void)period;
     (void)time;
 
@@ -332,6 +332,9 @@ hardware_interface::return_type BlackMouthHW::read(
 
     for (uint i = 0; i < hw_joints_.size(); i++) {
         // Get data from each motor
+        // presentPositionSyncRead_->isAvailable(hw_joints_[i].id,
+        //                                       ADDR_PRESENT_POSITION,
+        //                                       LEN_ADDR_PRESENT_POSITION);
         hw_joints_[i].present_position = presentPositionSyncRead_->getData(
             hw_joints_[i].id, ADDR_PRESENT_POSITION,
             LEN_ADDR_PRESENT_POSITION);
@@ -341,19 +344,19 @@ hardware_interface::return_type BlackMouthHW::read(
                                            hw_joints_[i].home_angle);
     }
 
-    // auto end = std::chrono::steady_clock::now();
-    // std::cout << "READ: "
-    //           << std::chrono::duration_cast<std::chrono::microseconds>(end -
-    //                                                                    start)
-    //                  .count()
-    //           << " µs" << std::endl;
+    auto end = std::chrono::steady_clock::now();
+    std::cout << "READ: "
+              << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                       start)
+                     .count()
+              << " µs" << std::endl;
 
     return hardware_interface::return_type::OK;
 }
 
 hardware_interface::return_type BlackMouthHW::write(
     const rclcpp::Time& time, const rclcpp::Duration& period) {
-    // auto start = std::chrono::steady_clock::now();
+    auto start = std::chrono::steady_clock::now();
 
     (void)period;
     (void)time;
@@ -390,12 +393,12 @@ hardware_interface::return_type BlackMouthHW::write(
         return hardware_interface::return_type::ERROR;
     }
 
-    // auto end = std::chrono::steady_clock::now();
-    // std::cout << "WRITE: "
-    //           << std::chrono::duration_cast<std::chrono::microseconds>(end -
-    //                                                                    start)
-    //                  .count()
-    //           << " µs" << std::endl;
+    auto end = std::chrono::steady_clock::now();
+    std::cout << "WRITE: "
+              << std::chrono::duration_cast<std::chrono::microseconds>(end -
+                                                                       start)
+                     .count()
+              << " µs" << std::endl;
 
     return hardware_interface::return_type::OK;
 }
