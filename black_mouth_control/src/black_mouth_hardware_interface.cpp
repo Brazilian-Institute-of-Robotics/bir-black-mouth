@@ -318,7 +318,7 @@ hardware_interface::CallbackReturn BlackMouthHW::on_deactivate(
 
 hardware_interface::return_type BlackMouthHW::read(
     const rclcpp::Time& time, const rclcpp::Duration& period) {
-    auto start = std::chrono::steady_clock::now();
+    // auto start = std::chrono::steady_clock::now();
     (void)period;
     (void)time;
 
@@ -342,21 +342,23 @@ hardware_interface::return_type BlackMouthHW::read(
         // Convert byte data to radians
         hw_joints_[i].state = read_convert(hw_joints_[i].present_position,
                                            hw_joints_[i].home_angle);
-    }
 
-    auto end = std::chrono::steady_clock::now();
-    std::cout << "READ: "
-              << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                       start)
-                     .count()
-              << " µs" << std::endl;
+    }
+    // std::cout << info_.joints[1].name.c_str() << ": " << hw_joints_[1].state << "\n";
+
+    // auto end = std::chrono::steady_clock::now();
+    // std::cout << "READ: "
+    //           << std::chrono::duration_cast<std::chrono::microseconds>(end -
+    //                                                                    start)
+    //                  .count()
+    //           << " µs" << std::endl;
 
     return hardware_interface::return_type::OK;
 }
 
 hardware_interface::return_type BlackMouthHW::write(
     const rclcpp::Time& time, const rclcpp::Duration& period) {
-    auto start = std::chrono::steady_clock::now();
+    // auto start = std::chrono::steady_clock::now();
 
     (void)period;
     (void)time;
@@ -386,6 +388,8 @@ hardware_interface::return_type BlackMouthHW::write(
                                             hw_joints_[i].write_goal_position);
     }
 
+    std::cout << info_.joints[1].name.c_str() << ": " << hw_joints_[1].goal_position << "\n";
+
     dxl_comm_result_ = goalPositionSyncWrite_->txPacket();
     if (dxl_comm_result_ != COMM_SUCCESS) {
         RCLCPP_ERROR(rclcpp::get_logger("BlackMouthHW"),
@@ -393,12 +397,12 @@ hardware_interface::return_type BlackMouthHW::write(
         return hardware_interface::return_type::ERROR;
     }
 
-    auto end = std::chrono::steady_clock::now();
-    std::cout << "WRITE: "
-              << std::chrono::duration_cast<std::chrono::microseconds>(end -
-                                                                       start)
-                     .count()
-              << " µs" << std::endl;
+    // auto end = std::chrono::steady_clock::now();
+    // std::cout << "WRITE: "
+    //           << std::chrono::duration_cast<std::chrono::microseconds>(end -
+    //                                                                    start)
+    //                  .count()
+    //           << " µs" << std::endl;
 
     return hardware_interface::return_type::OK;
 }

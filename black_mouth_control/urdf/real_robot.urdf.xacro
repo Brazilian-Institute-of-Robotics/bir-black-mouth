@@ -1,47 +1,6 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="quadruped">
 
-    <xacro:macro name="leg_joints" params="prefix leg_id">
-        <joint name="${prefix}_hip_roll_joint">
-            <param name="id">${leg_id}1</param>
-            <param name="drive_mode">0</param>
-            <param name="min_pos_limit">0</param>
-            <param name="max_pos_limit">3720</param>
-            <param name="home_angle">2048</param>
-            <param name="kp_gain">3000</param>
-            <param name="ki_gain">0</param>
-            <param name="kd_gain">500</param>
-            <command_interface name="position"/>
-            <state_interface name="position"/>
-        </joint>
-
-        <joint name="${prefix}_hip_pitch_joint">
-            <param name="id">${leg_id}2</param>
-            <param name="drive_mode">0</param>
-            <param name="min_pos_limit">0</param>
-            <param name="max_pos_limit">3800</param>
-            <param name="home_angle">2048</param>
-            <param name="kp_gain">3000</param>
-            <param name="ki_gain">0</param>
-            <param name="kd_gain">500</param>
-            <command_interface name="position"/>
-            <state_interface name="position"/>
-        </joint>
-
-        <joint name="${prefix}_elbow_joint">
-            <param name="id">${leg_id}3</param>
-            <param name="drive_mode">0</param>
-            <param name="min_pos_limit">0</param>
-            <param name="max_pos_limit">2700</param>
-            <param name="home_angle">2048</param>
-            <param name="kp_gain">3000</param>
-            <param name="ki_gain">0</param>
-            <param name="kd_gain">500</param>
-            <command_interface name="position"/>
-            <state_interface name="position"/>
-        </joint>
-    </xacro:macro>
-
     <ros2_control name="BlackMouthSystem" type="system">
         <hardware>
             <plugin>black_mouth_control/BlackMouthHW</plugin>
@@ -49,9 +8,201 @@
             <param name="usb_port">/dev/ttyUSB0</param>
             <param name="return_delay_type">100</param>
         </hardware>
-        <xacro:leg_joints prefix="front_right" leg_id="1"/>
-        <xacro:leg_joints prefix="front_left" leg_id="2"/>
-        <xacro:leg_joints prefix="back_left" leg_id="3"/>
-        <xacro:leg_joints prefix="back_right" leg_id="4"/>
+
+        <!-- FRONT RIGHT -->
+        <joint name="front_right_hip_roll_joint">
+            <param name="id">11</param>
+            <param name="drive_mode">0</param>
+            <param name="min_pos_limit">1709</param>
+            <param name="max_pos_limit">2386</param>
+            <param name="home_angle">2048</param>
+            <param name="kp_gain">850</param>
+            <param name="ki_gain">0</param>
+            <param name="kd_gain">0</param>
+            <command_interface name="position">
+                <param name="min">-0.52</param>
+                <param name="max">0.52</param>
+            </command_interface>
+            <state_interface name="position"/>
+        </joint>
+
+        <joint name="front_right_hip_pitch_joint">
+            <param name="id">12</param>
+            <param name="drive_mode">1</param>
+            <param name="min_pos_limit">1023</param>
+            <param name="max_pos_limit">2048</param>
+            <param name="home_angle">1533</param>
+            <param name="kp_gain">850</param>
+            <param name="ki_gain">0</param>
+            <param name="kd_gain">0</param>
+            <command_interface name="position">
+                <param name="min">-0.79</param>
+                <param name="max">0.79</param>
+            </command_interface>
+            <state_interface name="position"/>
+        </joint>
+
+        <joint name="front_right_elbow_joint">
+            <param name="id">13</param>
+            <param name="drive_mode">0</param>
+            <param name="min_pos_limit">1700</param>
+            <param name="max_pos_limit">2490</param>
+            <param name="home_angle">2048</param>
+            <param name="kp_gain">850</param>
+            <param name="ki_gain">0</param>
+            <param name="kd_gain">0</param>
+            <command_interface name="position">
+                <param name="min">-0.63</param>
+                <param name="max">0.63</param>
+            </command_interface>
+            <state_interface name="position"/>
+        </joint>
+
+        <!-- FRONT LEFT -->
+        <joint name="front_left_hip_roll_joint">
+            <param name="id">21</param>
+            <param name="drive_mode">0</param>
+            <param name="min_pos_limit">1709</param>
+            <param name="max_pos_limit">2386</param>
+            <param name="home_angle">2048</param>
+            <param name="kp_gain">850</param>
+            <param name="ki_gain">0</param>
+            <param name="kd_gain">0</param>
+            <command_interface name="position">
+                <param name="min">-0.52</param>
+                <param name="max">0.52</param>
+            </command_interface>
+            <state_interface name="position"/>
+        </joint>
+
+        <joint name="front_left_hip_pitch_joint">
+            <param name="id">22</param>
+            <param name="drive_mode">0</param>
+            <param name="min_pos_limit">1023</param>
+            <param name="max_pos_limit">2048</param>
+            <param name="home_angle">1533</param>
+            <param name="kp_gain">850</param>
+            <param name="ki_gain">0</param>
+            <param name="kd_gain">0</param>
+            <command_interface name="position">
+                <param name="min">-0.79</param>
+                <param name="max">0.79</param>
+            </command_interface>
+            <state_interface name="position"/>
+        </joint>
+
+        <joint name="front_left_elbow_joint">
+            <param name="id">23</param>
+            <param name="drive_mode">1</param>
+            <param name="min_pos_limit">1700</param>
+            <param name="max_pos_limit">2490</param>
+            <param name="home_angle">2048</param>
+            <param name="kp_gain">850</param>
+            <param name="ki_gain">0</param>
+            <param name="kd_gain">0</param>
+            <command_interface name="position">
+                <param name="min">-0.63</param>
+                <param name="max">0.63</param>
+            </command_interface>
+            <state_interface name="position"/>
+        </joint>
+
+        <!-- BACK RIGHT -->
+        <joint name="back_right_hip_roll_joint">
+            <param name="id">41</param>
+            <param name="drive_mode">1</param>
+            <param name="min_pos_limit">1709</param>
+            <param name="max_pos_limit">2386</param>
+            <param name="home_angle">2048</param>
+            <param name="kp_gain">850</param>
+            <param name="ki_gain">0</param>
+            <param name="kd_gain">0</param>
+            <command_interface name="position">
+                <param name="min">-0.52</param>
+                <param name="max">0.52</param>
+            </command_interface>
+            <state_interface name="position"/>
+        </joint>
+
+        <joint name="back_right_hip_pitch_joint">
+            <param name="id">42</param>
+            <param name="drive_mode">1</param>
+            <param name="min_pos_limit">1023</param>
+            <param name="max_pos_limit">2048</param>
+            <param name="home_angle">1533</param>
+            <param name="kp_gain">850</param>
+            <param name="ki_gain">0</param>
+            <param name="kd_gain">0</param>
+            <command_interface name="position">
+                <param name="min">-0.79</param>
+                <param name="max">0.79</param>
+            </command_interface>
+            <state_interface name="position"/>
+        </joint>
+
+        <joint name="back_right_elbow_joint">
+            <param name="id">43</param>
+            <param name="drive_mode">0</param>
+            <param name="min_pos_limit">1700</param>
+            <param name="max_pos_limit">2490</param>
+            <param name="home_angle">2048</param>
+            <param name="kp_gain">850</param>
+            <param name="ki_gain">0</param>
+            <param name="kd_gain">0</param>
+            <command_interface name="position">
+                <param name="min">-0.63</param>
+                <param name="max">0.63</param>
+            </command_interface>
+            <state_interface name="position"/>
+        </joint>
+
+        <!-- BACK LEFT -->
+        <joint name="back_left_hip_roll_joint">
+            <param name="id">31</param>
+            <param name="drive_mode">1</param>
+            <param name="min_pos_limit">1709</param>
+            <param name="max_pos_limit">2386</param>
+            <param name="home_angle">2048</param>
+            <param name="kp_gain">850</param>
+            <param name="ki_gain">0</param>
+            <param name="kd_gain">0</param>
+            <command_interface name="position">
+                <param name="min">-0.52</param>
+                <param name="max">0.52</param>
+            </command_interface>
+            <state_interface name="position"/>
+        </joint>
+
+        <joint name="back_left_hip_pitch_joint">
+            <param name="id">32</param>
+            <param name="drive_mode">0</param>
+            <param name="min_pos_limit">1023</param>
+            <param name="max_pos_limit">2048</param>
+            <param name="home_angle">1533</param>
+            <param name="kp_gain">850</param>
+            <param name="ki_gain">0</param>
+            <param name="kd_gain">0</param>
+            <command_interface name="position">
+                <param name="min">-0.79</param>
+                <param name="max">0.79</param>
+            </command_interface>
+            <state_interface name="position"/>
+        </joint>
+
+        <joint name="back_left_elbow_joint">
+            <param name="id">33</param>
+            <param name="drive_mode">1</param>
+            <param name="min_pos_limit">1700</param>
+            <param name="max_pos_limit">2490</param>
+            <param name="home_angle">2048</param>
+            <param name="kp_gain">850</param>
+            <param name="ki_gain">0</param>
+            <param name="kd_gain">0</param>
+            <command_interface name="position">
+                <param name="min">-0.63</param>
+                <param name="max">0.63</param>
+            </command_interface>
+            <state_interface name="position"/>
+        </joint>
     </ros2_control>
 </robot>
