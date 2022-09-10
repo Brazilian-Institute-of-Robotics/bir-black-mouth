@@ -124,7 +124,7 @@ hardware_interface::CallbackReturn BlackMouthHW::on_configure(
     }
 
     // Set the baudrate of the serial port
-    dxl_comm_result_ = port_handler_->setBaudRate(4000000);
+    dxl_comm_result_ = port_handler_->setBaudRate(baud_rate_);
     if (dxl_comm_result_ == false) {
         RCLCPP_ERROR(rclcpp::get_logger("BlackMouthHW"),
                      "Failed to set the baudrate!");
@@ -342,9 +342,9 @@ hardware_interface::return_type BlackMouthHW::read(
         // Convert byte data to radians
         hw_joints_[i].state = read_convert(hw_joints_[i].present_position,
                                            hw_joints_[i].home_angle);
-
     }
-    // std::cout << info_.joints[1].name.c_str() << ": " << hw_joints_[1].state << "\n";
+    // std::cout << info_.joints[1].name.c_str() << ": " << hw_joints_[1].state
+    // << "\n";
 
     // auto end = std::chrono::steady_clock::now();
     // std::cout << "READ: "
@@ -388,7 +388,8 @@ hardware_interface::return_type BlackMouthHW::write(
                                             hw_joints_[i].write_goal_position);
     }
 
-    std::cout << info_.joints[1].name.c_str() << ": " << hw_joints_[1].goal_position << "\n";
+    // std::cout << info_.joints[1].name.c_str() << ": "
+    //           << hw_joints_[1].goal_position << "\n";
 
     dxl_comm_result_ = goalPositionSyncWrite_->txPacket();
     if (dxl_comm_result_ != COMM_SUCCESS) {

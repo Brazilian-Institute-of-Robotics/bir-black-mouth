@@ -52,10 +52,6 @@ struct BMJointInfo {
     int32_t goal_position = home_angle;
     // TODO Check feedforward gains
 
-    // Aux convert functions
-    std::function<int32_t()> write_convert_func = [&]() -> int32_t {return 0;};
-    std::function<double()> read_convert_func = [&]() -> double {return 0.0;};
-
     // ros2_control interfaces
     double command;
     double state;
@@ -97,7 +93,7 @@ class BlackMouthHW : public hardware_interface::SystemInterface {
     int32_t write_convert(double command, int32_t home_pos);
 
     // Hardware parameters
-    uint8_t baud_rate_;
+    uint32_t baud_rate_;
     uint8_t return_delay_type_;
     std::string usb_port_;
     std::vector<BMJointInfo> hw_joints_;
