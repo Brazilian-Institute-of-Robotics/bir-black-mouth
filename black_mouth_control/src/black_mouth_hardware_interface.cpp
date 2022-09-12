@@ -340,8 +340,15 @@ hardware_interface::return_type BlackMouthHW::read(
             LEN_ADDR_PRESENT_POSITION);
 
         // Convert byte data to radians
-        hw_joints_[i].state = read_convert(hw_joints_[i].present_position,
-                                           hw_joints_[i].home_angle);
+        if (hw_joints_[i].id % 10 != 3) {
+            hw_joints_[i].state = read_convert(hw_joints_[i].present_position,
+                                               hw_joints_[i].home_angle);
+        } else {
+            double motor_angle = read_convert(hw_joints_[i].present_position,
+                                            hw_joints_[i].home_angle);
+            hw_joints_[i].state = 
+                asin(LA / L *sin(motor_angle));  // Convert motor angle to leg angle
+        }
     }
     // std::cout << info_.joints[1].name.c_str() << ": " << hw_joints_[1].state
     // << "\n";
@@ -365,8 +372,17 @@ hardware_interface::return_type BlackMouthHW::write(
 
     for (uint i = 0; i < hw_joints_.size(); i++) {
         // Convert command to dynamixel byte data
-        hw_joints_[i].goal_position =
-            write_convert(hw_joints_[i].command, hw_joints_[i].home_angle);
+        if (hw_joints_[i].id % 10 != 3) {
+            hw_joints_[i].goal_position =
+                write_convert(hw_joints_[i].command, hw_joints_[i].home_angle);
+        } else {
+            double motor_angle =
+                asin(L / LA *
+                     sin(hw_joints_[i]
+                             .command));  // Convert leg angle to motor angle
+            hw_joints_[i].goal_position =
+                write_convert(motor_angle, hw_joints_[i].home_angle);
+        }
 
         // Apply goal position limits
         if (hw_joints_[i].goal_position > hw_joints_[i].max_pos_limit) {

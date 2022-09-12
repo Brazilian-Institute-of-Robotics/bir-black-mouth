@@ -33,6 +33,10 @@
 // Protocol version
 #define PROTOCOL_VERSION 2.0
 
+// Robot parameters
+#define LA 26.8 // (mm) distance from tibia motor axis and ball joint axis
+#define L 24.12 // (mm) distance from tibia axis and ball joint axis
+
 namespace black_mouth_control {
 
 struct BMJointInfo {
