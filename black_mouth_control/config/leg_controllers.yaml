@@ -1,7 +1,7 @@
 controller_manager:
   ros__parameters:
     use_sim_time: true
-    update_rate: 100  # Hz
+    update_rate: 1000  # Hz
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
@@ -56,9 +56,9 @@ front_left_joint_trajectory_controller:
         goal: 0.05
     
     gains: 
-      front_left_hip_roll_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 9.0 }
-      front_left_hip_pitch_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 9.0 }
-      front_left_elbow_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 9.0 }
+      front_left_hip_roll_joint: {p: 30.00 , i: 1.0, d: 0.06, i_clamp: 10.0 }
+      front_left_hip_pitch_joint: {p: 30.00 , i: 1.0, d: 0.06, i_clamp: 10.0 }
+      front_left_elbow_joint: {p: 30.00 , i: 1.0, d: 0.06, i_clamp: 10.0 }
 
 
 front_right_joint_trajectory_controller:
@@ -96,9 +96,9 @@ front_right_joint_trajectory_controller:
         goal: 0.05
 
     gains: 
-      front_right_hip_roll_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 9.0 }
-      front_right_hip_pitch_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 9.0 }
-      front_right_elbow_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 9.0 }
+      front_right_hip_roll_joint: {p: 30.00 , i: 1.0, d: 0.06, i_clamp: 10.0 }
+      front_right_hip_pitch_joint: {p: 30.00 , i: 1.0, d: 0.06, i_clamp: 10.0 }
+      front_right_elbow_joint: {p: 30.00 , i: 1.0, d: 0.06, i_clamp: 10.0 }
 
 back_left_joint_trajectory_controller:
   ros__parameters:
@@ -134,9 +134,9 @@ back_left_joint_trajectory_controller:
         trajectory: 0.05
         goal: 0.05
     gains: 
-      back_left_hip_roll_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 9.0 }
-      back_left_hip_pitch_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 9.0 }
-      back_left_elbow_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 9.0 }
+      back_left_hip_roll_joint: {p: 30.00 , i: 1.0, d: 0.06, i_clamp: 10.0 }
+      back_left_hip_pitch_joint: {p: 30.00 , i: 1.0, d: 0.06, i_clamp: 10.0 }
+      back_left_elbow_joint: {p: 30.00 , i: 1.0, d: 0.06, i_clamp: 10.0 }
 
 back_right_joint_trajectory_controller:
   ros__parameters:
@@ -172,6 +172,6 @@ back_right_joint_trajectory_controller:
         goal: 0.05
 
     gains: 
-      back_right_hip_roll_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 9.0 }
-      back_right_hip_pitch_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 9.0 }
-      back_right_elbow_joint: {p: 6.00 , i: 2.3, d: 0.02, i_clamp: 9.0 }
+      back_right_hip_roll_joint: {p: 30.00 , i: 1.0, d: 0.06, i_clamp: 10.0 }
+      back_right_hip_pitch_joint: {p: 30.00 , i: 1.0, d: 0.06, i_clamp: 10.0 }
+      back_right_elbow_joint: {p: 30.00 , i: 1.0, d: 0.06, i_clamp: 10.0 }

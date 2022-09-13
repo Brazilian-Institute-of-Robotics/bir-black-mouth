@@ -69,7 +69,7 @@ void InverseKinematics::defaultPoseCallback(const std_msgs::msg::Empty::SharedPt
   (void) msg;
   this->_cmd_ik_msg.body_leg_ik_trajectory.resize(1);
   this->_cmd_ik_msg.time_from_start.resize(1);
-  this->_cmd_ik_msg.time_from_start.at(0).sec     = 1.0;
+  this->_cmd_ik_msg.time_from_start.at(0).sec     = 2.0;
   this->_cmd_ik_msg.time_from_start.at(0).nanosec = 0.0;
   this->_cmd_ik_msg.body_leg_ik_trajectory.at(0).body_position = geometry_msgs::msg::Vector3();
   this->_cmd_ik_msg.body_leg_ik_trajectory.at(0).body_rotation = geometry_msgs::msg::Vector3();

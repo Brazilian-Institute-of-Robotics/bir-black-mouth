@@ -24,6 +24,7 @@ set(dependencies
   rosidl_default_generators
   builtin_interfaces
   Eigen3
+  black_mouth_kinematics
 )
 
 foreach(dependency ${dependencies})
@@ -33,18 +34,21 @@ endforeach()
 rosidl_generate_interfaces(${PROJECT_NAME}
   # msg/...
   "srv/ComputeGaitTrajectory.srv"
-  DEPENDENCIES std_msgs geometry_msgs builtin_interfaces
+  DEPENDENCIES std_msgs geometry_msgs builtin_interfaces black_mouth_kinematics
 )
 
 ament_export_dependencies(rosidl_default_runtime)
 
 add_executable(gait_traj_server src/compute_gait_trajectory.cpp)
+add_executable(ik_gait_traj_server src/compute_ik_gait_trajectory.cpp)
 ament_target_dependencies(gait_traj_server ${dependencies})
+ament_target_dependencies(ik_gait_traj_server ${dependencies})
 
 rosidl_get_typesupport_target(cpp_typesupport_target
   "${PROJECT_NAME}" "rosidl_typesupport_cpp"
 )
 target_link_libraries(gait_traj_server "${cpp_typesupport_target}")
+target_link_libraries(ik_gait_traj_server "${cpp_typesupport_target}")
 
 
 include_directories(${EIGEN3_INCLUDE_DIR})
@@ -53,6 +57,7 @@ include_directories(include)
 install(
   TARGETS
   gait_traj_server
+  ik_gait_traj_server
   DESTINATION
   lib/${PROJECT_NAME}
 )
