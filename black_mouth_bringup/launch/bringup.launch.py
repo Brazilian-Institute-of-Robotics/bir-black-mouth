@@ -1,108 +1,60 @@
 import os
-import launch
-from launch.actions import IncludeLaunchDescription, ExecuteProcess, DeclareLaunchArgument
 from launch import LaunchDescription
-from launch_ros.actions import Node
+from launch.substitutions import Command, LaunchConfiguration
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
+  
+    bm_description_pkg_share = FindPackageShare('black_mouth_description').find('black_mouth_description')
+    bm_control_pkg_share = FindPackageShare('black_mouth_control').find('black_mouth_control')
+    bm_kinematics_pkg_share = FindPackageShare('black_mouth_kinematics').find('black_mouth_kinematics')
 
-    pkg_description = FindPackageShare('black_mouth_description').find('black_mouth_description')
+    default_model = os.path.join(bm_description_pkg_share, "urdf", "black_mouth_real.urdf.xacro")
+    robot_model = LaunchConfiguration('model', default=default_model)
 
-    default_model = os.path.join(
-        pkg_description, "urdf", "black_mouth_real.urdf.xacro")
+    default_controllers = os.path.join(bm_control_pkg_share, "config", "leg_controllers_real_robot.yaml")
+    robot_controllers = LaunchConfiguration('controllers', default=default_controllers)
 
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    default_quadruped_config = os.path.join(bm_kinematics_pkg_share, 'config', 'quadruped.yaml')
+    quadruped_config = LaunchConfiguration('quadruped_config', default=default_quadruped_config)
 
-    # Publish TF
-    node_robot_state_publisher = Node(
+    use_sim_time = LaunchConfiguration('use_sim_time', default='false')
+
+    robot_state_publisher = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
         output="screen",
         parameters=[{'use_sim_time': use_sim_time,
-                     'robot_description': Command(['xacro ', default_model])}],
+                     'robot_description': Command(['xacro ', robot_model])}],
+    )
+    
+    bm_controllers = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(bm_control_pkg_share, 'launch', 'bm_load_controller.launch.py')),
+        launch_arguments={'model': robot_model,
+                          'controllers': robot_controllers}.items(),
     )
 
-    # Load controller to publish joint data
-    load_joint_state_broadcaster = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-             'joint_state_broadcaster'],
-        output='screen'
-    )
-
-    robot_description_content = Command(
-        [
-            PathJoinSubstitution([FindExecutable(name="xacro")]),
-            " ",
-            PathJoinSubstitution(
-                [
-                    FindPackageShare("black_mouth_description"),
-                    "urdf",
-                    "black_mouth_real.urdf.xacro",
-                ]
-            ),
-        ]
-    )
-    robot_description2 = {"robot_description": robot_description_content}
-
-    robot_controllers = PathJoinSubstitution(
-        [
-            FindPackageShare("black_mouth_control"),
-            "config",
-            "leg_controllers_real_robot.yaml",
-        ]
-    )
-
-    control_node = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        parameters=[robot_description2, robot_controllers],
-        output="both",
-    )
-
-    # Load controller of the front left leg joints
-    load_front_left_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-             'front_left_joint_trajectory_controller'],
-        output='screen'
-    )
-
-    # Load controller of the front right leg joints
-    load_front_right_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-             'front_right_joint_trajectory_controller'],
-        output='screen'
-    )
-
-    # Load controller of the back left leg joints
-    load_back_left_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-             'back_left_joint_trajectory_controller'],
-        output='screen'
-    )
-
-    # Load controller of the back right leg joints
-    load_back_right_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-             'back_right_joint_trajectory_controller'],
-        output='screen'
+    inverse_kinematics = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(bm_kinematics_pkg_share, 'launch', 'kinematics.launch.py')),
+        launch_arguments={'quadruped_config': quadruped_config}.items(),
     )
 
     return LaunchDescription([
-        DeclareLaunchArgument(
-            'use_sim_time', default_value='false', description='Use simulation (Gazebo) clock if true'),
-        DeclareLaunchArgument(name='gui', default_value='false',
-                                             description='Flag to enable joint_state_publisher_gui'),
-        DeclareLaunchArgument(
-            name='model', default_value=default_model, description='Absolute path to robot urdf file'),
-        node_robot_state_publisher,
-        control_node,
-        load_joint_state_broadcaster,
-        load_front_left_joint_trajectory_controller,
-        load_front_right_joint_trajectory_controller,
-        load_back_left_joint_trajectory_controller,
-        load_back_right_joint_trajectory_controller,
+        DeclareLaunchArgument(name='use_sim_time', default_value='false', 
+                              description='Use simulation (Gazebo) clock if true'),
+        DeclareLaunchArgument(name='model', default_value=default_model, 
+                              description='Absolute path to robot urdf file'),
+        DeclareLaunchArgument(name='controllers', default_value=default_controllers, 
+                              description='Absolute path to robot controllers file'),
+        DeclareLaunchArgument(name='quadruped_config', default_value=default_quadruped_config, 
+                              description='Absolute path to quadruped config file'),
+        robot_state_publisher,
+        bm_controllers,
+        inverse_kinematics
     ])
