@@ -346,8 +346,7 @@ hardware_interface::return_type BlackMouthHW::read(
         } else {
             double motor_angle = read_convert(hw_joints_[i].present_position,
                                             hw_joints_[i].home_angle);
-            hw_joints_[i].state = 
-                asin(LA / L *sin(motor_angle));  // Convert motor angle to leg angle
+            hw_joints_[i].state = 1.12283214*motor_angle - 0.01613196;  // Convert motor angle to leg angle
         }
     }
     // std::cout << info_.joints[1].name.c_str() << ": " << hw_joints_[1].state
@@ -376,10 +375,7 @@ hardware_interface::return_type BlackMouthHW::write(
             hw_joints_[i].goal_position =
                 write_convert(hw_joints_[i].command, hw_joints_[i].home_angle);
         } else {
-            double motor_angle =
-                asin(L / LA *
-                     sin(hw_joints_[i]
-                             .command));  // Convert leg angle to motor angle
+            double motor_angle = 0.89058151*hw_joints_[i].command + 0.01436683;  // Convert leg angle to motor angle
             hw_joints_[i].goal_position =
                 write_convert(motor_angle, hw_joints_[i].home_angle);
         }
