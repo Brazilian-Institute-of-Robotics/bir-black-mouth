@@ -33,28 +33,28 @@ def generate_launch_description():
 
     # Load controller of the front left leg joints
     load_front_left_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'configured',
              'front_left_joint_trajectory_controller'],
         output='screen'
     )
 
     # Load controller of the front right leg joints
     load_front_right_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'configured',
              'front_right_joint_trajectory_controller'],
         output='screen'
     )
 
     # Load controller of the back left leg joints
     load_back_left_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'configured',
              'back_left_joint_trajectory_controller'],
         output='screen'
     )
 
     # Load controller of the back right leg joints
     load_back_right_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'configured',
              'back_right_joint_trajectory_controller'],
         output='screen'
     )

@@ -349,8 +349,8 @@ hardware_interface::return_type BlackMouthHW::read(
             hw_joints_[i].state = 1.12283214*motor_angle - 0.01613196;  // Convert motor angle to leg angle
         }
     }
-    // std::cout << info_.joints[1].name.c_str() << ": " << hw_joints_[1].state
-    // << "\n";
+    // std::cout << "READ: " << info_.joints[1].name.c_str() << "  "
+    //            << hw_joints_[1].state << "\n";
 
     // auto end = std::chrono::steady_clock::now();
     // std::cout << "READ: "
@@ -400,8 +400,8 @@ hardware_interface::return_type BlackMouthHW::write(
                                             hw_joints_[i].write_goal_position);
     }
 
-    // std::cout << info_.joints[1].name.c_str() << ": "
-    //           << hw_joints_[1].goal_position << "\n";
+    // std::cout << "WRITE: " << info_.joints[1].name.c_str() << "  "
+    //            << hw_joints_[1].command << "\n";
 
     dxl_comm_result_ = goalPositionSyncWrite_->txPacket();
     if (dxl_comm_result_ != COMM_SUCCESS) {
