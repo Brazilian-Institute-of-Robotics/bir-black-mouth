@@ -11,10 +11,11 @@ from launch_ros.actions import Node
 def generate_launch_description():
 
     bm_gazebo_pkg_share = FindPackageShare('black_mouth_gazebo').find('black_mouth_gazebo')
+    bm_bringup_pkg_share = FindPackageShare('black_mouth_bringup').find('black_mouth_bringup')
     bm_description_pkg_share = FindPackageShare('black_mouth_description').find('black_mouth_description')
     bm_control_pkg_share = FindPackageShare('black_mouth_control').find('black_mouth_control')
     bm_kinematics_pkg_share = FindPackageShare('black_mouth_kinematics').find('black_mouth_kinematics')
-        
+    
     default_world = os.path.join(bm_gazebo_pkg_share, 'worlds/empty.world')
     default_rviz_config = os.path.join(bm_description_pkg_share, 'rviz/urdf_config.rviz')
     default_model = os.path.join(bm_description_pkg_share, "urdf", "black_mouth.urdf.xacro")
@@ -56,9 +57,9 @@ def generate_launch_description():
         condition=IfCondition(LaunchConfiguration('use_rviz'))
     )
 
-    start_robot = IncludeLaunchDescription(
+    bringup = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(bm_description_pkg_share, 'launch', 'start_robot.launch.py')),
+            os.path.join(bm_bringup_pkg_share, 'launch', 'bringup.launch.py')),
         launch_arguments={'use_sim_time': LaunchConfiguration('use_sim_time'),
                           'model': LaunchConfiguration('model'),
                           'controllers': LaunchConfiguration('controllers'),
@@ -68,7 +69,7 @@ def generate_launch_description():
 
 
     return LaunchDescription([
-        DeclareLaunchArgument(name='use_sim_time', default_value='false', 
+        DeclareLaunchArgument(name='use_sim_time', default_value='true', 
                               description='Use simulation (Gazebo) clock if true'),
         DeclareLaunchArgument(name='world', default_value=default_world, 
                               description='Absolute path to world file'),
@@ -85,6 +86,6 @@ def generate_launch_description():
         gzserver,
         gzclient,
         spawn_robot,
-        start_robot,
+        bringup,
         rviz,
     ])
