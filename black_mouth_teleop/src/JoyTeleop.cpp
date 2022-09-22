@@ -27,6 +27,9 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
                           std::bind(&JoyTeleop::joyCallback, this, _1));
 
   _set_state_client = this->create_client<black_mouth_teleop::srv::SetTeleopState>("set_teleop_state");
+  
+  _set_hw_state_client = this->create_client<controller_manager_msgs::srv::SetHardwareComponentState>("controller_manager/set_hardware_component_state");
+  _switch_controller_client = this->create_client<controller_manager_msgs::srv::SwitchController>("controller_manager/switch_controller");
 
   _ik_timer = this->create_wall_timer(50ms,  std::bind(&JoyTeleop::publishIK, this));
   _vel_timer = this->create_wall_timer(200ms, std::bind(&JoyTeleop::publishVel, this));
@@ -81,6 +84,30 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
     RCLCPP_INFO(this->get_logger(), "Set teleop state service not available, waiting again...");
   }
 
+  while(!_set_hw_state_client->wait_for_service(1s))
+  {
+    if(!rclcpp::ok())
+    {
+      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the %s service. Exiting.", 
+      _set_hw_state_client->get_service_name());
+      return;
+    }
+    RCLCPP_INFO(this->get_logger(), "%s service not available, waiting again...",
+      _set_hw_state_client->get_service_name());
+  }
+
+  while(!_switch_controller_client->wait_for_service(1s))
+  {
+    if(!rclcpp::ok())
+    {
+      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the %s service. Exiting.", 
+      _switch_controller_client->get_service_name());
+      return;
+    }
+    RCLCPP_INFO(this->get_logger(), "%s service not available, waiting again...",
+      _switch_controller_client->get_service_name());
+  }
+
   auto request = std::make_shared<black_mouth_teleop::srv::SetTeleopState::Request>();
   request->state = _state;
   _set_state_client->async_send_request(request);
@@ -125,8 +152,29 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 
   if (_state.state == black_mouth_teleop::msg::TeleopState::INIT)
   {
-    if (msg->buttons[_rest_button])
+    if (msg->buttons[_rest_button]) {
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
+
+      // Activate hardware interface
+      auto set_hw_state_request = controller_manager_msgs::srv::SetHardwareComponentState::Request();
+      set_hw_state_request.name = "BlackMouthSystem";
+      set_hw_state_request.target_state.id = 3; // 3 = Active
+
+      _set_hw_state_client->async_send_request(std::make_shared<controller_manager_msgs::srv::SetHardwareComponentState::Request>(set_hw_state_request));
+
+      // Activate leg controllers
+      auto switch_controller_request = controller_manager_msgs::srv::SwitchController::Request();
+      switch_controller_request.activate_asap = true;
+      switch_controller_request.start_asap = true;
+      switch_controller_request.activate_controllers.push_back("front_left_joint_trajectory_controller");
+      switch_controller_request.activate_controllers.push_back("front_right_joint_trajectory_controller");
+      switch_controller_request.activate_controllers.push_back("back_left_joint_trajectory_controller");
+      switch_controller_request.activate_controllers.push_back("back_right_joint_trajectory_controller");
+
+      _switch_controller_client->async_send_request(std::make_shared<controller_manager_msgs::srv::SwitchController::Request>(switch_controller_request));
+
+
+    }
   }
 
   else if (_state.state == black_mouth_teleop::msg::TeleopState::RESTING)

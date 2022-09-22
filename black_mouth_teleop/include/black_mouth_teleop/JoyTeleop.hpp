@@ -9,6 +9,8 @@
 #include "black_mouth_teleop/msg/teleop_state.hpp"
 #include "black_mouth_teleop/srv/set_teleop_state.hpp"
 #include "black_mouth_teleop/EMAFilter.hpp"
+#include "controller_manager_msgs/srv/set_hardware_component_state.hpp"
+#include "controller_manager_msgs/srv/switch_controller.hpp"
 
 #include <memory>
 
@@ -32,6 +34,9 @@ private:
   void controllingBodyState(const sensor_msgs::msg::Joy::SharedPtr msg);
   void walkingState(const sensor_msgs::msg::Joy::SharedPtr msg);
 
+  rclcpp::CallbackGroup::SharedPtr _callback_group;
+  rclcpp::SubscriptionOptions _sub_options;
+
   rclcpp::TimerBase::SharedPtr _ik_timer;
   rclcpp::TimerBase::SharedPtr _vel_timer;
   rclcpp::TimerBase::SharedPtr _default_pose_timer;
@@ -43,6 +48,9 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr _joy_subscriber;
 
   rclcpp::Client<black_mouth_teleop::srv::SetTeleopState>::SharedPtr _set_state_client;
+
+  rclcpp::Client<controller_manager_msgs::srv::SetHardwareComponentState>::SharedPtr _set_hw_state_client;
+  rclcpp::Client<controller_manager_msgs::srv::SwitchController>::SharedPtr _switch_controller_client;
 
   black_mouth_teleop::msg::TeleopState _state;
 
