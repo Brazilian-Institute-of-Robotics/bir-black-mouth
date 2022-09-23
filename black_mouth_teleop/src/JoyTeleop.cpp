@@ -160,20 +160,30 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       set_hw_state_request.name = "BlackMouthSystem";
       set_hw_state_request.target_state.id = 3; // 3 = Active
 
-      _set_hw_state_client->async_send_request(std::make_shared<controller_manager_msgs::srv::SetHardwareComponentState::Request>(set_hw_state_request));
+      auto result_hw_state_goal = _set_hw_state_client->async_send_request(std::make_shared<controller_manager_msgs::srv::SetHardwareComponentState::Request>(set_hw_state_request));
+      result_hw_state_goal.wait_for(1s);
 
       // Activate leg controllers
       auto switch_controller_request = controller_manager_msgs::srv::SwitchController::Request();
       switch_controller_request.activate_asap = true;
-      switch_controller_request.start_asap = true;
+      switch_controller_request.strictness = 1; // BEST EFFORT
       switch_controller_request.activate_controllers.push_back("front_left_joint_trajectory_controller");
       switch_controller_request.activate_controllers.push_back("front_right_joint_trajectory_controller");
       switch_controller_request.activate_controllers.push_back("back_left_joint_trajectory_controller");
       switch_controller_request.activate_controllers.push_back("back_right_joint_trajectory_controller");
 
-      _switch_controller_client->async_send_request(std::make_shared<controller_manager_msgs::srv::SwitchController::Request>(switch_controller_request));
+      auto result_switch_goal = _switch_controller_client->async_send_request(std::make_shared<controller_manager_msgs::srv::SwitchController::Request>(switch_controller_request));
+      result_switch_goal.wait_for(1s);
 
+      _default_pose_publisher->publish(std_msgs::msg::Empty());
 
+      // Delay
+      RCLCPP_INFO(this->get_logger(), "Going to default position...");
+      auto delay_time = std::chrono::system_clock::now() + 3s;
+      while (std::chrono::system_clock::now() < delay_time){
+        continue;
+      }
+      RCLCPP_INFO(this->get_logger(), "Ready!");
     }
   }
 
