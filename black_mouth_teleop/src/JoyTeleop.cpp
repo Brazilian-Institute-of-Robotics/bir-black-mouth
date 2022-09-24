@@ -51,6 +51,7 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   this->declare_parameter("lock", 0);
   this->declare_parameter("rest", 1);
   this->declare_parameter("walk", 2);
+  this->declare_parameter("start", 9);
   this->declare_parameter("filter_alpha", 0.0);
 
   this->get_parameters("axis_linear", _axis_linear_map);
@@ -59,6 +60,7 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   this->get_parameter("lock", _lock_button);
   this->get_parameter("rest", _rest_button);
   this->get_parameter("walk", _walk_button);
+  this->get_parameter("start", _start_button);
   this->get_parameter("filter_alpha", _filter_alpha);
 
   _use_filter = _filter_alpha > 0.0;
@@ -195,6 +197,29 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
         _state.state = black_mouth_teleop::msg::TeleopState::BODY_LOCKED;
       else if (msg->buttons[_walk_button])
         _state.state = black_mouth_teleop::msg::TeleopState::WALKING;
+      else if (msg->buttons[_start_button]) {
+        _state.state = black_mouth_teleop::msg::TeleopState::INIT;
+
+        // Deactivate leg controllers
+        auto switch_controller_request = controller_manager_msgs::srv::SwitchController::Request();
+        switch_controller_request.strictness = 1; // BEST EFFORT
+        switch_controller_request.deactivate_controllers.push_back("front_left_joint_trajectory_controller");
+        switch_controller_request.deactivate_controllers.push_back("front_right_joint_trajectory_controller");
+        switch_controller_request.deactivate_controllers.push_back("back_left_joint_trajectory_controller");
+        switch_controller_request.deactivate_controllers.push_back("back_right_joint_trajectory_controller");
+
+        auto result_switch_goal = _switch_controller_client->async_send_request(std::make_shared<controller_manager_msgs::srv::SwitchController::Request>(switch_controller_request));
+        result_switch_goal.wait_for(1s);
+
+        // Deactivate hardware interface
+        auto set_hw_state_request = controller_manager_msgs::srv::SetHardwareComponentState::Request();
+        set_hw_state_request.name = "BlackMouthSystem";
+        set_hw_state_request.target_state.id = 2; // Inactive 
+
+        auto result_hw_state_goal = _set_hw_state_client->async_send_request(std::make_shared<controller_manager_msgs::srv::SetHardwareComponentState::Request>(set_hw_state_request));
+        result_hw_state_goal.wait_for(1s);
+
+      }
       else
         _state.state = black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY;
     }

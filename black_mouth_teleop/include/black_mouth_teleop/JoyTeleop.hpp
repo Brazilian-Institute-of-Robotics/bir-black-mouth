@@ -77,6 +77,7 @@ private:
   uint8_t _lock_button;
   uint8_t _rest_button;
   uint8_t _walk_button;
+  uint8_t _start_button;
 
   bool _resting;
   
