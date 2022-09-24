@@ -6,6 +6,9 @@
 #include <memory>
 #include <cmath>
 
+#define ANSI_COLOR_RESET "\x1b[0m"
+#define ANSI_COLOR_BLUE  "\x1b[34m"
+
 std::vector<std::string> states = {"INIT", 
                                    "RESTING", 
                                    "BODY_LOCKED", 
@@ -19,7 +22,8 @@ void setTeleopState(const std::shared_ptr<black_mouth_teleop::srv::SetTeleopStat
   (void) responde;
   current_state = request->state;
 
-  RCLCPP_INFO(rclcpp::get_logger("teleop_state_server"), "Teleop State set to %s", states.at(current_state.state).c_str());
+  RCLCPP_INFO(rclcpp::get_logger("teleop_state_server"), "State: " ANSI_COLOR_BLUE "\x1b[34m"
+ "\33[1m%s\33[0m" ANSI_COLOR_RESET, states.at(current_state.state).c_str());
 }
 
 void getTeleopState(const std::shared_ptr<black_mouth_teleop::srv::GetTeleopState::Request> request,
