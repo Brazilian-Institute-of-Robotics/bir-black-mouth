@@ -1,0 +1,15 @@
+joy_teleop_node:
+  ros__parameters:
+    filter_alpha: 0.92
+    joy_type: x360
+    axis_linear:
+      x: 1
+      y: 0
+      z: 4
+    axis_angular:
+      roll: 6
+      pitch: 7
+      yaw: 3
+    rest: 2
+    lock: 0
+    walk: 1

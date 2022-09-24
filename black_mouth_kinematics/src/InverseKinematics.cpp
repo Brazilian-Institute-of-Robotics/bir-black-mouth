@@ -69,7 +69,7 @@ void InverseKinematics::defaultPoseCallback(const std_msgs::msg::Empty::SharedPt
   (void) msg;
   this->_cmd_ik_msg.body_leg_ik_trajectory.resize(1);
   this->_cmd_ik_msg.time_from_start.resize(1);
-  this->_cmd_ik_msg.time_from_start.at(0).sec     = 1.0;
+  this->_cmd_ik_msg.time_from_start.at(0).sec     = 2.0;
   this->_cmd_ik_msg.time_from_start.at(0).nanosec = 0.0;
   this->_cmd_ik_msg.body_leg_ik_trajectory.at(0).body_position = geometry_msgs::msg::Vector3();
   this->_cmd_ik_msg.body_leg_ik_trajectory.at(0).body_rotation = geometry_msgs::msg::Vector3();
@@ -99,12 +99,12 @@ void InverseKinematics::computeIK()
   {
     request->body_leg_ik = this->_cmd_ik_msg.body_leg_ik_trajectory.at(i);  
     auto result = this->_ik_client->async_send_request(request);
-    std::future_status status = result.wait_for(1.5ms);
+    std::future_status status = result.wait_for(10ms);
     
     if (status == std::future_status::ready)
       _all_leg_joints.at(i) = result.get()->leg_joints;
     else
-      RCLCPP_WARN(rclcpp::get_logger("ik_client"), "Failed to comput leg joints, timeout");
+      RCLCPP_WARN(rclcpp::get_logger("ik_client"), "Failed to compute leg joints, timeout");
   }
 }
 

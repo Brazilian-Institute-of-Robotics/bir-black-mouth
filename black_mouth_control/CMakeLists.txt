@@ -15,14 +15,58 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+set(dependencies
+  ament_cmake
+  rclcpp
+  hardware_interface
+  pluginlib
+  rclcpp_lifecycle
+  dynamixel_sdk
+)
+
 # find dependencies
-find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
+foreach(dependency ${dependencies})
+  find_package(${dependency} REQUIRED)
+endforeach()
+
+include_directories(include)
+
+add_library(${PROJECT_NAME} 
+  SHARED 
+  src/black_mouth_hardware_interface.cpp
+  )
+target_include_directories(${PROJECT_NAME} PRIVATE include)
+ament_target_dependencies(${PROJECT_NAME} ${dependencies})
+
+# Export hardware pligins
+pluginlib_export_plugin_description_file(hardware_interface black_mouth_control.xml)
+
+install(
+  TARGETS ${PROJECT_NAME}
+  DESTINATION lib
+)
+
+install(
+  DIRECTORY include/
+  DESTINATION include
+)
+
 
 install(
   DIRECTORY urdf config launch
   DESTINATION share/${PROJECT_NAME}
 )
+
+## EXPORTS
+ament_export_include_directories(
+  include
+)
+
+ament_export_libraries(
+  ${PROJECT_NAME}
+)
+
+ament_export_dependencies(${dependencies})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

@@ -13,16 +13,16 @@ def generate_launch_description():
     bm_control_pkg_share = FindPackageShare('black_mouth_control').find('black_mouth_control')
     bm_kinematics_pkg_share = FindPackageShare('black_mouth_kinematics').find('black_mouth_kinematics')
 
-    default_model = os.path.join(bm_description_pkg_share, "urdf", "black_mouth.urdf.xacro")
+    default_model = os.path.join(bm_description_pkg_share, "urdf", "black_mouth_real.urdf.xacro")
     robot_model = LaunchConfiguration('model', default=default_model)
 
-    default_controllers = os.path.join(bm_control_pkg_share, "config", "leg_controllers.yaml")
+    default_controllers = os.path.join(bm_control_pkg_share, "config", "leg_controllers_real_robot.yaml")
     robot_controllers = LaunchConfiguration('controllers', default=default_controllers)
 
     default_quadruped_config = os.path.join(bm_kinematics_pkg_share, 'config', 'quadruped.yaml')
     quadruped_config = LaunchConfiguration('quadruped_config', default=default_quadruped_config)
 
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    use_sim_time = LaunchConfiguration('use_sim_time', default='false')
 
     robot_state_publisher = Node(
         package="robot_state_publisher",

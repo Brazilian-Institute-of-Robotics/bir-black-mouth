@@ -1,0 +1,17 @@
+joy_teleop_node:
+  ros__parameters:
+    filter_alpha: 0.9
+    joy_type: ps4
+    axis_linear:
+      x: 1
+      y: 0
+      z: 3
+    axis_angular:
+      roll_inc: 14
+      roll_dec: 13
+      pitch_inc: 11
+      pitch_dec: 12
+      yaw: 2
+    rest: 2
+    lock: 0
+    walk: 1
