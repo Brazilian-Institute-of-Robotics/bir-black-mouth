@@ -16,6 +16,7 @@ public:
 
 private:
   void IMUCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
+  void desiredRotationCallback(const geometry_msgs::msg::Vector3::SharedPtr msg);
   
   void publishBodyRotation();
   void publishIK();
@@ -30,6 +31,7 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr _body_rotation_publisher;
 
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr _imu_subscriber;
+  rclcpp::Subscription<geometry_msgs::msg::Vector3>::SharedPtr _desired_rotation_subscriber;
 
   geometry_msgs::msg::Vector3 _last_rotation_euler;
   geometry_msgs::msg::Vector3 _rotation_euler;
