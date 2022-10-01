@@ -14,8 +14,8 @@ BodyRotationControl::BodyRotationControl() : Node("body_rotation_control")
 {
   RCLCPP_INFO(this->get_logger(), "Body Rotation Control Node initialized");
   
-  _kp = 1.0;
-  _ki = 0.5;
+  _kp = 0.5;
+  _ki = 1.5;
   _kd = 0.0;
 
   _sum_error_roll = 0.0;
@@ -24,7 +24,7 @@ BodyRotationControl::BodyRotationControl() : Node("body_rotation_control")
   _publish_ik = true;
 
   _ik_publisher = this->create_publisher<black_mouth_kinematics::msg::BodyLegIKTrajectory>("cmd_ik", 10);
-  _body_rotation_publisher = this->create_publisher<geometry_msgs::msg::Vector3>("desired_body_rotation", 10);
+  _body_rotation_publisher = this->create_publisher<geometry_msgs::msg::Vector3>("body_control_rotation", 10);
 
   _imu_subscriber = this->create_subscription<sensor_msgs::msg::Imu>("imu/out", 10,
                           std::bind(&BodyRotationControl::IMUCallback, this, _1));
@@ -60,7 +60,6 @@ void BodyRotationControl::IMUCallback(const sensor_msgs::msg::Imu::SharedPtr msg
 void BodyRotationControl::desiredRotationCallback(const geometry_msgs::msg::Vector3::SharedPtr msg)
 {
   _desired_body_rotation = *msg;
-  // std::cout << "Desired rotation: roll=" << msg->x << ", pitch=" << msg->y << std::endl;
 }
 
 void BodyRotationControl::publishBodyRotation()
@@ -77,27 +76,26 @@ void BodyRotationControl::publishIK()
   ik_msg.body_leg_ik_trajectory.at(0).leg_points.reference_link = 1;
   ik_msg.body_leg_ik_trajectory.at(0).body_rotation = _body_rotation_cmd;
 
-  // std::cout << "publishing: roll=" << ik_msg.body_leg_ik_trajectory.at(0).body_rotation.x << ", pitch=" << ik_msg.body_leg_ik_trajectory.at(0).body_rotation.y << std::endl;
-
   _ik_publisher->publish(ik_msg);
 }
 
 void BodyRotationControl::computePID()
 {
   _current_time = this->now();
+  
+  float dt = (_current_time - _last_current_time).seconds();
 
   _error_roll = _desired_body_rotation.x - _rotation_euler.x;
   _error_pitch = _desired_body_rotation.y - _rotation_euler.y;
 
-  _sum_error_roll += _error_roll;
-  _sum_error_pitch += _error_pitch;
-
-  float dt = (_current_time - _last_current_time).seconds();
+  _sum_error_roll  += std::abs(_ki*_sum_error_roll*dt)  < 0.35 ? _error_roll  : 0.0;
+  _sum_error_pitch += std::abs(_ki*_sum_error_pitch*dt) < 0.35 ? _error_pitch : 0.0;
 
   float PID_roll  = _kp*_error_roll  + _ki*_sum_error_roll*dt  + _kd*(_error_roll-_last_error_roll)/dt;
   float PID_pitch = _kp*_error_pitch + _ki*_sum_error_pitch*dt + _kd*(_error_pitch-_last_error_pitch)/dt;
 
-  // std::cout << "PID: roll=" << PID_roll << ", pitch=" << PID_pitch << std::endl;
+  PID_roll  = std::abs(PID_roll)  < 0.4 ? PID_roll  : 0.4*(std::abs(PID_roll)/PID_roll);
+  PID_pitch = std::abs(PID_pitch) < 0.4 ? PID_pitch : 0.4*(std::abs(PID_pitch)/PID_pitch);
 
   _body_rotation_cmd.x = PID_roll;
   _body_rotation_cmd.y = PID_pitch;
