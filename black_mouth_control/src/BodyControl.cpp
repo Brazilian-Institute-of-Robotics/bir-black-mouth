@@ -9,19 +9,21 @@
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
+using std::placeholders::_2;
 
 BodyControl::BodyControl() : Node("body_control")
 {
   RCLCPP_INFO(this->get_logger(), "Body Control Node initialized");
   
-  _kp = 0.5;
+  _kp = 0.2;
   _ki = 1.5;
-  _kd = 0.0;
+  _kd = 0.0042;
 
-  _sum_error_roll = 0.0;
+  _sum_error_roll  = 0.0;
   _sum_error_pitch = 0.0;
-
-  _publish_ik = true;
+  
+  _last_error_roll  = 0.0;
+  _last_error_pitch = 0.0;
 
   _ik_publisher = this->create_publisher<black_mouth_kinematics::msg::BodyLegIKTrajectory>("cmd_ik", 10);
   _body_control_publisher = this->create_publisher<black_mouth_control::msg::BodyControl>("body_control", 10);
@@ -30,10 +32,13 @@ BodyControl::BodyControl() : Node("body_control")
                           std::bind(&BodyControl::IMUCallback, this, _1));
   _desired_rotation_subscriber = this->create_subscription<geometry_msgs::msg::Vector3>("body_desired_rotation", 10,
                                        std::bind(&BodyControl::desiredRotationCallback, this, _1));
+  
+  _set_publish_ik_service = this->create_service<std_srvs::srv::SetBool>("set_body_control_publish_ik", 
+                                  std::bind(&BodyControl::setPublishIK, this, _1, _2));
 
   _pid_timer = this->create_wall_timer(20ms, std::bind(&BodyControl::computePID, this));
-  if (_publish_ik)
-    _ik_timer = this->create_wall_timer(20ms, std::bind(&BodyControl::publishIK, this));
+  _ik_timer = this->create_wall_timer(20ms, std::bind(&BodyControl::publishIK, this));
+  _ik_timer->cancel();
 
   _last_time = this->now();
   _current_time = this->now();
@@ -60,6 +65,25 @@ void BodyControl::desiredRotationCallback(const geometry_msgs::msg::Vector3::Sha
   _desired_body_rotation = *msg;
 }
 
+void BodyControl::setPublishIK(const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
+                                     std::shared_ptr<std_srvs::srv::SetBool::Response> response)
+{
+  if (request->data)
+  {
+    if (_ik_timer->is_canceled())
+      _ik_timer->reset();
+  }
+  else
+  {
+    if (!_ik_timer->is_canceled())
+      _ik_timer->cancel();
+  }
+
+  response->success = true;
+  response->message = request->data ? "Set publish_ik to True" : "Set publish_ik to False";
+  RCLCPP_INFO(this->get_logger(), response->message.c_str());
+}
+
 void BodyControl::publishIK()
 {
   auto ik_msg = black_mouth_kinematics::msg::BodyLegIKTrajectory();
@@ -78,17 +102,22 @@ void BodyControl::computePID()
   
   float dt = (_current_time - _last_time).seconds();
 
-  _error_roll = _desired_body_rotation.x - _rotation_euler.x;
+  _error_roll  = _desired_body_rotation.x - _rotation_euler.x;
   _error_pitch = _desired_body_rotation.y - _rotation_euler.y;
 
-  _sum_error_roll  += std::abs(_ki*_sum_error_roll*dt)  < 0.35 ? _error_roll  : 0.0;
-  _sum_error_pitch += std::abs(_ki*_sum_error_pitch*dt) < 0.35 ? _error_pitch : 0.0;
+  _sum_error_roll  += std::abs(_ki*(_sum_error_roll +_error_roll)*dt)  < 0.30 ? _error_roll  : 0.0;
+  _sum_error_pitch += std::abs(_ki*(_sum_error_pitch+_error_pitch)*dt) < 0.30 ? _error_pitch : 0.0;
 
   float PID_roll  = _kp*_error_roll  + _ki*_sum_error_roll*dt  + _kd*(_error_roll-_last_error_roll)/dt;
   float PID_pitch = _kp*_error_pitch + _ki*_sum_error_pitch*dt + _kd*(_error_pitch-_last_error_pitch)/dt;
 
-  PID_roll  = std::abs(PID_roll)  < 0.4 ? PID_roll  : 0.4*(std::abs(PID_roll)/PID_roll);
-  PID_pitch = std::abs(PID_pitch) < 0.4 ? PID_pitch : 0.4*(std::abs(PID_pitch)/PID_pitch);
+  if (std::abs(PID_roll) + std::abs(PID_pitch) > 0.45)
+  {
+    float PID_roll_aux  = 0.45 * PID_roll/(std::abs(PID_roll) + std::abs(PID_pitch));
+    float PID_pitch_aux = 0.45 * PID_pitch/(std::abs(PID_roll) + std::abs(PID_pitch));
+    PID_roll  = PID_roll_aux;
+    PID_pitch = PID_pitch_aux;
+  }
 
   _body_control.pid_roll.current_val = _rotation_euler.x;
   _body_control.pid_roll.setpoint    = _desired_body_rotation.x;

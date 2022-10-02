@@ -21,6 +21,7 @@ set(dependencies
   tf2
   geometry_msgs
   sensor_msgs
+  std_srvs
   hardware_interface
   pluginlib
   rclcpp_lifecycle
@@ -50,7 +51,7 @@ add_library(${PROJECT_NAME}_hw
 )
 
 add_executable(body_control src/BodyControl.cpp)
-ament_target_dependencies(body_control rclcpp tf2 sensor_msgs geometry_msgs black_mouth_kinematics)
+ament_target_dependencies(body_control ${dependencies})
 
 target_include_directories(${PROJECT_NAME}_hw PRIVATE include)
 ament_target_dependencies(${PROJECT_NAME}_hw ${dependencies})
