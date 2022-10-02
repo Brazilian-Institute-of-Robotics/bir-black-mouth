@@ -8,11 +8,11 @@
 
 #include <memory>
 
-class BodyRotationControl : public rclcpp::Node
+class BodyControl : public rclcpp::Node
 {
 public:
-  BodyRotationControl();
-  ~BodyRotationControl();
+  BodyControl();
+  ~BodyControl();
 
 private:
   void IMUCallback(const sensor_msgs::msg::Imu::SharedPtr msg);

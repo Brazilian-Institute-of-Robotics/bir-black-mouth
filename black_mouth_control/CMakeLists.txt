@@ -18,10 +18,15 @@ endif()
 set(dependencies
   ament_cmake
   rclcpp
+  tf2
+  geometry_msgs
+  sensor_msgs
   hardware_interface
   pluginlib
   rclcpp_lifecycle
   dynamixel_sdk
+  black_mouth_kinematics
+  rosidl_default_generators
 )
 
 # find dependencies
@@ -34,11 +39,15 @@ include_directories(include)
 add_library(${PROJECT_NAME} 
   SHARED 
   src/black_mouth_hardware_interface.cpp
-  )
+)
+
+add_executable(body_control src/BodyControl.cpp)
+ament_target_dependencies(body_control rclcpp tf2 sensor_msgs geometry_msgs black_mouth_kinematics)
+
 target_include_directories(${PROJECT_NAME} PRIVATE include)
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})
 
-# Export hardware pligins
+# Export hardware plugins
 pluginlib_export_plugin_description_file(hardware_interface black_mouth_control.xml)
 
 install(
@@ -51,10 +60,14 @@ install(
   DESTINATION include
 )
 
-
 install(
   DIRECTORY urdf config launch
   DESTINATION share/${PROJECT_NAME}
+)
+
+install(
+  TARGETS body_control
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 ## EXPORTS

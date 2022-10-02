@@ -10,6 +10,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
+  <depend>tf2</depend>
   <depend>ros2_control</depend>
   <depend>ros2_controllers</depend>
   <depend>controller_manager</depend>
@@ -18,11 +19,16 @@
   <depend>pluginlib</depend>
   <depend>rclcpp_lifecycle</depend>
   <depend>dynamixel_sdk</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>black_mouth_kinematics</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 
   <test_depend>ament_cmake_gtest</test_depend>
+
+  <member_of_group>rosidl_interface_packages</member_of_group>
 
   <export>
     <build_type>ament_cmake</build_type>

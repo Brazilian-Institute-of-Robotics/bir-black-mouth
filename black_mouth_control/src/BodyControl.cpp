@@ -1,5 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
-#include "black_mouth_kinematics/BodyRotationControl.hpp"
+#include "black_mouth_control/BodyControl.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/LinearMath/Matrix3x3.h"
 
@@ -10,9 +10,9 @@
 using namespace std::chrono_literals;
 using std::placeholders::_1;
 
-BodyRotationControl::BodyRotationControl() : Node("body_rotation_control")
+BodyControl::BodyControl() : Node("body_control")
 {
-  RCLCPP_INFO(this->get_logger(), "Body Rotation Control Node initialized");
+  RCLCPP_INFO(this->get_logger(), "Body Control Node initialized");
   
   _kp = 0.5;
   _ki = 1.5;
@@ -27,25 +27,25 @@ BodyRotationControl::BodyRotationControl() : Node("body_rotation_control")
   _body_rotation_publisher = this->create_publisher<geometry_msgs::msg::Vector3>("body_control_rotation", 10);
 
   _imu_subscriber = this->create_subscription<sensor_msgs::msg::Imu>("imu/out", 10,
-                          std::bind(&BodyRotationControl::IMUCallback, this, _1));
+                          std::bind(&BodyControl::IMUCallback, this, _1));
   _desired_rotation_subscriber = this->create_subscription<geometry_msgs::msg::Vector3>("body_desired_rotation", 10,
-                                       std::bind(&BodyRotationControl::desiredRotationCallback, this, _1));
+                                       std::bind(&BodyControl::desiredRotationCallback, this, _1));
 
-  _ik_timer = this->create_wall_timer(50ms, std::bind(&BodyRotationControl::publishIK, this));
+  _ik_timer = this->create_wall_timer(50ms, std::bind(&BodyControl::publishIK, this));
   if (_publish_ik)
-    _body_timer = this->create_wall_timer(50ms, std::bind(&BodyRotationControl::publishBodyRotation, this));
-  _pid_timer = this->create_wall_timer(20ms, std::bind(&BodyRotationControl::computePID, this));
+    _body_timer = this->create_wall_timer(50ms, std::bind(&BodyControl::publishBodyRotation, this));
+  _pid_timer = this->create_wall_timer(20ms, std::bind(&BodyControl::computePID, this));
 
   _last_current_time = this->now();
   _current_time = this->now();
 
 }
 
-BodyRotationControl::~BodyRotationControl()
+BodyControl::~BodyControl()
 {
 }
 
-void BodyRotationControl::IMUCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
+void BodyControl::IMUCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
 {
   _last_rotation_euler = _rotation_euler;
   tf2::Quaternion q(msg->orientation.x, 
@@ -54,20 +54,19 @@ void BodyRotationControl::IMUCallback(const sensor_msgs::msg::Imu::SharedPtr msg
                     msg->orientation.w);
   tf2::Matrix3x3 m(q);
   m.getRPY(_rotation_euler.x, _rotation_euler.y, _rotation_euler.z);
-  std::cout << "Current rotation: roll=" << _rotation_euler.x << ", pitch=" << _rotation_euler.y << std::endl;
 }
 
-void BodyRotationControl::desiredRotationCallback(const geometry_msgs::msg::Vector3::SharedPtr msg)
+void BodyControl::desiredRotationCallback(const geometry_msgs::msg::Vector3::SharedPtr msg)
 {
   _desired_body_rotation = *msg;
 }
 
-void BodyRotationControl::publishBodyRotation()
+void BodyControl::publishBodyRotation()
 {
   _body_rotation_publisher->publish(_body_rotation_cmd);
 }
 
-void BodyRotationControl::publishIK()
+void BodyControl::publishIK()
 {
   auto ik_msg = black_mouth_kinematics::msg::BodyLegIKTrajectory();
   
@@ -79,7 +78,7 @@ void BodyRotationControl::publishIK()
   _ik_publisher->publish(ik_msg);
 }
 
-void BodyRotationControl::computePID()
+void BodyControl::computePID()
 {
   _current_time = this->now();
   
@@ -108,7 +107,7 @@ void BodyRotationControl::computePID()
 int main(int argc, char **argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<BodyRotationControl>());
+  rclcpp::spin(std::make_shared<BodyControl>());
   rclcpp::shutdown();
   return 0;
 }
