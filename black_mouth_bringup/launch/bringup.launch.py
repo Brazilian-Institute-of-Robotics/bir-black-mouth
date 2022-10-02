@@ -10,8 +10,8 @@ from launch_ros.actions import Node
 def generate_launch_description():
   
     bm_description_pkg_share = FindPackageShare('black_mouth_description').find('black_mouth_description')
-    bm_control_pkg_share = FindPackageShare('black_mouth_control').find('black_mouth_control')
     bm_kinematics_pkg_share = FindPackageShare('black_mouth_kinematics').find('black_mouth_kinematics')
+    bm_control_pkg_share = FindPackageShare('black_mouth_control').find('black_mouth_control')
 
     default_model = os.path.join(bm_description_pkg_share, "urdf", "black_mouth_real.urdf.xacro")
     robot_model = LaunchConfiguration('model', default=default_model)
@@ -21,6 +21,9 @@ def generate_launch_description():
 
     default_quadruped_config = os.path.join(bm_kinematics_pkg_share, 'config', 'quadruped.yaml')
     quadruped_config = LaunchConfiguration('quadruped_config', default=default_quadruped_config)
+
+    default_body_control_config = os.path.join(bm_control_pkg_share, 'config', 'body_control.yaml')
+    body_control_config = LaunchConfiguration('body_control_config', default=default_body_control_config)
 
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
 
@@ -45,6 +48,14 @@ def generate_launch_description():
         launch_arguments={'quadruped_config': quadruped_config}.items(),
     )
 
+    body_control = Node(
+        package="black_mouth_control",
+        executable="body_control",
+        name="body_control_node",
+        parameters=[body_control_config],
+        output="screen",
+    )
+
     return LaunchDescription([
         DeclareLaunchArgument(name='use_sim_time', default_value='false', 
                               description='Use simulation (Gazebo) clock if true'),
@@ -54,7 +65,10 @@ def generate_launch_description():
                               description='Absolute path to robot controllers file'),
         DeclareLaunchArgument(name='quadruped_config', default_value=default_quadruped_config, 
                               description='Absolute path to quadruped config file'),
+        DeclareLaunchArgument(name='body_control_config', default_value=default_body_control_config, 
+                              description='Absolute path to body control config file'),
         robot_state_publisher,
         bm_controllers,
-        inverse_kinematics
+        inverse_kinematics,
+        body_control
     ])

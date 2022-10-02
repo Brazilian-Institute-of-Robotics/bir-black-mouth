@@ -14,16 +14,6 @@ using std::placeholders::_2;
 BodyControl::BodyControl() : Node("body_control")
 {
   RCLCPP_INFO(this->get_logger(), "Body Control Node initialized");
-  
-  _kp = 0.2;
-  _ki = 1.5;
-  _kd = 0.0042;
-
-  _sum_error_roll  = 0.0;
-  _sum_error_pitch = 0.0;
-  
-  _last_error_roll  = 0.0;
-  _last_error_pitch = 0.0;
 
   _ik_publisher = this->create_publisher<black_mouth_kinematics::msg::BodyLegIKTrajectory>("cmd_ik", 10);
   _body_control_publisher = this->create_publisher<black_mouth_control::msg::BodyControl>("body_control", 10);
@@ -39,6 +29,24 @@ BodyControl::BodyControl() : Node("body_control")
   _pid_timer = this->create_wall_timer(20ms, std::bind(&BodyControl::computePID, this));
   _ik_timer = this->create_wall_timer(20ms, std::bind(&BodyControl::publishIK, this));
   _ik_timer->cancel();
+
+  this->declare_parameter("kp", 0.2);
+  this->declare_parameter("ki", 1.5);
+  this->declare_parameter("kd", 0.0042);
+  this->declare_parameter("max_integrative_term", 0.30);
+  this->declare_parameter("max_PIDs_sum", 0.45);
+
+  this->get_parameter("kp", _kp);
+  this->get_parameter("ki", _ki);
+  this->get_parameter("kd", _kd);
+  this->get_parameter("max_integrative_term", _max_integrative_term);
+  this->get_parameter("max_PIDs_sum", _max_PIDs_sum);
+
+  _sum_error_roll  = 0.0;
+  _sum_error_pitch = 0.0;
+  
+  _last_error_roll  = 0.0;
+  _last_error_pitch = 0.0;
 
   _last_time = this->now();
   _current_time = this->now();
@@ -105,16 +113,16 @@ void BodyControl::computePID()
   _error_roll  = _desired_body_rotation.x - _rotation_euler.x;
   _error_pitch = _desired_body_rotation.y - _rotation_euler.y;
 
-  _sum_error_roll  += std::abs(_ki*(_sum_error_roll +_error_roll)*dt)  < 0.30 ? _error_roll  : 0.0;
-  _sum_error_pitch += std::abs(_ki*(_sum_error_pitch+_error_pitch)*dt) < 0.30 ? _error_pitch : 0.0;
+  _sum_error_roll  += std::abs(_ki*(_sum_error_roll +_error_roll)*dt)  < _max_integrative_term ? _error_roll  : 0.0;
+  _sum_error_pitch += std::abs(_ki*(_sum_error_pitch+_error_pitch)*dt) < _max_integrative_term ? _error_pitch : 0.0;
 
   float PID_roll  = _kp*_error_roll  + _ki*_sum_error_roll*dt  + _kd*(_error_roll-_last_error_roll)/dt;
   float PID_pitch = _kp*_error_pitch + _ki*_sum_error_pitch*dt + _kd*(_error_pitch-_last_error_pitch)/dt;
 
-  if (std::abs(PID_roll) + std::abs(PID_pitch) > 0.45)
+  if (std::abs(PID_roll) + std::abs(PID_pitch) > _max_PIDs_sum)
   {
-    float PID_roll_aux  = 0.45 * PID_roll/(std::abs(PID_roll) + std::abs(PID_pitch));
-    float PID_pitch_aux = 0.45 * PID_pitch/(std::abs(PID_roll) + std::abs(PID_pitch));
+    float PID_roll_aux  = _max_PIDs_sum * PID_roll/(std::abs(PID_roll)  + std::abs(PID_pitch));
+    float PID_pitch_aux = _max_PIDs_sum * PID_pitch/(std::abs(PID_roll) + std::abs(PID_pitch));
     PID_roll  = PID_roll_aux;
     PID_pitch = PID_pitch_aux;
   }

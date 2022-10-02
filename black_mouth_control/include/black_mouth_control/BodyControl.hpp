@@ -47,6 +47,8 @@ private:
   rclcpp::Time _last_time;
 
   float _kp, _ki, _kd;
+  float _max_integrative_term, _max_PIDs_sum;
+
   float _error_roll, _error_pitch;
   float _sum_error_roll, _sum_error_pitch;
   float _last_error_roll, _last_error_pitch;

@@ -21,6 +21,7 @@ def generate_launch_description():
     default_model = os.path.join(bm_description_pkg_share, "urdf", "black_mouth.urdf.xacro")
     default_controllers = os.path.join(bm_control_pkg_share, "config", "leg_controllers.yaml")
     default_quadruped_config = os.path.join(bm_kinematics_pkg_share, 'config', 'quadruped.yaml')
+    default_body_control_config = os.path.join(bm_control_pkg_share, 'config', 'body_control.yaml')
     
     gzserver = ExecuteProcess(
         cmd=['gzserver',
@@ -64,6 +65,7 @@ def generate_launch_description():
                           'model': LaunchConfiguration('model'),
                           'controllers': LaunchConfiguration('controllers'),
                           'quadruped_config': LaunchConfiguration('quadruped_config'),
+                          'body_control_config': LaunchConfiguration('body_control_config'),
                           }.items(),
     )
 
@@ -79,6 +81,8 @@ def generate_launch_description():
                               description='Absolute path to robot controllers file'),
         DeclareLaunchArgument(name='quadruped_config', default_value=default_quadruped_config, 
                               description='Absolute path to quadruped config file'),
+        DeclareLaunchArgument(name='body_control_config', default_value=default_body_control_config, 
+                              description='Absolute path to body control config file'),
         DeclareLaunchArgument(name='use_rviz', default_value='false', 
                               description='Start rviz if true'),
         DeclareLaunchArgument(name='rviz_config', default_value=default_rviz_config, 

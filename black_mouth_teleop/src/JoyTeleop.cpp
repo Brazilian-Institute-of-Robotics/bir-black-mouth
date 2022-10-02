@@ -147,6 +147,7 @@ void JoyTeleop::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 
 bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
+  // TODO: cancel/reset timers in state transition
   auto last_state = _state.state;
 
   if (msg->buttons[_rest_button])
