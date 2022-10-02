@@ -34,9 +34,17 @@ foreach(dependency ${dependencies})
   find_package(${dependency} REQUIRED)
 endforeach()
 
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/PID.msg"
+  "msg/BodyControl.msg"
+  DEPENDENCIES geometry_msgs builtin_interfaces
+)
+
+ament_export_dependencies(rosidl_default_runtime)
+
 include_directories(include)
 
-add_library(${PROJECT_NAME} 
+add_library(${PROJECT_NAME}_hw 
   SHARED 
   src/black_mouth_hardware_interface.cpp
 )
@@ -44,14 +52,18 @@ add_library(${PROJECT_NAME}
 add_executable(body_control src/BodyControl.cpp)
 ament_target_dependencies(body_control rclcpp tf2 sensor_msgs geometry_msgs black_mouth_kinematics)
 
-target_include_directories(${PROJECT_NAME} PRIVATE include)
-ament_target_dependencies(${PROJECT_NAME} ${dependencies})
+target_include_directories(${PROJECT_NAME}_hw PRIVATE include)
+ament_target_dependencies(${PROJECT_NAME}_hw ${dependencies})
+
+rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
+
+target_link_libraries(body_control "${cpp_typesupport_target}")
 
 # Export hardware plugins
 pluginlib_export_plugin_description_file(hardware_interface black_mouth_control.xml)
 
 install(
-  TARGETS ${PROJECT_NAME}
+  TARGETS ${PROJECT_NAME}_hw
   DESTINATION lib
 )
 
@@ -76,7 +88,7 @@ ament_export_include_directories(
 )
 
 ament_export_libraries(
-  ${PROJECT_NAME}
+  ${PROJECT_NAME}_hw
 )
 
 ament_export_dependencies(${dependencies})

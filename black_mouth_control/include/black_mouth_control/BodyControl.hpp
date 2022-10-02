@@ -5,6 +5,7 @@
 #include "sensor_msgs/msg/imu.hpp"
 #include "geometry_msgs/msg/vector3.hpp"
 #include "black_mouth_kinematics/msg/body_leg_ik_trajectory.hpp"
+#include "black_mouth_control/msg/body_control.hpp"
 
 #include <memory>
 
@@ -18,17 +19,14 @@ private:
   void IMUCallback(const sensor_msgs::msg::Imu::SharedPtr msg);
   void desiredRotationCallback(const geometry_msgs::msg::Vector3::SharedPtr msg);
   
-  void publishBodyRotation();
   void publishIK();
-
   void computePID();
 
-  rclcpp::TimerBase::SharedPtr _ik_timer;
-  rclcpp::TimerBase::SharedPtr _body_timer;
   rclcpp::TimerBase::SharedPtr _pid_timer;
+  rclcpp::TimerBase::SharedPtr _ik_timer;
 
   rclcpp::Publisher<black_mouth_kinematics::msg::BodyLegIKTrajectory>::SharedPtr _ik_publisher;
-  rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr _body_rotation_publisher;
+  rclcpp::Publisher<black_mouth_control::msg::BodyControl>::SharedPtr _body_control_publisher;
 
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr _imu_subscriber;
   rclcpp::Subscription<geometry_msgs::msg::Vector3>::SharedPtr _desired_rotation_subscriber;
@@ -37,10 +35,10 @@ private:
   geometry_msgs::msg::Vector3 _rotation_euler;
 
   geometry_msgs::msg::Vector3 _desired_body_rotation;
-  geometry_msgs::msg::Vector3 _body_rotation_cmd;
+  black_mouth_control::msg::BodyControl _body_control;
 
   rclcpp::Time _current_time;
-  rclcpp::Time _last_current_time;
+  rclcpp::Time _last_time;
 
   float _kp, _ki, _kd;
   float _error_roll, _error_pitch;

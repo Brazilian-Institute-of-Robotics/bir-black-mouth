@@ -1,4 +1,4 @@
-<library path="black_mouth_control">
+<library path="black_mouth_control_hw">
   <class name="black_mouth_control/BlackMouthHW"
          type="black_mouth_control::BlackMouthHW"
          base_class_type="hardware_interface::SystemInterface">
