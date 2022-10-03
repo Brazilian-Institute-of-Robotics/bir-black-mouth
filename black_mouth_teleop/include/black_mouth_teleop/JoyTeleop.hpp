@@ -2,6 +2,7 @@
 #define JOY_TELEOP_HPP
 
 #include "rclcpp/rclcpp.hpp"
+#include "std_srvs/srv/set_bool.hpp"
 #include "std_msgs/msg/empty.hpp"
 #include "sensor_msgs/msg/joy.hpp"
 #include "geometry_msgs/msg/twist.hpp"
@@ -31,7 +32,8 @@ private:
   void initState();
   void restingState();
   void bodyLockedState();
-  void controllingBodyState(const sensor_msgs::msg::Joy::SharedPtr msg);
+  void controllingBodyState();
+  void movingBodyState(const sensor_msgs::msg::Joy::SharedPtr msg);
   void walkingState(const sensor_msgs::msg::Joy::SharedPtr msg);
 
   rclcpp::CallbackGroup::SharedPtr _callback_group;
@@ -48,6 +50,7 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr _joy_subscriber;
 
   rclcpp::Client<black_mouth_teleop::srv::SetTeleopState>::SharedPtr _set_state_client;
+  rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr _set_body_control_publish_ik_client;
 
   rclcpp::Client<controller_manager_msgs::srv::SetHardwareComponentState>::SharedPtr _set_hw_state_client;
   rclcpp::Client<controller_manager_msgs::srv::SwitchController>::SharedPtr _switch_controller_client;
@@ -76,8 +79,9 @@ private:
 
   uint8_t _lock_button;
   uint8_t _rest_button;
+  uint8_t _body_button;
   uint8_t _walk_button;
-  uint8_t _start_button;
+  uint8_t _restart_button;
 
   bool _resting;
   

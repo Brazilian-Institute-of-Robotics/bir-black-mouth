@@ -10,6 +10,8 @@ joy_teleop_node:
       roll: 6
       pitch: 7
       yaw: 3
+    restart: 9
     rest: 2
     lock: 0
+    body: 3
     walk: 1

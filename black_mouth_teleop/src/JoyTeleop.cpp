@@ -1,4 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
+#include "std_srvs/srv/set_bool.hpp"
 #include "std_msgs/msg/empty.hpp"
 #include "sensor_msgs/msg/joy.hpp"
 #include "geometry_msgs/msg/twist.hpp"
@@ -27,13 +28,18 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
                           std::bind(&JoyTeleop::joyCallback, this, _1));
 
   _set_state_client = this->create_client<black_mouth_teleop::srv::SetTeleopState>("set_teleop_state");
-  
+  _set_body_control_publish_ik_client = this->create_client<std_srvs::srv::SetBool>("set_body_control_publish_ik");
+
   _set_hw_state_client = this->create_client<controller_manager_msgs::srv::SetHardwareComponentState>("controller_manager/set_hardware_component_state");
   _switch_controller_client = this->create_client<controller_manager_msgs::srv::SwitchController>("controller_manager/switch_controller");
 
   _ik_timer = this->create_wall_timer(50ms,  std::bind(&JoyTeleop::publishIK, this));
   _vel_timer = this->create_wall_timer(200ms, std::bind(&JoyTeleop::publishVel, this));
   _default_pose_timer = this->create_wall_timer(30ms, std::bind(&JoyTeleop::publishDefaultPose, this));
+
+  _ik_timer->cancel();
+  _vel_timer->cancel();
+  _default_pose_timer->cancel();
 
   _resting = false;
 
@@ -50,8 +56,9 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   this->declare_parameter("joy_type", "generic");
   this->declare_parameter("lock", 0);
   this->declare_parameter("rest", 1);
-  this->declare_parameter("walk", 2);
-  this->declare_parameter("start", 9);
+  this->declare_parameter("body", 2);
+  this->declare_parameter("walk", 3);
+  this->declare_parameter("restart", 9);
   this->declare_parameter("filter_alpha", 0.0);
 
   this->get_parameters("axis_linear", _axis_linear_map);
@@ -59,8 +66,9 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   this->get_parameter("joy_type", _joy_type);
   this->get_parameter("lock", _lock_button);
   this->get_parameter("rest", _rest_button);
+  this->get_parameter("body", _body_button);
   this->get_parameter("walk", _walk_button);
-  this->get_parameter("start", _start_button);
+  this->get_parameter("restart", _restart_button);
   this->get_parameter("filter_alpha", _filter_alpha);
 
   _use_filter = _filter_alpha > 0.0;
@@ -84,6 +92,16 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
       return;
     }
     RCLCPP_INFO(this->get_logger(), "Set teleop state service not available, waiting again...");
+  }
+
+  while(!_set_body_control_publish_ik_client->wait_for_service(1s))
+  {
+    if(!rclcpp::ok())
+    {
+      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the set_body_control_publish_ik_client service. Exiting.");
+      return;
+    }
+    RCLCPP_INFO(this->get_logger(), "Set body_control publish_ik service not available, waiting again...");
   }
 
   while(!_set_hw_state_client->wait_for_service(1s))
@@ -136,7 +154,9 @@ void JoyTeleop::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
   else if (_state.state == black_mouth_teleop::msg::TeleopState::BODY_LOCKED)
     this->bodyLockedState();
   else if (_state.state == black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY)
-    this->controllingBodyState(msg);
+    this->controllingBodyState();
+  else if (_state.state == black_mouth_teleop::msg::TeleopState::MOVING_BODY)
+    this->movingBodyState(msg);
   else if (_state.state == black_mouth_teleop::msg::TeleopState::WALKING)
     this->walkingState(msg);
   else
@@ -147,7 +167,6 @@ void JoyTeleop::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 
 bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
-  // TODO: cancel/reset timers in state transition
   auto last_state = _state.state;
 
   if (msg->buttons[_rest_button])
@@ -157,6 +176,10 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
   {
     if (msg->buttons[_rest_button]) {
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
+
+      _ik_timer->cancel();
+      _vel_timer->cancel();
+      _default_pose_timer->reset();
 
       // Activate hardware interface
       auto set_hw_state_request = controller_manager_msgs::srv::SetHardwareComponentState::Request();
@@ -194,11 +217,26 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
   {
     if (_resting)
     {
+      _default_pose_timer->cancel();
       if (msg->buttons[_lock_button])
+      {
         _state.state = black_mouth_teleop::msg::TeleopState::BODY_LOCKED;
+      }
+      else if (msg->buttons[_body_button])
+      {
+        _state.state = black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY;
+        
+        auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
+        request->data = true;
+        _set_body_control_publish_ik_client->async_send_request(request);
+
+      }
       else if (msg->buttons[_walk_button])
+      {
         _state.state = black_mouth_teleop::msg::TeleopState::WALKING;
-      else if (msg->buttons[_start_button]) {
+        _vel_timer->reset();
+      }
+      else if (msg->buttons[_restart_button]) {
         _state.state = black_mouth_teleop::msg::TeleopState::INIT;
 
         // Deactivate leg controllers
@@ -222,7 +260,10 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 
       }
       else
-        _state.state = black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY;
+      {
+        _state.state = black_mouth_teleop::msg::TeleopState::MOVING_BODY;
+        _ik_timer->reset();
+      }
     }
     else _resting = true;
   }
@@ -230,27 +271,108 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
   else if (_state.state == black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY)
   {
     if (msg->buttons[_rest_button])
+    {
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
+
+      auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
+      request->data = false;
+      _set_body_control_publish_ik_client->async_send_request(request);
+
+      _default_pose_timer->reset();
+    }
     else if (msg->buttons[_lock_button])
+    {
       _state.state = black_mouth_teleop::msg::TeleopState::BODY_LOCKED;
+
+      auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
+      request->data = false;
+      _set_body_control_publish_ik_client->async_send_request(request);
+    }
     else if (msg->buttons[_walk_button])
+    {
       _state.state = black_mouth_teleop::msg::TeleopState::WALKING;
+
+      auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
+      request->data = false;
+      _set_body_control_publish_ik_client->async_send_request(request);
+      
+      _vel_timer->reset();
+    }
+  }
+
+  else if (_state.state == black_mouth_teleop::msg::TeleopState::MOVING_BODY)
+  {
+    if (msg->buttons[_rest_button])
+    {
+      _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
+      _ik_timer->cancel();
+      _default_pose_timer->reset();
+    }
+    else if (msg->buttons[_lock_button])
+    {
+      _state.state = black_mouth_teleop::msg::TeleopState::BODY_LOCKED;
+      _ik_timer->cancel();
+    }
+    else if (msg->buttons[_body_button])
+    {
+      _state.state = black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY;
+      
+      auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
+      request->data = true;
+      _set_body_control_publish_ik_client->async_send_request(request);
+
+      _ik_timer->cancel();
+    }
+    else if (msg->buttons[_walk_button])
+    {
+      _state.state = black_mouth_teleop::msg::TeleopState::WALKING;
+      _ik_timer->cancel();
+      _vel_timer->reset();
+    }
   }
 
   else if (_state.state == black_mouth_teleop::msg::TeleopState::BODY_LOCKED)
   {
     if (msg->buttons[_rest_button])
+    {
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
+      _default_pose_timer->reset();
+    }
     else if (msg->buttons[_lock_button])
-      _state.state = black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY;
+    {
+      _state.state = black_mouth_teleop::msg::TeleopState::MOVING_BODY;
+      _ik_timer->reset();
+    }
+    else if (msg->buttons[_body_button])
+    {
+      _state.state = black_mouth_teleop::msg::TeleopState::MOVING_BODY;
+    }
   }
 
   else if (_state.state == black_mouth_teleop::msg::TeleopState::WALKING)
   {
     if (msg->buttons[_rest_button])
+    {
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
+      _vel_timer->cancel();
+      _default_pose_timer->reset();
+    }
     else if (msg->buttons[_walk_button])
+    {
+      _state.state = black_mouth_teleop::msg::TeleopState::MOVING_BODY;
+      _vel_timer->cancel();
+      _ik_timer->reset();
+    }
+    else if (msg->buttons[_body_button])
+    {
       _state.state = black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY;
+      
+      auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
+      request->data = true;
+      _set_body_control_publish_ik_client->async_send_request(request);
+
+      _vel_timer->cancel();
+    }
   }
 
   return (last_state != _state.state);
@@ -280,7 +402,12 @@ void JoyTeleop::bodyLockedState()
   return;
 }
 
-void JoyTeleop::controllingBodyState(const sensor_msgs::msg::Joy::SharedPtr msg)
+void JoyTeleop::controllingBodyState()
+{
+  return;
+}
+
+void JoyTeleop::movingBodyState(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
   _ik_msg.body_leg_ik_trajectory.at(0).leg_points.reference_link = black_mouth_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
 
@@ -337,8 +464,6 @@ void JoyTeleop::filterIK()
 
 void JoyTeleop::publishIK()
 {
-  if (_state.state == black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY)
-  {
     if (_use_filter)
     {
       this->filterIK();
@@ -346,24 +471,19 @@ void JoyTeleop::publishIK()
     }
     else
       _ik_publisher->publish(_ik_msg);
-  }
 }
 
 void JoyTeleop::publishVel()
 {
-  if (_state.state == black_mouth_teleop::msg::TeleopState::WALKING)
     _vel_publisher->publish(_vel_msg);
 }
 
 void JoyTeleop::publishDefaultPose()
 {
-  if (_state.state == black_mouth_teleop::msg::TeleopState::RESTING)
-  {
     if (!_resting)
       _default_pose_publisher->publish(std_msgs::msg::Empty());
     if (_use_filter)
       this->filterIK();
-  }
 }
 
 

@@ -12,6 +12,8 @@ joy_teleop_node:
       pitch_inc: 11
       pitch_dec: 12
       yaw: 2
+    restart: 9
     rest: 2
     lock: 0
+    body: 3
     walk: 1

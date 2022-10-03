@@ -18,6 +18,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -37,7 +38,7 @@ add_executable(teleop_state_server src/teleop_state_server.cpp)
 ament_target_dependencies(teleop_state_server rclcpp)
 
 add_executable(joy_teleop src/JoyTeleop.cpp)
-ament_target_dependencies(joy_teleop rclcpp std_msgs sensor_msgs geometry_msgs black_mouth_kinematics controller_manager)
+ament_target_dependencies(joy_teleop rclcpp std_srvs std_msgs sensor_msgs geometry_msgs black_mouth_kinematics controller_manager)
 
 rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
 
