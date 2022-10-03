@@ -186,6 +186,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       set_hw_state_request.name = "BlackMouthSystem";
       set_hw_state_request.target_state.id = 3; // 3 = Active
 
+      RCLCPP_INFO(this->get_logger(), "Activating hardware_interface...");
       auto result_hw_state_goal = _set_hw_state_client->async_send_request(std::make_shared<controller_manager_msgs::srv::SetHardwareComponentState::Request>(set_hw_state_request));
       result_hw_state_goal.wait_for(1s);
 
@@ -198,6 +199,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       switch_controller_request.activate_controllers.push_back("back_left_joint_trajectory_controller");
       switch_controller_request.activate_controllers.push_back("back_right_joint_trajectory_controller");
 
+      RCLCPP_INFO(this->get_logger(), "Activating controllers...");
       auto result_switch_goal = _switch_controller_client->async_send_request(std::make_shared<controller_manager_msgs::srv::SwitchController::Request>(switch_controller_request));
       result_switch_goal.wait_for(1s);
 
@@ -288,6 +290,16 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       request->data = false;
       _set_body_control_publish_ik_client->async_send_request(request);
     }
+    else if (msg->buttons[_body_button])
+    {
+      _state.state = black_mouth_teleop::msg::TeleopState::MOVING_BODY;
+
+      auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
+      request->data = false;
+      _set_body_control_publish_ik_client->async_send_request(request);
+
+      _ik_timer->reset();
+    }
     else if (msg->buttons[_walk_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::WALKING;
@@ -346,6 +358,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
     else if (msg->buttons[_body_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::MOVING_BODY;
+      _ik_timer->reset();
     }
   }
 

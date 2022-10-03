@@ -13,6 +13,7 @@ std::vector<std::string> states = {"INIT",
                                    "RESTING", 
                                    "BODY_LOCKED", 
                                    "CONTROLLING_BODY", 
+                                   "MOVING_BODY", 
                                    "WALKING"};
 black_mouth_teleop::msg::TeleopState current_state;
 
