@@ -16,7 +16,7 @@
             <param name="min_pos_limit">1709</param>
             <param name="max_pos_limit">2386</param>
             <param name="home_angle">2048</param>
-            <param name="kp_gain">500</param>
+            <param name="kp_gain">850</param>
             <param name="ki_gain">0</param>
             <param name="kd_gain">0</param>
             <command_interface name="position">
@@ -32,7 +32,7 @@
             <param name="min_pos_limit">1023</param>
             <param name="max_pos_limit">2048</param>
             <param name="home_angle">1533</param>
-            <param name="kp_gain">500</param>
+            <param name="kp_gain">850</param>
             <param name="ki_gain">0</param>
             <param name="kd_gain">0</param>
             <command_interface name="position">
@@ -48,7 +48,7 @@
             <param name="min_pos_limit">1700</param>
             <param name="max_pos_limit">2490</param>
             <param name="home_angle">2048</param>
-            <param name="kp_gain">500</param>
+            <param name="kp_gain">850</param>
             <param name="ki_gain">0</param>
             <param name="kd_gain">0</param>
             <command_interface name="position">
@@ -65,7 +65,7 @@
             <param name="min_pos_limit">1709</param>
             <param name="max_pos_limit">2386</param>
             <param name="home_angle">2048</param>
-            <param name="kp_gain">500</param>
+            <param name="kp_gain">850</param>
             <param name="ki_gain">0</param>
             <param name="kd_gain">0</param>
             <command_interface name="position">
@@ -81,7 +81,7 @@
             <param name="min_pos_limit">1023</param>
             <param name="max_pos_limit">2048</param>
             <param name="home_angle">1533</param>
-            <param name="kp_gain">500</param>
+            <param name="kp_gain">850</param>
             <param name="ki_gain">0</param>
             <param name="kd_gain">0</param>
             <command_interface name="position">
@@ -97,7 +97,7 @@
             <param name="min_pos_limit">1700</param>
             <param name="max_pos_limit">2490</param>
             <param name="home_angle">2048</param>
-            <param name="kp_gain">500</param>
+            <param name="kp_gain">850</param>
             <param name="ki_gain">0</param>
             <param name="kd_gain">0</param>
             <command_interface name="position">
@@ -114,7 +114,7 @@
             <param name="min_pos_limit">1709</param>
             <param name="max_pos_limit">2386</param>
             <param name="home_angle">2048</param>
-            <param name="kp_gain">500</param>
+            <param name="kp_gain">850</param>
             <param name="ki_gain">0</param>
             <param name="kd_gain">0</param>
             <command_interface name="position">
@@ -130,7 +130,7 @@
             <param name="min_pos_limit">1023</param>
             <param name="max_pos_limit">2048</param>
             <param name="home_angle">1533</param>
-            <param name="kp_gain">500</param>
+            <param name="kp_gain">850</param>
             <param name="ki_gain">0</param>
             <param name="kd_gain">0</param>
             <command_interface name="position">
@@ -146,7 +146,7 @@
             <param name="min_pos_limit">1700</param>
             <param name="max_pos_limit">2490</param>
             <param name="home_angle">2048</param>
-            <param name="kp_gain">500</param>
+            <param name="kp_gain">850</param>
             <param name="ki_gain">0</param>
             <param name="kd_gain">0</param>
             <command_interface name="position">
@@ -163,7 +163,7 @@
             <param name="min_pos_limit">1709</param>
             <param name="max_pos_limit">2386</param>
             <param name="home_angle">2048</param>
-            <param name="kp_gain">500</param>
+            <param name="kp_gain">850</param>
             <param name="ki_gain">0</param>
             <param name="kd_gain">0</param>
             <command_interface name="position">
@@ -179,7 +179,7 @@
             <param name="min_pos_limit">1023</param>
             <param name="max_pos_limit">2048</param>
             <param name="home_angle">1533</param>
-            <param name="kp_gain">500</param>
+            <param name="kp_gain">850</param>
             <param name="ki_gain">0</param>
             <param name="kd_gain">0</param>
             <command_interface name="position">
@@ -195,7 +195,7 @@
             <param name="min_pos_limit">1700</param>
             <param name="max_pos_limit">2490</param>
             <param name="home_angle">2048</param>
-            <param name="kp_gain">500</param>
+            <param name="kp_gain">850</param>
             <param name="ki_gain">0</param>
             <param name="kd_gain">0</param>
             <command_interface name="position">
