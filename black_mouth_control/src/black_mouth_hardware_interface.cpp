@@ -306,12 +306,23 @@ hardware_interface::CallbackReturn BlackMouthHW::on_deactivate(
                 "Deactivating ...please wait...");
 
     // TURN OFF TORQUE
-    dxl_comm_result_ = switch_dynamixel_torque(false);
-    if (dxl_comm_result_ != COMM_SUCCESS) {
-        RCLCPP_ERROR(rclcpp::get_logger("BlackMouthHW"),
-                     "Failed to TURN OFF torque");
-        return hardware_interface::CallbackReturn::FAILURE;
+    // dxl_comm_result_ = switch_dynamixel_torque(false);
+    // if (dxl_comm_result_ != COMM_SUCCESS) {
+    //     RCLCPP_ERROR(rclcpp::get_logger("BlackMouthHW"),
+    //                  "Failed to TURN OFF torque");
+    //     return hardware_interface::CallbackReturn::FAILURE;
+    // }
+
+    // REBOOT Motor
+    for (uint i = 0; i < hw_joints_.size(); i++) {
+        packet_handler_->reboot(port_handler_, hw_joints_[i].id, &dxl_error_);
+        if (dxl_error_ != 0) {
+            printf("ID %d: %s\n", hw_joints_[i].id,
+                   packet_handler_->getRxPacketError(dxl_error_));
+        }
     }
+
+    RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"), "Finished rebooting motors");
 
     return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -345,10 +356,17 @@ hardware_interface::return_type BlackMouthHW::read(
                                                hw_joints_[i].home_angle);
         } else {
             double motor_angle = read_convert(hw_joints_[i].present_position,
-                                            hw_joints_[i].home_angle);
-            hw_joints_[i].state = 1.12283214*motor_angle - 0.01613196;  // Convert motor angle to leg angle
+                                              hw_joints_[i].home_angle);
+            hw_joints_[i].state =
+                1.12283214 * motor_angle -
+                0.01613196;  // Convert motor angle to leg angle
         }
     }
+
+    uint16_t present_load = 0;
+    packet_handler_->read2ByteTxRx(port_handler_, 33, 126, &present_load);
+    int16_t converted_present_load =
+        (present_load > 10000) ? present_load - 65535 : present_load;
     // std::cout << "READ: " << info_.joints[1].name.c_str() << "  "
     //            << hw_joints_[1].state << "\n";
 
@@ -375,7 +393,9 @@ hardware_interface::return_type BlackMouthHW::write(
             hw_joints_[i].goal_position =
                 write_convert(hw_joints_[i].command, hw_joints_[i].home_angle);
         } else {
-            double motor_angle = 0.89058151*hw_joints_[i].command + 0.01436683;  // Convert leg angle to motor angle
+            double motor_angle =
+                0.89058151 * hw_joints_[i].command +
+                0.01436683;  // Convert leg angle to motor angle
             hw_joints_[i].goal_position =
                 write_convert(motor_angle, hw_joints_[i].home_angle);
         }
