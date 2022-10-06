@@ -315,11 +315,19 @@ hardware_interface::CallbackReturn BlackMouthHW::on_deactivate(
 
     // REBOOT Motor
     for (uint i = 0; i < hw_joints_.size(); i++) {
-        packet_handler_->reboot(port_handler_, hw_joints_[i].id, &dxl_error_);
-        if (dxl_error_ != 0) {
-            printf("ID %d: %s\n", hw_joints_[i].id,
-                   packet_handler_->getRxPacketError(dxl_error_));
+        dxl_comm_result_ = packet_handler_->reboot(port_handler_, hw_joints_[i].id, &dxl_error_);
+
+        if (dxl_comm_result_ != COMM_SUCCESS) {
+                RCLCPP_ERROR(rclcpp::get_logger("BlackMouthHW"), 
+                    "TxRxError: ID %d: %s\n",
+                    hw_joints_[i].id, packet_handler_->getTxRxResult(dxl_comm_result_));
         }
+        else if (dxl_error_ != 0) {
+            RCLCPP_ERROR(rclcpp::get_logger("BlackMouthHW"), 
+                "DxlError: ID %d: %s\n", hw_joints_[i].id,
+                packet_handler_->getRxPacketError(dxl_error_));
+        }
+
     }
 
     RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"), "Finished rebooting motors");
@@ -363,13 +371,13 @@ hardware_interface::return_type BlackMouthHW::read(
         }
     }
 
+   //TODO DEBUG
     uint16_t present_load = 0;
     packet_handler_->read2ByteTxRx(port_handler_, 33, 126, &present_load);
     int16_t converted_present_load =
         (present_load > 10000) ? present_load - 65535 : present_load;
-    // std::cout << "READ: " << info_.joints[1].name.c_str() << "  "
-    //            << hw_joints_[1].state << "\n";
-
+    RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"), "Load id33: %d", converted_present_load);
+    
     // auto end = std::chrono::steady_clock::now();
     // std::cout << "READ: "
     //           << std::chrono::duration_cast<std::chrono::microseconds>(end -
