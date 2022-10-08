@@ -272,7 +272,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 
   else if (_state.state == black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY)
   {
-    if (msg->buttons[_rest_button])
+    if (msg->buttons[_rest_button] || msg->buttons[_body_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
 
@@ -281,34 +281,6 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       _set_body_control_publish_ik_client->async_send_request(request);
 
       _default_pose_timer->reset();
-    }
-    else if (msg->buttons[_lock_button])
-    {
-      _state.state = black_mouth_teleop::msg::TeleopState::BODY_LOCKED;
-
-      auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
-      request->data = false;
-      _set_body_control_publish_ik_client->async_send_request(request);
-    }
-    else if (msg->buttons[_body_button])
-    {
-      _state.state = black_mouth_teleop::msg::TeleopState::MOVING_BODY;
-
-      auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
-      request->data = false;
-      _set_body_control_publish_ik_client->async_send_request(request);
-
-      _ik_timer->reset();
-    }
-    else if (msg->buttons[_walk_button])
-    {
-      _state.state = black_mouth_teleop::msg::TeleopState::WALKING;
-
-      auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
-      request->data = false;
-      _set_body_control_publish_ik_client->async_send_request(request);
-      
-      _vel_timer->reset();
     }
   }
 
@@ -325,22 +297,6 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       _state.state = black_mouth_teleop::msg::TeleopState::BODY_LOCKED;
       _ik_timer->cancel();
     }
-    else if (msg->buttons[_body_button])
-    {
-      _state.state = black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY;
-      
-      auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
-      request->data = true;
-      _set_body_control_publish_ik_client->async_send_request(request);
-
-      _ik_timer->cancel();
-    }
-    else if (msg->buttons[_walk_button])
-    {
-      _state.state = black_mouth_teleop::msg::TeleopState::WALKING;
-      _ik_timer->cancel();
-      _vel_timer->reset();
-    }
   }
 
   else if (_state.state == black_mouth_teleop::msg::TeleopState::BODY_LOCKED)
@@ -350,12 +306,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
       _default_pose_timer->reset();
     }
-    else if (msg->buttons[_lock_button])
-    {
-      _state.state = black_mouth_teleop::msg::TeleopState::MOVING_BODY;
-      _ik_timer->reset();
-    }
-    else if (msg->buttons[_body_button])
+    else if (msg->buttons[_lock_button] || msg->buttons[_body_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::MOVING_BODY;
       _ik_timer->reset();
@@ -364,27 +315,11 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 
   else if (_state.state == black_mouth_teleop::msg::TeleopState::WALKING)
   {
-    if (msg->buttons[_rest_button])
+    if (msg->buttons[_rest_button] || msg->buttons[_walk_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
       _vel_timer->cancel();
       _default_pose_timer->reset();
-    }
-    else if (msg->buttons[_walk_button])
-    {
-      _state.state = black_mouth_teleop::msg::TeleopState::MOVING_BODY;
-      _vel_timer->cancel();
-      _ik_timer->reset();
-    }
-    else if (msg->buttons[_body_button])
-    {
-      _state.state = black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY;
-      
-      auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
-      request->data = true;
-      _set_body_control_publish_ik_client->async_send_request(request);
-
-      _vel_timer->cancel();
     }
   }
 
