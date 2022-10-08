@@ -18,7 +18,7 @@ BodyControl::BodyControl() : Node("body_control")
   _ik_publisher = this->create_publisher<black_mouth_kinematics::msg::BodyLegIKTrajectory>("cmd_ik", 10);
   _body_control_publisher = this->create_publisher<black_mouth_control::msg::BodyControl>("body_control", 10);
 
-  _imu_subscriber = this->create_subscription<sensor_msgs::msg::Imu>("imu/out", 10,
+  _imu_subscriber = this->create_subscription<sensor_msgs::msg::Imu>("imu/data", 10,
                           std::bind(&BodyControl::IMUCallback, this, _1));
   _desired_rotation_subscriber = this->create_subscription<geometry_msgs::msg::Vector3>("body_desired_rotation", 10,
                                        std::bind(&BodyControl::desiredRotationCallback, this, _1));

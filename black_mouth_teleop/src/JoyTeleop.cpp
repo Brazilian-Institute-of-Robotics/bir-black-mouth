@@ -153,6 +153,7 @@ void JoyTeleop::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
   if (this->stateTransition(msg))
   {
+    _resting = false;
     auto request = std::make_shared<black_mouth_teleop::srv::SetTeleopState::Request>();
     request->state = _state;
     _set_state_client->async_send_request(request);
@@ -425,26 +426,26 @@ void JoyTeleop::filterIK()
 
 void JoyTeleop::publishIK()
 {
-    if (_use_filter)
-    {
-      this->filterIK();
-      _ik_publisher->publish(_ik_msg_filtered);
-    }
-    else
-      _ik_publisher->publish(_ik_msg);
+  if (_use_filter)
+  {
+    this->filterIK();
+    _ik_publisher->publish(_ik_msg_filtered);
+  }
+  else
+    _ik_publisher->publish(_ik_msg);
 }
 
 void JoyTeleop::publishVel()
 {
-    _vel_publisher->publish(_vel_msg);
+  _vel_publisher->publish(_vel_msg);
 }
 
 void JoyTeleop::publishDefaultPose()
 {
-    if (!_resting)
-      _default_pose_publisher->publish(std_msgs::msg::Empty());
-    if (_use_filter)
-      this->filterIK();
+  if (!_resting)
+    _default_pose_publisher->publish(std_msgs::msg::Empty());
+  if (_use_filter)
+    this->filterIK();
 }
 
 
