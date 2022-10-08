@@ -2,6 +2,7 @@
 #define BODY_ROTATION_CONTROL_HPP
 
 #include "rclcpp/rclcpp.hpp"
+#include "std_srvs/srv/empty.hpp"
 #include "std_srvs/srv/set_bool.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 #include "geometry_msgs/msg/vector3.hpp"
@@ -25,6 +26,8 @@ private:
 
   void setPublishIK(const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
                           std::shared_ptr<std_srvs::srv::SetBool::Response> response);
+  void resetPID(const std::shared_ptr<std_srvs::srv::Empty::Request> request,
+                      std::shared_ptr<std_srvs::srv::Empty::Response> response);
 
   rclcpp::TimerBase::SharedPtr _pid_timer;
   rclcpp::TimerBase::SharedPtr _ik_timer;
@@ -36,6 +39,7 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::Vector3>::SharedPtr _desired_rotation_subscriber;
 
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr _set_publish_ik_service;
+  rclcpp::Service<std_srvs::srv::Empty>::SharedPtr _reset_pid_service;
 
   geometry_msgs::msg::Vector3 _last_rotation_euler;
   geometry_msgs::msg::Vector3 _rotation_euler;

@@ -29,6 +29,7 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
 
   _set_state_client = this->create_client<black_mouth_teleop::srv::SetTeleopState>("set_teleop_state");
   _set_body_control_publish_ik_client = this->create_client<std_srvs::srv::SetBool>("set_body_control_publish_ik");
+  _reset_body_control_pid_client = this->create_client<std_srvs::srv::Empty>("reset_body_control_pid");
 
   _set_hw_state_client = this->create_client<controller_manager_msgs::srv::SetHardwareComponentState>("controller_manager/set_hardware_component_state");
   _switch_controller_client = this->create_client<controller_manager_msgs::srv::SwitchController>("controller_manager/switch_controller");
@@ -102,6 +103,16 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
       return;
     }
     RCLCPP_INFO(this->get_logger(), "Set body_control publish_ik service not available, waiting again...");
+  }
+
+  while(!_reset_body_control_pid_client->wait_for_service(1s))
+  {
+    if(!rclcpp::ok())
+    {
+      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the reset_body_control_pid_client service. Exiting.");
+      return;
+    }
+    RCLCPP_INFO(this->get_logger(), "Reset body_control reset_pid service not available, waiting again...");
   }
 
   while(!_set_hw_state_client->wait_for_service(1s))
@@ -228,6 +239,8 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       {
         _state.state = black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY;
         
+        _reset_body_control_pid_client->async_send_request(std::make_shared<std_srvs::srv::Empty::Request>());
+
         auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
         request->data = true;
         _set_body_control_publish_ik_client->async_send_request(request);
