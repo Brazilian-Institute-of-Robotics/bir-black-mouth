@@ -17,10 +17,28 @@ void computeGaitTrajectory(
         black_mouth_gait_planner::srv::ComputeGaitTrajectory::Response>
         response) {
 
-    //auto start = std::chrono::steady_clock::now();
-    auto time =
-        Eigen::ArrayXd::LinSpaced(request->resolution, 0.0, request->period)
-            .transpose();
+    // auto start = std::chrono::steady_clock::now();
+
+    int N_first_fraction = (int)(request->resolution * request->resolution_first_fraction);
+    double T_first_fraction = (double)(request->period * request->period_first_fraction);
+
+    Eigen::ArrayXd time(request->resolution); 
+
+    if(request->resolution_first_fraction != 1.0 && request->period_first_fraction != 1.0){
+        auto time1 = Eigen::ArrayXd::LinSpaced(N_first_fraction, 0.0, T_first_fraction);
+        auto time2 = Eigen::ArrayXd::LinSpaced(request->resolution - N_first_fraction + 1,
+            T_first_fraction, 
+            request->period);
+
+        for (int i=0; i < request->resolution; i++){
+            time[i] = i < N_first_fraction ? time1[i] : time2[i - N_first_fraction + 1];
+        }
+    }
+    else {
+        time = Eigen::ArrayXd::LinSpaced(request->resolution, 0.0,
+            request->period);
+    }
+
     auto k = 2 * M_PI / request->period * time;
     auto xy_common = (k - k.sin()) / (2 * M_PI);
     auto x_axis =
