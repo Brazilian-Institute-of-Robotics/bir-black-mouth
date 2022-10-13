@@ -372,11 +372,17 @@ hardware_interface::return_type BlackMouthHW::read(
     }
 
    //TODO DEBUG
-    uint16_t present_load = 0;
-    packet_handler_->read2ByteTxRx(port_handler_, 33, 126, &present_load);
-    int16_t converted_present_load =
-        (present_load > 10000) ? present_load - 65535 : present_load;
-    RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"), "Load id33: %d", converted_present_load);
+    // uint16_t present_load = 0;
+    // packet_handler_->read2ByteTxRx(port_handler_, 33, 126, &present_load);
+    // int16_t converted_present_load =
+    //     (present_load > 10000) ? present_load - 65535 : present_load;
+    // RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"), "Load 33: %d", converted_present_load);
+    
+    // present_load = 0;
+    // packet_handler_->read2ByteTxRx(port_handler_, 23, 126, &present_load);
+    // converted_present_load =
+    //     (present_load > 10000) ? present_load - 65535 : present_load;
+    // RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"), "Load 23: %d\n", converted_present_load);
     
     // auto end = std::chrono::steady_clock::now();
     // std::cout << "READ: "

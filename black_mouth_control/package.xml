@@ -9,6 +9,9 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <depend>rclpy</depend>
+
+  
   <depend>rclcpp</depend>
   <depend>tf2</depend>
   <depend>ros2_control</depend>

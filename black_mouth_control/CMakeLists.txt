@@ -83,6 +83,13 @@ install(
   DESTINATION lib/${PROJECT_NAME}
 )
 
+# ament_python_install_package(${PROJECT_NAME})
+
+install(PROGRAMS
+  scripts/test_trot.py
+
+  DESTINATION lib/${PROJECT_NAME})
+
 ## EXPORTS
 ament_export_include_directories(
   include
