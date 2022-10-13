@@ -2,6 +2,7 @@
 #define JOY_TELEOP_HPP
 
 #include "rclcpp/rclcpp.hpp"
+#include "std_srvs/srv/empty.hpp"
 #include "std_srvs/srv/set_bool.hpp"
 #include "std_msgs/msg/empty.hpp"
 #include "sensor_msgs/msg/joy.hpp"
@@ -51,6 +52,7 @@ private:
 
   rclcpp::Client<black_mouth_teleop::srv::SetTeleopState>::SharedPtr _set_state_client;
   rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr _set_body_control_publish_ik_client;
+  rclcpp::Client<std_srvs::srv::Empty>::SharedPtr _reset_body_control_pid_client;
 
   rclcpp::Client<controller_manager_msgs::srv::SetHardwareComponentState>::SharedPtr _set_hw_state_client;
   rclcpp::Client<controller_manager_msgs::srv::SwitchController>::SharedPtr _switch_controller_client;

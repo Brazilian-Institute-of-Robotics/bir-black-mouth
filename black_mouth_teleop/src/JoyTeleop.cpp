@@ -29,6 +29,7 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
 
   _set_state_client = this->create_client<black_mouth_teleop::srv::SetTeleopState>("set_teleop_state");
   _set_body_control_publish_ik_client = this->create_client<std_srvs::srv::SetBool>("set_body_control_publish_ik");
+  _reset_body_control_pid_client = this->create_client<std_srvs::srv::Empty>("reset_body_control_pid");
 
   _set_hw_state_client = this->create_client<controller_manager_msgs::srv::SetHardwareComponentState>("controller_manager/set_hardware_component_state");
   _switch_controller_client = this->create_client<controller_manager_msgs::srv::SwitchController>("controller_manager/switch_controller");
@@ -104,6 +105,16 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
     RCLCPP_INFO(this->get_logger(), "Set body_control publish_ik service not available, waiting again...");
   }
 
+  while(!_reset_body_control_pid_client->wait_for_service(1s))
+  {
+    if(!rclcpp::ok())
+    {
+      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the reset_body_control_pid_client service. Exiting.");
+      return;
+    }
+    RCLCPP_INFO(this->get_logger(), "Reset body_control reset_pid service not available, waiting again...");
+  }
+
   while(!_set_hw_state_client->wait_for_service(1s))
   {
     if(!rclcpp::ok())
@@ -142,6 +153,7 @@ void JoyTeleop::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
   if (this->stateTransition(msg))
   {
+    _resting = false;
     auto request = std::make_shared<black_mouth_teleop::srv::SetTeleopState::Request>();
     request->state = _state;
     _set_state_client->async_send_request(request);
@@ -228,6 +240,8 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       {
         _state.state = black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY;
         
+        _reset_body_control_pid_client->async_send_request(std::make_shared<std_srvs::srv::Empty::Request>());
+
         auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
         request->data = true;
         _set_body_control_publish_ik_client->async_send_request(request);
@@ -272,7 +286,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 
   else if (_state.state == black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY)
   {
-    if (msg->buttons[_rest_button])
+    if (msg->buttons[_rest_button] || msg->buttons[_body_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
 
@@ -281,34 +295,6 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       _set_body_control_publish_ik_client->async_send_request(request);
 
       _default_pose_timer->reset();
-    }
-    else if (msg->buttons[_lock_button])
-    {
-      _state.state = black_mouth_teleop::msg::TeleopState::BODY_LOCKED;
-
-      auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
-      request->data = false;
-      _set_body_control_publish_ik_client->async_send_request(request);
-    }
-    else if (msg->buttons[_body_button])
-    {
-      _state.state = black_mouth_teleop::msg::TeleopState::MOVING_BODY;
-
-      auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
-      request->data = false;
-      _set_body_control_publish_ik_client->async_send_request(request);
-
-      _ik_timer->reset();
-    }
-    else if (msg->buttons[_walk_button])
-    {
-      _state.state = black_mouth_teleop::msg::TeleopState::WALKING;
-
-      auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
-      request->data = false;
-      _set_body_control_publish_ik_client->async_send_request(request);
-      
-      _vel_timer->reset();
     }
   }
 
@@ -325,22 +311,6 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       _state.state = black_mouth_teleop::msg::TeleopState::BODY_LOCKED;
       _ik_timer->cancel();
     }
-    else if (msg->buttons[_body_button])
-    {
-      _state.state = black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY;
-      
-      auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
-      request->data = true;
-      _set_body_control_publish_ik_client->async_send_request(request);
-
-      _ik_timer->cancel();
-    }
-    else if (msg->buttons[_walk_button])
-    {
-      _state.state = black_mouth_teleop::msg::TeleopState::WALKING;
-      _ik_timer->cancel();
-      _vel_timer->reset();
-    }
   }
 
   else if (_state.state == black_mouth_teleop::msg::TeleopState::BODY_LOCKED)
@@ -350,12 +320,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
       _default_pose_timer->reset();
     }
-    else if (msg->buttons[_lock_button])
-    {
-      _state.state = black_mouth_teleop::msg::TeleopState::MOVING_BODY;
-      _ik_timer->reset();
-    }
-    else if (msg->buttons[_body_button])
+    else if (msg->buttons[_lock_button] || msg->buttons[_body_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::MOVING_BODY;
       _ik_timer->reset();
@@ -364,27 +329,11 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 
   else if (_state.state == black_mouth_teleop::msg::TeleopState::WALKING)
   {
-    if (msg->buttons[_rest_button])
+    if (msg->buttons[_rest_button] || msg->buttons[_walk_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
       _vel_timer->cancel();
       _default_pose_timer->reset();
-    }
-    else if (msg->buttons[_walk_button])
-    {
-      _state.state = black_mouth_teleop::msg::TeleopState::MOVING_BODY;
-      _vel_timer->cancel();
-      _ik_timer->reset();
-    }
-    else if (msg->buttons[_body_button])
-    {
-      _state.state = black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY;
-      
-      auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
-      request->data = true;
-      _set_body_control_publish_ik_client->async_send_request(request);
-
-      _vel_timer->cancel();
     }
   }
 
@@ -477,26 +426,26 @@ void JoyTeleop::filterIK()
 
 void JoyTeleop::publishIK()
 {
-    if (_use_filter)
-    {
-      this->filterIK();
-      _ik_publisher->publish(_ik_msg_filtered);
-    }
-    else
-      _ik_publisher->publish(_ik_msg);
+  if (_use_filter)
+  {
+    this->filterIK();
+    _ik_publisher->publish(_ik_msg_filtered);
+  }
+  else
+    _ik_publisher->publish(_ik_msg);
 }
 
 void JoyTeleop::publishVel()
 {
-    _vel_publisher->publish(_vel_msg);
+  _vel_publisher->publish(_vel_msg);
 }
 
 void JoyTeleop::publishDefaultPose()
 {
-    if (!_resting)
-      _default_pose_publisher->publish(std_msgs::msg::Empty());
-    if (_use_filter)
-      this->filterIK();
+  if (!_resting)
+    _default_pose_publisher->publish(std_msgs::msg::Empty());
+  if (_use_filter)
+    this->filterIK();
 }
 
 

@@ -18,13 +18,15 @@ BodyControl::BodyControl() : Node("body_control")
   _ik_publisher = this->create_publisher<black_mouth_kinematics::msg::BodyLegIKTrajectory>("cmd_ik", 10);
   _body_control_publisher = this->create_publisher<black_mouth_control::msg::BodyControl>("body_control", 10);
 
-  _imu_subscriber = this->create_subscription<sensor_msgs::msg::Imu>("imu/out", 10,
+  _imu_subscriber = this->create_subscription<sensor_msgs::msg::Imu>("imu/data", 10,
                           std::bind(&BodyControl::IMUCallback, this, _1));
   _desired_rotation_subscriber = this->create_subscription<geometry_msgs::msg::Vector3>("body_desired_rotation", 10,
                                        std::bind(&BodyControl::desiredRotationCallback, this, _1));
   
   _set_publish_ik_service = this->create_service<std_srvs::srv::SetBool>("set_body_control_publish_ik", 
                                   std::bind(&BodyControl::setPublishIK, this, _1, _2));
+  _reset_pid_service = this->create_service<std_srvs::srv::Empty>("reset_body_control_pid",
+                             std::bind(&BodyControl::resetPID, this, _1, _2));
 
   _pid_timer = this->create_wall_timer(20ms, std::bind(&BodyControl::computePID, this));
   _ik_timer = this->create_wall_timer(20ms, std::bind(&BodyControl::publishIK, this));
@@ -90,6 +92,24 @@ void BodyControl::setPublishIK(const std::shared_ptr<std_srvs::srv::SetBool::Req
   response->success = true;
   response->message = request->data ? "Set publish_ik to True" : "Set publish_ik to False";
   RCLCPP_INFO(this->get_logger(), response->message.c_str());
+}
+
+void BodyControl::resetPID(const std::shared_ptr<std_srvs::srv::Empty::Request> request,
+                                 std::shared_ptr<std_srvs::srv::Empty::Response> response)
+{
+  (void) request;
+  (void) response;
+
+  _sum_error_roll  = 0.0;
+  _sum_error_pitch = 0.0;
+  
+  _last_error_roll  = 0.0;
+  _last_error_pitch = 0.0;
+
+  _last_time = this->now();
+  _current_time = this->now();
+
+  RCLCPP_INFO(this->get_logger(), "Body Control PID reseted");
 }
 
 void BodyControl::publishIK()
