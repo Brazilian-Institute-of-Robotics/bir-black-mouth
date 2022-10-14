@@ -54,7 +54,7 @@ def generate_launch_description():
         name="body_control_node",
         parameters=[body_control_config],
         output="screen",
-        remappings=[('imu/data', 'imu/out' if use_sim_time else 'imu/data')]
+        #TODO remappings=[('imu/data', 'imu/out' if use_sim_time else 'imu/data')]
     )
 
     return LaunchDescription([
