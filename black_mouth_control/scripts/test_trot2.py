@@ -31,6 +31,8 @@ class TestTrot(Node):
         self.gait_x_length = 0
         self.gait_theta_length = 0
         self.gait_y_length = 0
+        
+        self.cmd_vel_msg = Twist()
 
         timer_period = 0.02
         self.ik_timer = self.create_timer(timer_period, self.timerCallback)
@@ -85,15 +87,15 @@ class TestTrot(Node):
         self.req_minus_leg.period_first_fraction = 0.66
 
         self.req_body1 = ComputeGaitTrajectory.Request()
-        self.req_body1.initial_point = Point(x=0.005, z=self.lower_body+0.0025)
-        self.req_body1.landing_point = Point(x=0.025, z=self.lower_body+0.0025)
+        self.req_body1.initial_point = Point(x=0.005, z=self.lower_body+0.002)
+        self.req_body1.landing_point = Point(x=0.025, z=self.lower_body+0.002)
         self.req_body1.period = self.gait_period
         self.req_body1.height = 0.005
         self.req_body1.resolution = self.gait_res
 
         self.req_body2 = ComputeGaitTrajectory.Request()
-        self.req_body2.initial_point = Point(x=0.025, z=self.lower_body+0.0025)
-        self.req_body2.landing_point = Point(x=0.045, z=self.lower_body+0.0025)
+        self.req_body2.initial_point = Point(x=0.025, z=self.lower_body+0.002)
+        self.req_body2.landing_point = Point(x=0.045, z=self.lower_body+0.002)
         self.req_body2.period = self.gait_period
         self.req_body2.height = 0.005
         self.req_body2.resolution = self.gait_res
@@ -126,19 +128,20 @@ class TestTrot(Node):
         
     def create_body_matrix(self):
         self.coord_orig = np.array([[self.origin-self.Width/2, self.origin-self.Length/2 - self.last_step_l/2],
-                            [self.origin+self.Width/2, self.origin-self.Length/2],
-                            [self.origin+self.Width/2, self.origin+self.Length/2 - self.last_step_l/2],
-                            [self.origin, self.origin],
-                            [self.origin-self.Width/2, self.origin+self.Length/2]])
+                                    [self.origin+self.Width/2, self.origin-self.Length/2],
+                                    [self.origin+self.Width/2, self.origin+self.Length/2 - self.last_step_l/2],
+                                    [self.origin, self.origin],
+                                    [self.origin-self.Width/2, self.origin+self.Length/2]])
         self.coord_orig = np.vstack((self.coord_orig, self.coord_orig[0]))
 
     def bodyCallback(self, msg):
         self.body_rotation = msg.body_rotation
 
     def cmd_vel_cb(self, msg):
-        self.gait_x_length = msg.linear.x*(self.gait_period*4)
-        self.gait_y_length = msg.linear.y*(self.gait_period*4)
-        self.gait_theta_length = msg.angular.z*(self.gait_period*4)
+        self.cmd_vel_msg = msg
+        # self.gait_x_length = msg.linear.x*(self.gait_period*4)
+        # self.gait_y_length = msg.linear.y*(self.gait_period*4)
+        # self.gait_theta_length = msg.angular.z*(self.gait_period*4)
 
     def update_positions(mat, linear_x, linear_y,  theta):
         result = np.ones((mat.shape[0], 3))
@@ -205,11 +208,22 @@ class TestTrot(Node):
         # Update time and state counter
         if self.point_counter == self.gait_res - 1:
             if self.state == 3:
+                
+                self.gait_x_length = self.cmd_vel_msg.linear.x*(self.gait_period*4)
+                self.gait_y_length = self.cmd_vel_msg.linear.y*(self.gait_period*4)
+                self.gait_theta_length = self.cmd_vel_msg.angular.z*(self.gait_period*4)
+                
+                updated_pos = self.update_positions(
+                                self.coord_orig, 
+                                self.gait_x_length, 
+                                self.gait_y_length, 
+                                self.gait_theta_length)
+                
                 # reset whole gait
                 self.msg.body_leg_ik_trajectory[0] = BodyLegIK()
                 self.msg.body_leg_ik_trajectory[0].leg_points.reference_link = 1
                 self.msg.body_leg_ik_trajectory[0].body_position = self.point_to_vector3(
-                    Point(x=0.005, z=self.lower_body+0.0025))
+                    Point(x=0.005, z=self.lower_body+0.002))
                 self.msg.body_leg_ik_trajectory[0].leg_points.front_left_leg = Point(
                     x=-0.02)
                 self.msg.body_leg_ik_trajectory[0].leg_points.back_right_leg = Point(
