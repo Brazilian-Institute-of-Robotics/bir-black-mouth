@@ -55,6 +55,11 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(include)
 
 install(
+  DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
+)
+
+install(
   TARGETS
   gait_traj_server
   ik_gait_traj_server

@@ -66,12 +66,16 @@ def generate_launch_description():
                           'controllers': LaunchConfiguration('controllers'),
                           'quadruped_config': LaunchConfiguration('quadruped_config'),
                           'body_control_config': LaunchConfiguration('body_control_config'),
+                          'launch_joy_node': LaunchConfiguration('launch_joy_node'),
+                          'launch_joy_teleop': LaunchConfiguration('launch_joy_teleop'),
+                          'joy_type': LaunchConfiguration('joy_type'),
+                          'launch_imu': LaunchConfiguration('launch_imu'),
                           }.items(),
     )
 
 
     return LaunchDescription([
-        DeclareLaunchArgument(name='use_sim_time', default_value='true', 
+        DeclareLaunchArgument(name='use_sim_time', default_value='True', 
                               description='Use simulation (Gazebo) clock if true'),
         DeclareLaunchArgument(name='world', default_value=default_world, 
                               description='Absolute path to world file'),
@@ -87,6 +91,14 @@ def generate_launch_description():
                               description='Start rviz if true'),
         DeclareLaunchArgument(name='rviz_config', default_value=default_rviz_config, 
                               description='Absolute path to rviz config file'),
+        DeclareLaunchArgument(name='launch_joy_node', default_value='True',
+                              description='Whether to launch joy node or not'),
+        DeclareLaunchArgument(name='launch_joy_teleop', default_value='True',
+                              description="Whether to launch bm joy teleop or not"),
+        DeclareLaunchArgument(name='joy_type', default_value='generic', 
+                              description='Set the joystick type (generic, x360 or ps4)'),
+        DeclareLaunchArgument(name='launch_imu', default_value='False', 
+                              description='Whether to launch imu or not'),
         gzserver,
         gzclient,
         spawn_robot,

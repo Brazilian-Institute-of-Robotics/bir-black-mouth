@@ -10,7 +10,7 @@ def generate_launch_description():
 
     bm_teleop_pkg_share = FindPackageShare('black_mouth_teleop').find('black_mouth_teleop')
 
-    launch_joy_node = LaunchConfiguration('launch_joy')
+    launch_joy_node = LaunchConfiguration('launch_joy_node')
 
     joy_type = LaunchConfiguration('joy_type', default="generic")
     joystick_config = [TextSubstitution(text=os.path.join(bm_teleop_pkg_share, 'config', '')), 
@@ -45,8 +45,8 @@ def generate_launch_description():
     )
 
     return launch.LaunchDescription([
-        DeclareLaunchArgument('launch_joy', default_value='True',
-                               description="Whether to launch joy node or not"),
+        DeclareLaunchArgument(name='launch_joy_node', default_value='True',
+                              description="Whether to launch joy node or not"),
         DeclareLaunchArgument(name='joy_type', default_value='generic', 
                               description='Set the joystick type (generic, x360 or ps4)'),
         joy_node,
