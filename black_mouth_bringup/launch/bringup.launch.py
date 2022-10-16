@@ -67,7 +67,7 @@ def generate_launch_description():
         name="body_control_node",
         parameters=[body_control_config],
         output="screen",
-        remappings=[('imu/data', 'imu/out' if use_sim_time == "True" else 'imu/data')]
+        remappings=[('imu/data', 'imu/out' if PythonExpression([use_sim_time, ' == True']) else 'imu/data')]
     )
 
     gait_planner = IncludeLaunchDescription(
