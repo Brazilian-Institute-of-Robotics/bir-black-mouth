@@ -133,7 +133,8 @@ class TestTrot(Node):
         self.coord_orig = np.vstack((self.coord_orig, self.coord_orig[0]))
 
     def bodyCallback(self, msg):
-        self.body_rotation = msg.body_rotation
+        # self.body_rotation = msg.body_rotation
+        pass
 
     def cmd_vel_cb(self, msg):
         self.gait_x_length = msg.linear.x*(self.gait_period*4)
@@ -250,9 +251,9 @@ class TestTrot(Node):
             self.point_counter = 0
             self.start_time = time.time()
 
-            time_delay = time.time() + 2
-            while (time.time() < time_delay):
-                continue
+            # time_delay = time.time() + 2
+            # while (time.time() < time_delay):
+            #     continue
         else:
             self.point_counter += 1
 
