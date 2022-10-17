@@ -85,15 +85,15 @@ class TestTrot(Node):
         self.req_minus_leg.period_first_fraction = 0.66
 
         self.req_body1 = ComputeGaitTrajectory.Request()
-        self.req_body1.initial_point = Point(x=0.005, z=self.lower_body+0.0025)
-        self.req_body1.landing_point = Point(x=0.025, z=self.lower_body+0.0025)
+        self.req_body1.initial_point = Point(x=0.005, z=self.lower_body-0.0025)
+        self.req_body1.landing_point = Point(x=0.025, z=self.lower_body-0.0025)
         self.req_body1.period = self.gait_period
         self.req_body1.height = 0.005
         self.req_body1.resolution = self.gait_res
 
         self.req_body2 = ComputeGaitTrajectory.Request()
-        self.req_body2.initial_point = Point(x=0.025, z=self.lower_body+0.0025)
-        self.req_body2.landing_point = Point(x=0.045, z=self.lower_body+0.0025)
+        self.req_body2.initial_point = Point(x=0.025, z=self.lower_body-0.0025)
+        self.req_body2.landing_point = Point(x=0.045, z=self.lower_body-0.0025)
         self.req_body2.period = self.gait_period
         self.req_body2.height = 0.005
         self.req_body2.resolution = self.gait_res

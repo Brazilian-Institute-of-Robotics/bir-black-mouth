@@ -3,5 +3,5 @@ body_control_node:
     kp: 0.3
     ki: 7.5
     kd: 0.006
-    max_integritive_term: 0.30
+    max_integrative_term: 0.30
     max_PIDs_sum: 0.45
