@@ -4,7 +4,7 @@ from rclpy.node import Node
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from tf2_ros import TransformException
-from geometry_msgs.msg import Pose, PoseArray
+from geometry_msgs.msg import TransformStamped
 
 class FeetListener(Node):
 
@@ -14,25 +14,35 @@ class FeetListener(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
         
-        self.publisher = self.create_publisher(PoseArray, 'feet_poses', 1)
+        self.front_right_publisher = self.create_publisher(TransformStamped, 'feet_poses/front_right_foot', 1)
+        self.front_left_publisher = self.create_publisher(TransformStamped, 'feet_poses/front_left_foot', 1)
+        self.back_left_publisher = self.create_publisher(TransformStamped, 'feet_poses/back_left_foot', 1)
+        self.back_right_publisher = self.create_publisher(TransformStamped, 'feet_poses/back_right_foot', 1)
+
         self.timer = self.create_timer(0.001, self.publishPoses)
 
     def publishPoses(self):
-        feet_poses = PoseArray()
-        feet_poses.poses = [Pose()]*4
-        for i, foot in enumerate(["front_right_foot", "front_left_foot", "back_left_foot", "back_right_foot"]):
-            try:
-                transform = self.tf_buffer.lookup_transform(foot,
-                                                            foot+"_default",
-                                                            rclpy.time.Time())
-                feet_poses.poses[i].position.x = transform.transform.translation.x
-                feet_poses.poses[i].position.y = transform.transform.translation.y
-                feet_poses.poses[i].position.z = transform.transform.translation.z
-                feet_poses.poses[i].orientation = transform.transform.rotation
-            except TransformException as ex:
-                    self.get_logger().info(f'Could not transform {foot} to {foot}_default: {ex}')
-                    return
-        self.publisher.publish(feet_poses)
+        
+        try:
+            front_right_transform = self.tf_buffer.lookup_transform("front_right_foot",
+                                                                    "front_right_foot_default",
+                                                                     rclpy.time.Time())
+            front_left_transform = self.tf_buffer.lookup_transform("front_left_foot",
+                                                                   "front_left_foot_default",
+                                                                    rclpy.time.Time())
+            back_left_transform = self.tf_buffer.lookup_transform("back_left_foot",
+                                                                  "back_left_foot_default",
+                                                                   rclpy.time.Time())
+            back_right_transform = self.tf_buffer.lookup_transform("back_right_foot",
+                                                                   "back_right_foot_default",
+                                                                    rclpy.time.Time())
+            self.front_right_publisher.publish(front_right_transform)
+            self.front_left_publisher.publish(front_left_transform)
+            self.back_left_publisher.publish(back_left_transform)
+            self.back_right_publisher.publish(back_right_transform)
+        except TransformException as ex:
+                self.get_logger().info(f'Could not transform: {ex}')
+                return
 
 
 def main():
