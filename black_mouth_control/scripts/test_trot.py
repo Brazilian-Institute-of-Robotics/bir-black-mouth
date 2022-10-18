@@ -48,14 +48,14 @@ class TestTrot(Node):
         while not self.traj_client.wait_for_service(1.0):
             self.get_logger().info("...", once=True)
 
-        self.gait_period = 1.0  # secs
+        self.gait_period = 0.5  # secs
         self.gait_res = int(self.gait_period/timer_period)  # secs
         # self.gait_res = 7  # secs
 
         self.lower_body = 0.002
-        self.forward_body = 0.005
+        self.forward_body = 0.02
         self.lower_leg = -0.0045
-        self.gait_height = 0.05
+        self.gait_height = 0.03
         self.resolution_first_fraction = 0.33
         self.period_first_fraction = 0.66
 
@@ -219,6 +219,19 @@ class TestTrot(Node):
                 # Update coord matrix
                 self.last_step_l = self.gait_x_length
                 self.create_body_matrix()
+                
+                if self.last_step_l == 0.0 and self.cmd_vel_msg.linear.y == 0.0:
+                    self.FL_request.height = 0.0
+                    self.FR_request.height = 0.0
+                    self.BL_request.height = 0.0
+                    self.BR_request.height = 0.0
+                    self.BODY_request.height = 0.0
+                else:
+                    self.FL_request.height = self.gait_height
+                    self.FR_request.height = self.gait_height
+                    self.BL_request.height = self.gait_height
+                    self.BR_request.height = self.gait_height
+                    self.BODY_request.height = 0.005
 
                 # Reset whole gait
                 self.msg.body_leg_ik_trajectory[0] = BodyLegIK()
@@ -297,9 +310,9 @@ class TestTrot(Node):
             self.point_counter = 0
             self.start_time = time.time()
 
-            time_delay = time.time() + 3
-            while (time.time() < time_delay):
-                continue
+            # time_delay = time.time() + 3
+            # while (time.time() < time_delay):
+            #     continue
         else:
             self.point_counter += 1
 
