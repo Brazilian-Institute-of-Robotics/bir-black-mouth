@@ -24,17 +24,17 @@ class FeetListener(Node):
     def publishPoses(self):
         
         try:
-            front_right_transform = self.tf_buffer.lookup_transform("front_right_foot",
-                                                                    "front_right_foot_default",
+            front_right_transform = self.tf_buffer.lookup_transform("front_right_foot_default",
+                                                                    "front_right_foot",
                                                                      rclpy.time.Time())
-            front_left_transform = self.tf_buffer.lookup_transform("front_left_foot",
-                                                                   "front_left_foot_default",
+            front_left_transform = self.tf_buffer.lookup_transform("front_left_foot_default",
+                                                                   "front_left_foot",
                                                                     rclpy.time.Time())
-            back_left_transform = self.tf_buffer.lookup_transform("back_left_foot",
-                                                                  "back_left_foot_default",
+            back_left_transform = self.tf_buffer.lookup_transform("back_left_foot_default",
+                                                                  "back_left_foot",
                                                                    rclpy.time.Time())
-            back_right_transform = self.tf_buffer.lookup_transform("back_right_foot",
-                                                                   "back_right_foot_default",
+            back_right_transform = self.tf_buffer.lookup_transform("back_right_foot_default",
+                                                                   "back_right_foot",
                                                                     rclpy.time.Time())
             self.front_right_publisher.publish(front_right_transform)
             self.front_left_publisher.publish(front_left_transform)
