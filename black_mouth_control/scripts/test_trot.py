@@ -8,11 +8,14 @@ from black_mouth_kinematics.msg import BodyLegIKTrajectory, BodyLegIK
 from geometry_msgs.msg import Vector3, Point, Twist
 from builtin_interfaces.msg import Duration
 from black_mouth_gait_planner.srv import ComputeGaitTrajectory
+from black_mouth_teleop.msg import TeleopState
 
 
 class TestTrot(Node):
     def __init__(self):
         super().__init__('test_trot_node')
+
+        self.declare_parameters([('use_imu', False)])
 
         self.body_rotation = Vector3()
 
@@ -27,9 +30,18 @@ class TestTrot(Node):
                                                            '/cmd_vel',
                                                            self.cmd_vel_cb,
                                                            10)
+
+        self.current_state_subscriber = self.create_subscription(Twist,
+                                                                 '/current_state',
+                                                                 self.current_state_cb,
+                                                                 10)
+        self.current_state_msg = TeleopState()
+
         self.gait_x_length = 0
         self.gait_theta_length = 0
         self.gait_y_length = 0
+
+        self.use_imu = False
 
         self.cmd_vel_msg = Twist()
 
@@ -118,7 +130,8 @@ class TestTrot(Node):
         self.BR_response = None
         # ---------------------------------------------------------------------------
         self.BODY_request = ComputeGaitTrajectory.Request()
-        self.BODY_request.initial_point = Point(x=self.forward_body, z=self.lower_body)
+        self.BODY_request.initial_point = Point(
+            x=self.forward_body, z=self.lower_body)
         self.BODY_request.landing_point = Point(x=self.updated_pos['BODY'][0]+self.forward_body,
                                                 y=self.updated_pos['BODY'][1],
                                                 z=self.lower_body)
@@ -143,7 +156,8 @@ class TestTrot(Node):
         self.msg.body_leg_ik_trajectory[0].leg_points.front_left_leg = self.FL_request.initial_point
         self.msg.body_leg_ik_trajectory[0].leg_points.back_left_leg = self.BL_request.initial_point
         self.msg.body_leg_ik_trajectory[0].leg_points.back_right_leg = self.BR_request.initial_point
-        self.msg.body_leg_ik_trajectory[0].body_position = self.point_to_vector3(self.BODY_request.initial_point)
+        self.msg.body_leg_ik_trajectory[0].body_position = self.point_to_vector3(
+            self.BODY_request.initial_point)
         self.msg.time_from_start.append(self.t1)
 
     def create_body_matrix(self):
@@ -157,10 +171,17 @@ class TestTrot(Node):
         self.coord_orig = np.vstack((self.coord_orig, self.coord_orig[0]))
 
     def bodyCallback(self, msg):
-        self.body_rotation = msg.body_rotation
+        if self.get_parameter('use_imu'):
+            self.body_rotation = msg.body_rotation
 
     def cmd_vel_cb(self, msg):
         self.cmd_vel_msg = msg
+
+    def current_state_cb(self, msg):
+        # if transitioning to WALKING state
+        if self.current_state_msg.state != 5 and msg.state == 5:
+            self.ik_timer.reset()
+        self.current_state_msg = msg
 
     def update_positions(self, mat, linear_x, linear_y,  theta):
         result = np.ones((mat.shape[0], 3))
@@ -219,13 +240,17 @@ class TestTrot(Node):
                 # Update coord matrix
                 self.last_step_l = self.gait_x_length
                 self.create_body_matrix()
-                
+
                 if self.last_step_l == 0.0 and self.cmd_vel_msg.linear.y == 0.0:
                     self.FL_request.height = 0.0
                     self.FR_request.height = 0.0
                     self.BL_request.height = 0.0
                     self.BR_request.height = 0.0
                     self.BODY_request.height = 0.0
+
+                    # Turn off timer when quitting WALKING state
+                    if self.current_state_msg.state != 5:
+                        self.ik_timer.cancel()
                 else:
                     self.FL_request.height = self.gait_height
                     self.FR_request.height = self.gait_height
@@ -236,9 +261,12 @@ class TestTrot(Node):
                 # Reset whole gait
                 self.msg.body_leg_ik_trajectory[0] = BodyLegIK()
                 self.msg.body_leg_ik_trajectory[0].leg_points.reference_link = 1
-                self.msg.body_leg_ik_trajectory[0].body_position = self.point_to_vector3(Point(x=self.forward_body, z=self.lower_body))
-                self.msg.body_leg_ik_trajectory[0].leg_points.front_right_leg = Point(x=-self.last_step_l/2, z=self.lower_leg)
-                self.msg.body_leg_ik_trajectory[0].leg_points.back_left_leg = Point(x=-self.last_step_l/2, z=self.lower_leg)
+                self.msg.body_leg_ik_trajectory[0].body_position = self.point_to_vector3(
+                    Point(x=self.forward_body, z=self.lower_body))
+                self.msg.body_leg_ik_trajectory[0].leg_points.front_right_leg = Point(
+                    x=-self.last_step_l/2, z=self.lower_leg)
+                self.msg.body_leg_ik_trajectory[0].leg_points.back_left_leg = Point(
+                    x=-self.last_step_l/2, z=self.lower_leg)
 
                 # Get new X, Y, Yaw values
                 self.gait_x_length = self.cmd_vel_msg.linear.x * \
@@ -261,22 +289,27 @@ class TestTrot(Node):
 
             # Update trajectory
             if self.state == 0:
-                self.BODY_request.initial_point = self.vector3_to_point(self.msg.body_leg_ik_trajectory[0].body_position)
-                self.BODY_request.landing_point.x = self.BODY_request.initial_point.x + self.updated_pos['BODY'][0] / 2
-                self.BODY_request.landing_point.y = self.BODY_request.initial_point.y + self.updated_pos['BODY'][1] / 2
+                self.BODY_request.initial_point = self.vector3_to_point(
+                    self.msg.body_leg_ik_trajectory[0].body_position)
+                self.BODY_request.landing_point.x = self.BODY_request.initial_point.x + \
+                    self.updated_pos['BODY'][0] / 2
+                self.BODY_request.landing_point.y = self.BODY_request.initial_point.y + \
+                    self.updated_pos['BODY'][1] / 2
                 future = self.traj_client.call_async(self.BODY_request)
                 rclpy.spin_until_future_complete(self.support_node, future)
                 self.BODY_response = future.result()
 
             elif self.state == 1:
-                self.FR_request.initial_point = self.msg.body_leg_ik_trajectory[0].leg_points.front_right_leg
+                self.FR_request.initial_point = self.msg.body_leg_ik_trajectory[
+                    0].leg_points.front_right_leg
                 self.FR_request.landing_point.x = self.updated_pos['FR'][0] / 2
                 self.FR_request.landing_point.y = self.updated_pos['FR'][1]
                 future = self.traj_client.call_async(self.FR_request)
                 rclpy.spin_until_future_complete(self.support_node, future)
                 self.FR_response = future.result()
 
-                self.BL_request.initial_point = self.msg.body_leg_ik_trajectory[0].leg_points.back_left_leg
+                self.BL_request.initial_point = self.msg.body_leg_ik_trajectory[
+                    0].leg_points.back_left_leg
                 self.BL_request.landing_point.x = self.updated_pos['BL'][0] / 2
                 self.BL_request.landing_point.y = self.updated_pos['BL'][1]
                 future = self.traj_client.call_async(self.BL_request)
@@ -284,22 +317,27 @@ class TestTrot(Node):
                 self.BL_response = future.result()
 
             elif self.state == 2:
-                self.BODY_request.initial_point = self.vector3_to_point(self.msg.body_leg_ik_trajectory[0].body_position)
-                self.BODY_request.landing_point.x = self.BODY_request.initial_point.x + self.updated_pos['BODY'][0] / 2
-                self.BODY_request.landing_point.y = self.BODY_request.initial_point.y + self.updated_pos['BODY'][1] / 2
+                self.BODY_request.initial_point = self.vector3_to_point(
+                    self.msg.body_leg_ik_trajectory[0].body_position)
+                self.BODY_request.landing_point.x = self.BODY_request.initial_point.x + \
+                    self.updated_pos['BODY'][0] / 2
+                self.BODY_request.landing_point.y = self.BODY_request.initial_point.y + \
+                    self.updated_pos['BODY'][1] / 2
                 future = self.traj_client.call_async(self.BODY_request)
                 rclpy.spin_until_future_complete(self.support_node, future)
                 self.BODY_response = future.result()
 
             elif self.state == 3:
-                self.FL_request.initial_point = self.msg.body_leg_ik_trajectory[0].leg_points.front_left_leg
+                self.FL_request.initial_point = self.msg.body_leg_ik_trajectory[
+                    0].leg_points.front_left_leg
                 self.FL_request.landing_point.x = self.updated_pos['FL'][0]
                 self.FL_request.landing_point.y = self.updated_pos['FL'][1]
                 future = self.traj_client.call_async(self.FL_request)
                 rclpy.spin_until_future_complete(self.support_node, future)
                 self.FL_response = future.result()
 
-                self.BR_request.initial_point = self.msg.body_leg_ik_trajectory[0].leg_points.back_right_leg
+                self.BR_request.initial_point = self.msg.body_leg_ik_trajectory[
+                    0].leg_points.back_right_leg
                 self.BR_request.landing_point.x = self.updated_pos['BR'][0]
                 self.BR_request.landing_point.y = self.updated_pos['BR'][1]
                 future = self.traj_client.call_async(self.BR_request)
@@ -318,7 +356,7 @@ class TestTrot(Node):
 
     def point_to_vector3(self, point):
         return Vector3(x=point.x, y=point.y, z=point.z)
-    
+
     def vector3_to_point(self, vector):
         return Point(x=vector.x, y=vector.y, z=vector.z)
 
@@ -333,7 +371,7 @@ def main(args=None):
     rclpy.spin_until_future_complete(test_trot.support_node, future)
     test_trot.BODY_response = future.result()
 
-    test_trot.ik_timer.reset()
+    # test_trot.ik_timer.reset()
 
     rclpy.spin(test_trot)
 
