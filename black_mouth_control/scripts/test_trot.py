@@ -15,7 +15,7 @@ class TestTrot(Node):
     def __init__(self):
         super().__init__('test_trot_node')
 
-        self.declare_parameters([('use_imu', False)])
+        self.declare_parameter('use_imu', False)
 
         self.body_rotation = Vector3()
 
@@ -31,8 +31,8 @@ class TestTrot(Node):
                                                            self.cmd_vel_cb,
                                                            10)
 
-        self.current_state_subscriber = self.create_subscription(Twist,
-                                                                 '/current_state',
+        self.current_state_subscriber = self.create_subscription(TeleopState,
+                                                                 '/teleop_state',
                                                                  self.current_state_cb,
                                                                  10)
         self.current_state_msg = TeleopState()
@@ -40,6 +40,8 @@ class TestTrot(Node):
         self.gait_x_length = 0
         self.gait_theta_length = 0
         self.gait_y_length = 0
+
+        self.fixed_forward_body = 0.02
 
         self.use_imu = False
 
@@ -65,7 +67,7 @@ class TestTrot(Node):
         # self.gait_res = 7  # secs
 
         self.lower_body = 0.002
-        self.forward_body = 0.02
+        self.forward_body = 0.0
         self.lower_leg = -0.0045
         self.gait_height = 0.03
         self.resolution_first_fraction = 0.33
@@ -160,6 +162,8 @@ class TestTrot(Node):
             self.BODY_request.initial_point)
         self.msg.time_from_start.append(self.t1)
 
+        self.get_logger().info("Ready to walk!", once=True)
+
     def create_body_matrix(self):
         self.coord_orig = np.array([[self.origin-self.Width/2, self.origin-self.Length/2 - self.last_step_l/2],
                                     [self.origin+self.Width/2,
@@ -241,7 +245,7 @@ class TestTrot(Node):
                 self.last_step_l = self.gait_x_length
                 self.create_body_matrix()
 
-                if self.last_step_l == 0.0 and self.cmd_vel_msg.linear.y == 0.0:
+                if self.last_step_l == 0.0 and self.cmd_vel_msg.linear.y == 0.0 and self.cmd_vel_msg.linear.x == 0:
                     self.FL_request.height = 0.0
                     self.FR_request.height = 0.0
                     self.BL_request.height = 0.0
@@ -262,7 +266,7 @@ class TestTrot(Node):
                 self.msg.body_leg_ik_trajectory[0] = BodyLegIK()
                 self.msg.body_leg_ik_trajectory[0].leg_points.reference_link = 1
                 self.msg.body_leg_ik_trajectory[0].body_position = self.point_to_vector3(
-                    Point(x=self.forward_body, z=self.lower_body))
+                    Point(x=self.fixed_forward_body - self.last_step_l/2, z=self.lower_body))
                 self.msg.body_leg_ik_trajectory[0].leg_points.front_right_leg = Point(
                     x=-self.last_step_l/2, z=self.lower_leg)
                 self.msg.body_leg_ik_trajectory[0].leg_points.back_left_leg = Point(
@@ -291,8 +295,7 @@ class TestTrot(Node):
             if self.state == 0:
                 self.BODY_request.initial_point = self.vector3_to_point(
                     self.msg.body_leg_ik_trajectory[0].body_position)
-                self.BODY_request.landing_point.x = self.BODY_request.initial_point.x + \
-                    self.updated_pos['BODY'][0] / 2
+                self.BODY_request.landing_point.x = self.fixed_forward_body
                 self.BODY_request.landing_point.y = self.BODY_request.initial_point.y + \
                     self.updated_pos['BODY'][1] / 2
                 future = self.traj_client.call_async(self.BODY_request)

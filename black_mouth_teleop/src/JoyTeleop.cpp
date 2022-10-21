@@ -407,8 +407,8 @@ void JoyTeleop::movingBodyState(const sensor_msgs::msg::Joy::SharedPtr msg)
 
 void JoyTeleop::walkingState(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
-  _vel_msg.linear.x = 0.025*msg->axes[_axis_linear_map["x"]];
-  _vel_msg.linear.y = 0.015*msg->axes[_axis_linear_map["y"]];
+  _vel_msg.linear.x = 0.05*msg->axes[_axis_linear_map["x"]];
+  _vel_msg.linear.y = 0.05*msg->axes[_axis_linear_map["y"]];
   _vel_msg.angular.z = 0.0*msg->axes[_axis_angular_map["yaw"]];
 }
 
