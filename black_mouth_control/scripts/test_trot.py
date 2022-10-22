@@ -17,7 +17,7 @@ class TestTrot(Node):
 
         self.declare_parameter('use_imu', False)
 
-        self.body_rotation = Vector3()
+        self.body_imu_rotation = Vector3()
 
         self.ik_publisher_ = self.create_publisher(
             BodyLegIKTrajectory, '/cmd_ik', 10)
@@ -73,8 +73,9 @@ class TestTrot(Node):
         self.resolution_first_fraction = 0.33
         self.period_first_fraction = 0.66
 
-        self.Length = 0.245  # 0.2291
-        self.Width = 0.225  # 0.140
+        self.Length = 0.2291
+        self.Width = 0.140
+        self.L1 = 0.048
         self.origin = 0.0
         self.last_step_l = 0.0
         self.create_body_matrix()
@@ -143,6 +144,8 @@ class TestTrot(Node):
         self.BODY_request.resolution_first_fraction = 1.0
         self.BODY_request.period_first_fraction = 1.0
         self.BODY_response = None
+        self.BODY_rotation = np.array([])
+        self.progress_time_vector = np.array([])
         # ---------------------------------------------------------------------------
 
         self.state = 0
@@ -165,18 +168,18 @@ class TestTrot(Node):
         self.get_logger().info("Ready to walk!", once=True)
 
     def create_body_matrix(self):
-        self.coord_orig = np.array([[self.origin-self.Width/2, self.origin-self.Length/2 - self.last_step_l/2],
-                                    [self.origin+self.Width/2,
-                                        self.origin-self.Length/2],
-                                    [self.origin+self.Width/2, self.origin +
-                                        self.Length/2 - self.last_step_l/2],
-                                    [self.origin, self.origin],
-                                    [self.origin-self.Width/2, self.origin+self.Length/2]])
+        self.coord_orig = np.array([[0.0, 0.0],
+                                    [self.Length/2 - self.last_step_l /
+                                     2, -(self.Width/2 + self.L1)],
+                                    [self.Length/2, +(self.Width/2 + self.L1)],
+                                    [-self.Length/2 - self.last_step_l /
+                                     2, +(self.Width/2 + self.L1)],
+                                    [-self.Length/2, -(self.Width/2 + self.L1)]])
         self.coord_orig = np.vstack((self.coord_orig, self.coord_orig[0]))
 
     def bodyCallback(self, msg):
         if self.get_parameter('use_imu'):
-            self.body_rotation = msg.body_rotation
+            self.body_imu_rotation = msg.body_rotation
 
     def cmd_vel_cb(self, msg):
         self.cmd_vel_msg = msg
@@ -197,28 +200,38 @@ class TestTrot(Node):
 
         x = linear_x*np.cos(theta) - linear_y*np.sin(theta)
         y = linear_x*np.sin(theta) + linear_y*np.cos(theta)
-        transMat = np.array([[1, 0, y],
-                            [0, 1, x],
+
+        transMat = np.array([[1, 0, x],
+                            [0, 1, y],
                             [0, 0, 1]])
 
         for i in range(mat.shape[0]-1):
             result[i] = transMat@rotMat@result[i]
         result[-1] = result[0]
 
-        # 3 decimals places of precision
-        diff_coord = np.round(result[:, :-1] - mat, 3)
+        # TODO check with kinematics
+        # diff_coord = np.zeros((5, 2))
+        # diff_coord[0] = result[0, :-1] - mat[0, :-1]  # FR
+        # diff_coord[1] = result[1, :-1] - mat[1, :-1]  # FL
+        # diff_coord[2] = result[2, :-1] - mat[2, :-1]  # BL
+        # diff_coord[3] = result[3, :-1] - mat[3, :-1]  # BODY
+        # diff_coord[4] = result[4, :-1] - mat[4, :-1]  # BR
 
-        self.updated_pos = {'BR': [diff_coord[0, 1], diff_coord[0, 0]],
-                            'BL': [diff_coord[1, 1], diff_coord[1, 0]],
-                            'FL': [diff_coord[2, 1], diff_coord[2, 0]],
-                            'BODY': [diff_coord[3, 1], diff_coord[3, 0]],
-                            'FR': [diff_coord[4, 1], diff_coord[4, 0]]}
+        diff_coord = result[:, :-1] - self.coord_orig
+        print(diff_coord, '\n')
+
+        self.updated_pos = {'BODY': [diff_coord[0, 0], diff_coord[0, 1]],
+                            'FR': [diff_coord[1, 0], diff_coord[1, 1]],
+                            'FL': [diff_coord[2, 0], diff_coord[2, 1]],
+                            'BL': [diff_coord[3, 0], diff_coord[3, 1]],
+                            'BR': [diff_coord[4, 0], diff_coord[4, 1]]}
 
     def timerCallback(self):
 
         if self.state == 0:
             self.msg.body_leg_ik_trajectory[0].body_position = self.point_to_vector3(
                 self.BODY_response.points[self.point_counter])
+            self.msg.body_leg_ik_trajectory[0].body_rotation.z = self.BODY_rotation[self.point_counter]
 
         elif self.state == 1:
             self.msg.body_leg_ik_trajectory[0].leg_points.front_right_leg = self.FR_response.points[self.point_counter]
@@ -227,13 +240,15 @@ class TestTrot(Node):
         elif self.state == 2:
             self.msg.body_leg_ik_trajectory[0].body_position = self.point_to_vector3(
                 self.BODY_response.points[self.point_counter])
+            self.msg.body_leg_ik_trajectory[0].body_rotation.z = self.BODY_rotation[self.point_counter]
 
         elif self.state == 3:
             self.msg.body_leg_ik_trajectory[0].leg_points.front_left_leg = self.FL_response.points[self.point_counter]
             self.msg.body_leg_ik_trajectory[0].leg_points.back_right_leg = self.BR_response.points[self.point_counter]
 
         # Add IMU control effort
-        self.msg.body_leg_ik_trajectory[0].body_rotation = self.body_rotation
+        self.msg.body_leg_ik_trajectory[0].body_rotation.x = self.body_imu_rotation.x
+        self.msg.body_leg_ik_trajectory[0].body_rotation.y = self.body_imu_rotation.y
 
         # Publish
         self.ik_publisher_.publish(self.msg)
@@ -252,9 +267,9 @@ class TestTrot(Node):
                     self.BR_request.height = 0.0
                     self.BODY_request.height = 0.0
 
-                    # Turn off timer when quitting WALKING state
-                    if self.current_state_msg.state != 5:
-                        self.ik_timer.cancel()
+                    # TODO Uncomment Turn off timer when quitting WALKING state
+                    # if self.current_state_msg.state != 5:
+                    #     self.ik_timer.cancel()
                 else:
                     self.FL_request.height = self.gait_height
                     self.FR_request.height = self.gait_height
@@ -301,6 +316,7 @@ class TestTrot(Node):
                 future = self.traj_client.call_async(self.BODY_request)
                 rclpy.spin_until_future_complete(self.support_node, future)
                 self.BODY_response = future.result()
+                self.BODY_rotation = self.gait_theta_length/2 * self.progress_time_vector
 
             elif self.state == 1:
                 self.FR_request.initial_point = self.msg.body_leg_ik_trajectory[
@@ -329,6 +345,8 @@ class TestTrot(Node):
                 future = self.traj_client.call_async(self.BODY_request)
                 rclpy.spin_until_future_complete(self.support_node, future)
                 self.BODY_response = future.result()
+                self.BODY_rotation = (self.gait_theta_length/2 *
+                                      self.progress_time_vector) + self.gait_theta_length/2
 
             elif self.state == 3:
                 self.FL_request.initial_point = self.msg.body_leg_ik_trajectory[
@@ -373,9 +391,12 @@ def main(args=None):
     future = test_trot.traj_client.call_async(test_trot.BODY_request)
     rclpy.spin_until_future_complete(test_trot.support_node, future)
     test_trot.BODY_response = future.result()
+    test_trot.progress_time_vector = np.array(
+        [t.sec + t.nanosec*1e-9 for t in test_trot.BODY_response.time_from_start]) / test_trot.gait_period
+    test_trot.BODY_rotation = test_trot.gait_theta_length / \
+        2 * test_trot.progress_time_vector
 
-    # test_trot.ik_timer.reset()
-
+    test_trot.ik_timer.reset()
     rclpy.spin(test_trot)
 
     test_trot.destroy_node()
