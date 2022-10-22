@@ -260,16 +260,15 @@ class TestTrot(Node):
                 self.last_step_l = self.gait_x_length
                 self.create_body_matrix()
 
-                if self.last_step_l == 0.0 and self.cmd_vel_msg.linear.y == 0.0 and self.cmd_vel_msg.linear.x == 0:
+                if self.last_step_l == 0.0 and self.cmd_vel_msg.linear.y == 0.0 and self.cmd_vel_msg.linear.x == 0.0 and self.cmd_vel_msg.angular.z == 0.0:
                     self.FL_request.height = 0.0
                     self.FR_request.height = 0.0
                     self.BL_request.height = 0.0
                     self.BR_request.height = 0.0
                     self.BODY_request.height = 0.0
 
-                    # TODO Uncomment Turn off timer when quitting WALKING state
-                    # if self.current_state_msg.state != 5:
-                    #     self.ik_timer.cancel()
+                    if self.current_state_msg.state != 5:
+                        self.ik_timer.cancel()
                 else:
                     self.FL_request.height = self.gait_height
                     self.FR_request.height = self.gait_height
@@ -316,7 +315,7 @@ class TestTrot(Node):
                 future = self.traj_client.call_async(self.BODY_request)
                 rclpy.spin_until_future_complete(self.support_node, future)
                 self.BODY_response = future.result()
-                self.BODY_rotation = self.gait_theta_length/2 * self.progress_time_vector
+                self.BODY_rotation = -self.gait_theta_length/2 * self.progress_time_vector
 
             elif self.state == 1:
                 self.FR_request.initial_point = self.msg.body_leg_ik_trajectory[
@@ -345,8 +344,8 @@ class TestTrot(Node):
                 future = self.traj_client.call_async(self.BODY_request)
                 rclpy.spin_until_future_complete(self.support_node, future)
                 self.BODY_response = future.result()
-                self.BODY_rotation = (self.gait_theta_length/2 *
-                                      self.progress_time_vector) + self.gait_theta_length/2
+                self.BODY_rotation = -1*((self.gait_theta_length/2 *
+                                      self.progress_time_vector) + self.gait_theta_length/2)
 
             elif self.state == 3:
                 self.FL_request.initial_point = self.msg.body_leg_ik_trajectory[
@@ -393,10 +392,10 @@ def main(args=None):
     test_trot.BODY_response = future.result()
     test_trot.progress_time_vector = np.array(
         [t.sec + t.nanosec*1e-9 for t in test_trot.BODY_response.time_from_start]) / test_trot.gait_period
-    test_trot.BODY_rotation = test_trot.gait_theta_length / \
+    test_trot.BODY_rotation = -test_trot.gait_theta_length / \
         2 * test_trot.progress_time_vector
 
-    test_trot.ik_timer.reset()
+    # test_trot.ik_timer.reset()
     rclpy.spin(test_trot)
 
     test_trot.destroy_node()
