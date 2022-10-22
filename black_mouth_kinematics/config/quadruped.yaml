@@ -12,6 +12,6 @@ compute_ik_server:
 ik_node:
   ros__parameters:
     joint_limits:
-      hip_roll_limit: 0.52359877559
-      hip_pitch_limit: 0.78539816339
+      hip_roll_limit: 0.78539816339
+      hip_pitch_limit: 1.04719755
       elbow_limit: 0.62831853071

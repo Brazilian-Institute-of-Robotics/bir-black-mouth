@@ -100,7 +100,7 @@
             <parent link="${prefix}_hip_fixed"/>
             <child link="${prefix}_hip"/>
             <axis xyz="1 0 0"/>
-            <limit lower="${-M_PI/6}" upper="${M_PI/6}" velocity="5.75" effort="${effort_limit}"/>
+            <limit lower="${-M_PI/4}" upper="${M_PI/4}" velocity="5.75" effort="${effort_limit}"/>
             <xacro:insert_block name="joint_pose"/>
             <dynamics damping="0.1" friction="0.01" /> 
         </joint>
@@ -159,7 +159,7 @@
             <parent link="${prefix}_hip"/>
             <child link="${prefix}_femur"/>
             <axis xyz="0 1 0"/>
-            <limit lower="${-M_PI/4}" upper="${M_PI/4}" velocity="5.75" effort="${effort_limit}"/>
+            <limit lower="${-M_PI/3}" upper="${M_PI/3}" velocity="5.75" effort="${effort_limit}"/>
             <dynamics damping="0.1" friction="0.01" /> 
         </joint>
 
