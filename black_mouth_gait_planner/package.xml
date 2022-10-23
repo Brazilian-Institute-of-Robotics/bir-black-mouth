@@ -16,12 +16,17 @@
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
   <depend>builtin_interfaces</depend>
   <depend>eigen</depend>
   <depend>black_mouth_kinematics</depend>
+  <depend>black_mouth_teleop</depend>
+  <depend>black_mouth_control</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
+
+  <test_depend>ament_cmake_gtest</test_depend>
 
   <member_of_group>rosidl_interface_packages</member_of_group>
 

@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
             black_mouth_gait_planner::srv::ComputeGaitTrajectory>(
             "compute_gait_trajectory", &computeGaitTrajectory);
 
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
+    RCLCPP_INFO(rclcpp::get_logger("gait_traj_server"),
                 "Ready to compute gait trajectory.");
 
     rclcpp::spin(node);

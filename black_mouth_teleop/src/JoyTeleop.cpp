@@ -89,30 +89,36 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   {
     if(!rclcpp::ok())
     {
-      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the set_teleop_state service. Exiting.");
+      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the %s service. Exiting.",
+        _set_state_client->get_service_name());
       return;
     }
-    RCLCPP_INFO(this->get_logger(), "Set teleop state service not available, waiting again...");
+    RCLCPP_INFO(this->get_logger(), "%s service not available, waiting again...",
+      _set_state_client->get_service_name());
   }
 
   while(!_set_body_control_publish_ik_client->wait_for_service(1s))
   {
     if(!rclcpp::ok())
     {
-      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the set_body_control_publish_ik_client service. Exiting.");
+      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the %s service. Exiting.",
+        _set_body_control_publish_ik_client->get_service_name());
       return;
     }
-    RCLCPP_INFO(this->get_logger(), "Set body_control publish_ik service not available, waiting again...");
+    RCLCPP_INFO(this->get_logger(), "%s service not available, waiting again...",
+      _set_body_control_publish_ik_client->get_service_name());
   }
 
   while(!_reset_body_control_pid_client->wait_for_service(1s))
   {
     if(!rclcpp::ok())
     {
-      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the reset_body_control_pid_client service. Exiting.");
+      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the %s service. Exiting.",
+        _reset_body_control_pid_client->get_service_name());
       return;
     }
-    RCLCPP_INFO(this->get_logger(), "Reset body_control reset_pid service not available, waiting again...");
+    RCLCPP_INFO(this->get_logger(), "%s service not available, waiting again...",
+      _reset_body_control_pid_client->get_service_name());
   }
 
   while(!_set_hw_state_client->wait_for_service(1s))

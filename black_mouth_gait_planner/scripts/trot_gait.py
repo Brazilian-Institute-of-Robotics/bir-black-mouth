@@ -11,7 +11,7 @@ from black_mouth_gait_planner.srv import ComputeGaitTrajectory
 from black_mouth_teleop.msg import TeleopState
 
 
-class TestTrot(Node):
+class TrotGait(Node):
     def __init__(self):
         super().__init__('test_trot_node')
 
@@ -19,8 +19,10 @@ class TestTrot(Node):
 
         self.body_imu_rotation = Vector3()
 
-        self.ik_publisher_ = self.create_publisher(
-            BodyLegIKTrajectory, '/cmd_ik', 10)
+        self.ik_publisher_ = self.create_publisher(BodyLegIKTrajectory, 
+                                                   '/cmd_ik', 
+                                                   10)
+
         self.body_control_subscriber = self.create_subscription(BodyControl,
                                                                 '/body_control',
                                                                 self.bodyCallback,
@@ -58,9 +60,10 @@ class TestTrot(Node):
         self.traj_client = self.support_node.create_client(
             ComputeGaitTrajectory, 'compute_gait_trajectory')
 
-        self.get_logger().info("Waiting for server")
         while not self.traj_client.wait_for_service(1.0):
-            self.get_logger().info("...", once=True)
+            if not rclpy.ok():
+                self.get_logger().error(f"Interrupted while waiting for the {self.traj_client.srv_name} service. Exiting.")
+            self.get_logger().info(f"{self.traj_client.srv_name} service not available, waiting...")
 
         self.gait_period = 0.5  # secs
         self.gait_res = int(self.gait_period/timer_period)  # secs
@@ -218,7 +221,7 @@ class TestTrot(Node):
         # diff_coord[4] = result[4, :-1] - mat[4, :-1]  # BR
 
         diff_coord = result[:, :-1] - self.coord_orig
-        print(diff_coord, '\n')
+        # print(diff_coord, '\n')
 
         self.updated_pos = {'BODY': [diff_coord[0, 0], diff_coord[0, 1]],
                             'FR': [diff_coord[1, 0], diff_coord[1, 1]],
@@ -384,7 +387,7 @@ class TestTrot(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    test_trot = TestTrot()
+    test_trot = TrotGait()
 
     # Get first body trajectory
     future = test_trot.traj_client.call_async(test_trot.BODY_request)

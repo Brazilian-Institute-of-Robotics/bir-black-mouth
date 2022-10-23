@@ -9,7 +9,15 @@ def generate_launch_description():
         name='gait_traj_server',
         output='both',
     )
+
+    trot_gait = Node(
+        package='black_mouth_gait_planner',
+        executable='trot_gait.py',
+        name='trot_gait',
+        output='both',
+    )
     
     return LaunchDescription([
-        gait_traj_server
+        gait_traj_server,
+        trot_gait
     ])

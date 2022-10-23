@@ -20,11 +20,14 @@ set(dependencies
   ament_cmake
   rclcpp
   std_msgs
+  sensor_msgs
   geometry_msgs
   rosidl_default_generators
   builtin_interfaces
   Eigen3
   black_mouth_kinematics
+  black_mouth_control
+  black_mouth_teleop
 )
 
 foreach(dependency ${dependencies})
@@ -65,6 +68,13 @@ install(
   ik_gait_traj_server
   DESTINATION
   lib/${PROJECT_NAME}
+)
+
+# ament_python_install_package(${PROJECT_NAME})
+
+install(
+  PROGRAMS scripts/trot_gait.py
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)
