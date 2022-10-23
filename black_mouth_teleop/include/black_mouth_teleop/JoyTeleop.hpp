@@ -53,6 +53,8 @@ private:
   rclcpp::Client<black_mouth_teleop::srv::SetTeleopState>::SharedPtr _set_state_client;
   rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr _set_body_control_publish_ik_client;
   rclcpp::Client<std_srvs::srv::Empty>::SharedPtr _reset_body_control_pid_client;
+  
+  rclcpp::AsyncParametersClient::SharedPtr _set_gait_parameters_client;
 
   rclcpp::Client<controller_manager_msgs::srv::SetHardwareComponentState>::SharedPtr _set_hw_state_client;
   rclcpp::Client<controller_manager_msgs::srv::SwitchController>::SharedPtr _switch_controller_client;

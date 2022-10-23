@@ -58,7 +58,7 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(include)
 
 install(
-  DIRECTORY launch
+  DIRECTORY launch config
   DESTINATION share/${PROJECT_NAME}
 )
 

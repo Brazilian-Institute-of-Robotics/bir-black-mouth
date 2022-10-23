@@ -16,6 +16,14 @@ class TrotGait(Node):
         super().__init__('trot_gait_node')
 
         self.declare_parameter('use_imu', False)
+        self.declare_parameter('gait_period', 0.5)
+        self.declare_parameter('gait_height', 0.03)
+        self.declare_parameter('ground_penetration', 0.03)
+
+        self.use_imu = self.get_parameter('use_imu').get_parameter_value().bool_value
+        self.gait_period = self.get_parameter('gait_period').get_parameter_value().double_value
+        self.gait_height = self.get_parameter('gait_height').get_parameter_value().double_value
+        self.ground_penetration = self.get_parameter('ground_penetration').get_parameter_value().double_value
 
         self.body_imu_rotation = Vector3()
 
@@ -45,8 +53,6 @@ class TrotGait(Node):
 
         self.fixed_forward_body = 0.02
 
-        self.use_imu = False
-
         self.cmd_vel_msg = Twist()
 
         timer_period = 0.02
@@ -66,14 +72,12 @@ class TrotGait(Node):
                 return
             self.get_logger().info(f"{self.traj_client.srv_name} service not available, waiting...")
 
-        self.gait_period = 0.5  # secs
         self.gait_res = int(self.gait_period/timer_period)  # secs
         # self.gait_res = 7  # secs
 
         self.lower_body = 0.002
         self.forward_body = 0.0
         self.lower_leg = -0.0045
-        self.gait_height = 0.03
         self.resolution_first_fraction = 0.33
         self.period_first_fraction = 0.66
 
@@ -182,7 +186,7 @@ class TrotGait(Node):
         self.coord_orig = np.vstack((self.coord_orig, self.coord_orig[0]))
 
     def bodyCallback(self, msg):
-        if self.get_parameter('use_imu'):
+        if self.use_imu:
             self.body_imu_rotation = msg.body_rotation
 
     def cmd_vel_cb(self, msg):

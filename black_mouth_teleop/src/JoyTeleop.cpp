@@ -34,6 +34,8 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   _set_hw_state_client = this->create_client<controller_manager_msgs::srv::SetHardwareComponentState>("controller_manager/set_hardware_component_state");
   _switch_controller_client = this->create_client<controller_manager_msgs::srv::SwitchController>("controller_manager/switch_controller");
 
+  _set_gait_parameters_client = std::make_shared<rclcpp::AsyncParametersClient>(this, "trot_gait_node");
+
   _ik_timer = this->create_wall_timer(50ms,  std::bind(&JoyTeleop::publishIK, this));
   _vel_timer = this->create_wall_timer(200ms, std::bind(&JoyTeleop::publishVel, this));
   _default_pose_timer = this->create_wall_timer(30ms, std::bind(&JoyTeleop::publishDefaultPose, this));
@@ -122,6 +124,16 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
     }
     RCLCPP_INFO(this->get_logger(), "%s service not available, waiting again...",
       _reset_body_control_pid_client->get_service_name());
+  }
+
+  while(!_set_gait_parameters_client->wait_for_service(1s))
+  {
+    if(!rclcpp::ok())
+    {
+      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the gait_planner set_parameters service. Exiting.");
+      return;
+    }
+    RCLCPP_INFO(this->get_logger(), "gait_planner set_parameters service not available, waiting again...");
   }
 
   while(!_set_hw_state_client->wait_for_service(1s))
