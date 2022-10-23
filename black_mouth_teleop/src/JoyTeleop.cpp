@@ -47,11 +47,13 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   _ik_msg.body_leg_ik_trajectory.resize(1);
   _ik_msg.time_from_start.resize(1);
 
-  _default_axis_linear_map  = { {"x", 0},    {"y", 1},     {"z", 2},   };
-  _default_axis_angular_map = { {"roll", 3}, {"pitch", 4}, {"yaw", 5},
+  _default_max_vel_map      = { {"lin_x", 0.05}, {"lin_y", 0.05}, {"ang_z", 0.5} };
+  _default_axis_linear_map  = { {"x", 0},     {"y", 1},     {"z", 2} };
+  _default_axis_angular_map = { {"roll", 3},  {"pitch", 4}, {"yaw", 5},
                                 {"roll_inc", 6}, {"roll_dec", 7},
                                 {"pitch_inc", 6}, {"pitch_dec", 7} };
 
+  this->declare_parameters("max_vel", _default_max_vel_map);
   this->declare_parameters("axis_linear", _default_axis_linear_map);
   this->declare_parameters("axis_angular", _default_axis_angular_map);
   this->declare_parameter("joy_type", "generic");
@@ -62,6 +64,7 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   this->declare_parameter("restart", 9);
   this->declare_parameter("filter_alpha", 0.0);
 
+  this->get_parameters("max_vel", _max_vel_map);
   this->get_parameters("axis_linear", _axis_linear_map);
   this->get_parameters("axis_angular", _axis_angular_map);
   this->get_parameter("joy_type", _joy_type);
@@ -413,9 +416,9 @@ void JoyTeleop::movingBodyState(const sensor_msgs::msg::Joy::SharedPtr msg)
 
 void JoyTeleop::walkingState(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
-  _vel_msg.linear.x = 0.05*msg->axes[_axis_linear_map["x"]];
-  _vel_msg.linear.y = 0.05*msg->axes[_axis_linear_map["y"]];
-  _vel_msg.angular.z = 0.2*msg->axes[_axis_angular_map["yaw"]];
+  _vel_msg.linear.x = _max_vel_map["lin_x"]*msg->axes[_axis_linear_map["x"]];
+  _vel_msg.linear.y = _max_vel_map["lin_y"]*msg->axes[_axis_linear_map["y"]];
+  _vel_msg.angular.z = _max_vel_map["ang_z"]*msg->axes[_axis_angular_map["yaw"]];
 }
 
 

@@ -15,7 +15,7 @@ def generate_launch_description():
     bm_control_pkg_share = FindPackageShare('black_mouth_control').find('black_mouth_control')
     bm_gait_planner_pkg_share = FindPackageShare('black_mouth_gait_planner').find('black_mouth_gait_planner')
     bm_teleop_pkg_share = FindPackageShare('black_mouth_teleop').find('black_mouth_teleop')
-    imu_pkg_share = FindPackageShare('mpu6050_driver_ros2').find('mpu6050_driver_ros2')
+    # imu_pkg_share = FindPackageShare('mpu6050_driver_ros2').find('mpu6050_driver_ros2')
 
 
     default_model = os.path.join(bm_description_pkg_share, "urdf", "black_mouth_real.urdf.xacro")
@@ -34,11 +34,11 @@ def generate_launch_description():
     joy_type = LaunchConfiguration('joy_type', default="generic")
 
 
-    imu = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(imu_pkg_share, 'launch', 'mpu6050_driver_with_filter.launch.py')),
-        condition=IfCondition(LaunchConfiguration('launch_imu')),
-    )
+    # imu = IncludeLaunchDescription(
+    #     PythonLaunchDescriptionSource(
+    #         os.path.join(imu_pkg_share, 'launch', 'mpu6050_driver_with_filter.launch.py')),
+    #     condition=IfCondition(LaunchConfiguration('launch_imu')),
+    # )
     
     robot_state_publisher = Node(
         package="robot_state_publisher",
@@ -103,7 +103,7 @@ def generate_launch_description():
                               description='Set the joystick type (generic, x360 or ps4)'),
         DeclareLaunchArgument(name='launch_imu', default_value='True', 
                               description='Whether to launch imu or not'),
-        imu,
+        # imu,
         robot_state_publisher,
         TimerAction(period=1.0, actions=[bm_controllers]),
         TimerAction(period=2.0, actions=[inverse_kinematics]),

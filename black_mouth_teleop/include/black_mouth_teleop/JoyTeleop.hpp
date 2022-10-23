@@ -71,9 +71,11 @@ private:
   EMAFilter _body_rotation_y_filter;
   EMAFilter _body_rotation_z_filter;
 
+  std::map<std::string, float_t> _max_vel_map;
   std::map<std::string, uint8_t> _axis_linear_map;
   std::map<std::string, uint8_t> _axis_angular_map;
 
+  std::map<std::string, float_t> _default_max_vel_map;
   std::map<std::string, uint8_t> _default_axis_linear_map;
   std::map<std::string, uint8_t> _default_axis_angular_map;
 

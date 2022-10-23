@@ -13,7 +13,7 @@ from black_mouth_teleop.msg import TeleopState
 
 class TrotGait(Node):
     def __init__(self):
-        super().__init__('test_trot_node')
+        super().__init__('trot_gait_node')
 
         self.declare_parameter('use_imu', False)
 
@@ -56,13 +56,14 @@ class TrotGait(Node):
         self.start_time = time.time()
         self.point_counter = 0
 
-        self.support_node = Node('test_trot_node_support')
+        self.support_node = Node('trot_gait_node_support')
         self.traj_client = self.support_node.create_client(
             ComputeGaitTrajectory, 'compute_gait_trajectory')
 
         while not self.traj_client.wait_for_service(1.0):
             if not rclpy.ok():
                 self.get_logger().error(f"Interrupted while waiting for the {self.traj_client.srv_name} service. Exiting.")
+                return
             self.get_logger().info(f"{self.traj_client.srv_name} service not available, waiting...")
 
         self.gait_period = 0.5  # secs
@@ -205,8 +206,8 @@ class TrotGait(Node):
         y = linear_x*np.sin(theta) + linear_y*np.cos(theta)
 
         transMat = np.array([[1, 0, x],
-                            [0, 1, y],
-                            [0, 0, 1]])
+                             [0, 1, y],
+                             [0, 0, 1]])
 
         for i in range(mat.shape[0]-1):
             result[i] = transMat@rotMat@result[i]
@@ -387,21 +388,21 @@ class TrotGait(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    test_trot = TrotGait()
+    trot_gait = TrotGait()
 
     # Get first body trajectory
-    future = test_trot.traj_client.call_async(test_trot.BODY_request)
-    rclpy.spin_until_future_complete(test_trot.support_node, future)
-    test_trot.BODY_response = future.result()
-    test_trot.progress_time_vector = np.array(
-        [t.sec + t.nanosec*1e-9 for t in test_trot.BODY_response.time_from_start]) / test_trot.gait_period
-    test_trot.BODY_rotation = -test_trot.gait_theta_length / \
-        2 * test_trot.progress_time_vector
+    future = trot_gait.traj_client.call_async(trot_gait.BODY_request)
+    rclpy.spin_until_future_complete(trot_gait.support_node, future)
+    trot_gait.BODY_response = future.result()
+    trot_gait.progress_time_vector = np.array(
+        [t.sec + t.nanosec*1e-9 for t in trot_gait.BODY_response.time_from_start]) / trot_gait.gait_period
+    trot_gait.BODY_rotation = -trot_gait.gait_theta_length / \
+        2 * trot_gait.progress_time_vector
 
-    # test_trot.ik_timer.reset()
-    rclpy.spin(test_trot)
+    # trot_gait.ik_timer.reset()
+    rclpy.spin(trot_gait)
 
-    test_trot.destroy_node()
+    trot_gait.destroy_node()
     rclpy.shutdown()
 
 

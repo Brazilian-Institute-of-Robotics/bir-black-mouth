@@ -1,7 +1,11 @@
 joy_teleop_node:
   ros__parameters:
-    filter_alpha: 0.92
+    filter_alpha: 0.90
     joy_type: x360
+    max_vel:
+      lin_x: 0.05
+      lin_y: 0.03
+      ang_z: 0.25
     axis_linear:
       x: 1
       y: 0
