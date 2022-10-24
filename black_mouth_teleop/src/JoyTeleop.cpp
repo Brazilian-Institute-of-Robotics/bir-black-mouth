@@ -20,12 +20,15 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
 
   _state.state = black_mouth_teleop::msg::TeleopState::INIT;
 
+  _callback_group = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
+  _sub_options.callback_group = _callback_group;
+
   _ik_publisher = this->create_publisher<black_mouth_kinematics::msg::BodyLegIKTrajectory>("cmd_ik", 10);
   _default_pose_publisher = this->create_publisher<std_msgs::msg::Empty>("cmd_default_pose", 10);
   _vel_publisher = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
 
   _joy_subscriber = this->create_subscription<sensor_msgs::msg::Joy>("joy", 10, 
-                          std::bind(&JoyTeleop::joyCallback, this, _1));
+                          std::bind(&JoyTeleop::joyCallback, this, _1), _sub_options);
 
   _set_state_client = this->create_client<black_mouth_teleop::srv::SetTeleopState>("set_teleop_state");
   _set_body_control_publish_ik_client = this->create_client<std_srvs::srv::SetBool>("set_body_control_publish_ik");
@@ -34,7 +37,9 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   _set_hw_state_client = this->create_client<controller_manager_msgs::srv::SetHardwareComponentState>("controller_manager/set_hardware_component_state");
   _switch_controller_client = this->create_client<controller_manager_msgs::srv::SwitchController>("controller_manager/switch_controller");
 
-  _set_gait_parameters_client = std::make_shared<rclcpp::AsyncParametersClient>(this, "trot_gait_node");
+  _gait_parameters_client = std::make_shared<rclcpp::AsyncParametersClient>(this, "trot_gait_node",
+                                                                                rmw_qos_profile_services_default, 
+                                                                                _callback_group);
 
   _ik_timer = this->create_wall_timer(50ms,  std::bind(&JoyTeleop::publishIK, this));
   _vel_timer = this->create_wall_timer(200ms, std::bind(&JoyTeleop::publishVel, this));
@@ -50,14 +55,21 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   _ik_msg.time_from_start.resize(1);
 
   _default_max_vel_map      = { {"lin_x", 0.05}, {"lin_y", 0.05}, {"ang_z", 0.5} };
+  _default_gait_range_map   = { {"max_height", 0.05}, {"min_height", 0.025}, 
+                                {"max_period", 1.0}, {"min_period", 0.25} };
+
   _default_axis_linear_map  = { {"x", 0},     {"y", 1},     {"z", 2} };
   _default_axis_angular_map = { {"roll", 3},  {"pitch", 4}, {"yaw", 5},
                                 {"roll_inc", 6}, {"roll_dec", 7},
                                 {"pitch_inc", 6}, {"pitch_dec", 7} };
+  _default_gait_params_map  = { {"gait_height_inc", 8},  {"gait_height_dec", 9},
+                                {"gait_period_inc", 10}, {"gait_period_dec", 11} };
 
   this->declare_parameters("max_vel", _default_max_vel_map);
+  this->declare_parameters("gait_range", _default_gait_range_map);
   this->declare_parameters("axis_linear", _default_axis_linear_map);
   this->declare_parameters("axis_angular", _default_axis_angular_map);
+  this->declare_parameters("gait_params", _default_gait_params_map);
   this->declare_parameter("joy_type", "generic");
   this->declare_parameter("lock", 0);
   this->declare_parameter("rest", 1);
@@ -67,8 +79,10 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   this->declare_parameter("filter_alpha", 0.0);
 
   this->get_parameters("max_vel", _max_vel_map);
+  this->get_parameters("gait_range", _gait_range_map);
   this->get_parameters("axis_linear", _axis_linear_map);
   this->get_parameters("axis_angular", _axis_angular_map);
+  this->get_parameters("gait_params", _gait_params_map);
   this->get_parameter("joy_type", _joy_type);
   this->get_parameter("lock", _lock_button);
   this->get_parameter("rest", _rest_button);
@@ -126,7 +140,7 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
       _reset_body_control_pid_client->get_service_name());
   }
 
-  while(!_set_gait_parameters_client->wait_for_service(1s))
+  while(!_gait_parameters_client->wait_for_service(1s))
   {
     if(!rclcpp::ok())
     {
@@ -207,7 +221,8 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 
   if (_state.state == black_mouth_teleop::msg::TeleopState::INIT)
   {
-    if (msg->buttons[_rest_button]) {
+    if (msg->buttons[_rest_button])
+    {
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
 
       _ik_timer->cancel();
@@ -428,6 +443,49 @@ void JoyTeleop::movingBodyState(const sensor_msgs::msg::Joy::SharedPtr msg)
 
 void JoyTeleop::walkingState(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
+
+  if (msg->buttons[_gait_params_map["gait_height_inc"]] || 
+      msg->buttons[_gait_params_map["gait_height_dec"]] ||
+      msg->buttons[_gait_params_map["gait_period_inc"]] ||
+      msg->buttons[_gait_params_map["gait_period_dec"]] )
+  {
+    auto parameters = _gait_parameters_client->get_parameters({"gait_height", "gait_period"});
+    std::future_status status = parameters.wait_for(10ms);
+
+    if (status == std::future_status::ready)
+    {
+      double gait_height = parameters.get().at(0).as_double();
+      double gait_period = parameters.get().at(1).as_double();
+      
+      if(msg->buttons[_gait_params_map["gait_height_inc"]])
+      {
+        gait_height = std::min(_gait_range_map["max_height"], gait_height+0.005);
+        _gait_parameters_client->set_parameters({rclcpp::Parameter("gait_height", gait_height)});
+      }
+      else if(msg->buttons[_gait_params_map["gait_height_dec"]])
+      {
+        gait_height = std::max(_gait_range_map["min_height"], gait_height-0.005);
+        _gait_parameters_client->set_parameters({rclcpp::Parameter("gait_height", gait_height)});
+      }
+        
+      if(msg->buttons[_gait_params_map["gait_period_inc"]])
+      {
+        gait_period = std::min(_gait_range_map["max_period"], gait_period+0.25);
+        _gait_parameters_client->set_parameters({rclcpp::Parameter("gait_period", gait_period)});
+      }
+      else if(msg->buttons[_gait_params_map["gait_period_dec"]])
+      {
+        gait_period = std::max(_gait_range_map["min_period"], gait_period-0.25);
+        _gait_parameters_client->set_parameters({rclcpp::Parameter("gait_period", gait_period)});
+      }
+    }
+    else
+    {
+      RCLCPP_WARN(this->get_logger(), "Failed to get gait params, timeout");
+      return;
+    }
+  }
+
   _vel_msg.linear.x = _max_vel_map["lin_x"]*msg->axes[_axis_linear_map["x"]];
   _vel_msg.linear.y = _max_vel_map["lin_y"]*msg->axes[_axis_linear_map["y"]];
   _vel_msg.angular.z = _max_vel_map["ang_z"]*msg->axes[_axis_angular_map["yaw"]];
@@ -473,7 +531,10 @@ void JoyTeleop::publishDefaultPose()
 int main(int argc, char **argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<JoyTeleop>());
+  rclcpp::executors::MultiThreadedExecutor executor;
+  auto node = std::make_shared<JoyTeleop>();
+  executor.add_node(node);
+  executor.spin();
   rclcpp::shutdown();
   return 0;
 }

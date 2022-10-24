@@ -54,7 +54,7 @@ private:
   rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr _set_body_control_publish_ik_client;
   rclcpp::Client<std_srvs::srv::Empty>::SharedPtr _reset_body_control_pid_client;
   
-  rclcpp::AsyncParametersClient::SharedPtr _set_gait_parameters_client;
+  rclcpp::AsyncParametersClient::SharedPtr _gait_parameters_client;
 
   rclcpp::Client<controller_manager_msgs::srv::SetHardwareComponentState>::SharedPtr _set_hw_state_client;
   rclcpp::Client<controller_manager_msgs::srv::SwitchController>::SharedPtr _switch_controller_client;
@@ -73,13 +73,17 @@ private:
   EMAFilter _body_rotation_y_filter;
   EMAFilter _body_rotation_z_filter;
 
-  std::map<std::string, float_t> _max_vel_map;
+  std::map<std::string, double> _max_vel_map;
+  std::map<std::string, double> _gait_range_map;
   std::map<std::string, uint8_t> _axis_linear_map;
   std::map<std::string, uint8_t> _axis_angular_map;
+  std::map<std::string, uint8_t> _gait_params_map;
 
-  std::map<std::string, float_t> _default_max_vel_map;
+  std::map<std::string, double> _default_max_vel_map;
+  std::map<std::string, double> _default_gait_range_map;
   std::map<std::string, uint8_t> _default_axis_linear_map;
   std::map<std::string, uint8_t> _default_axis_angular_map;
+  std::map<std::string, uint8_t> _default_gait_params_map;
 
   std::string _joy_type;
 
