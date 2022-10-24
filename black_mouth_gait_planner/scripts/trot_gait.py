@@ -3,12 +3,14 @@ import rclpy
 import time
 import numpy as np
 from rclpy.node import Node
+from builtin_interfaces.msg import Duration
+from rcl_interfaces.msg import SetParametersResult
+from geometry_msgs.msg import Vector3, Point, Twist
 from black_mouth_control.msg import BodyControl
 from black_mouth_kinematics.msg import BodyLegIKTrajectory, BodyLegIK
-from geometry_msgs.msg import Vector3, Point, Twist
-from builtin_interfaces.msg import Duration
 from black_mouth_gait_planner.srv import ComputeGaitTrajectory
 from black_mouth_teleop.msg import TeleopState
+
 
 
 class TrotGait(Node):
@@ -24,6 +26,8 @@ class TrotGait(Node):
         self.gait_period = self.get_parameter('gait_period').get_parameter_value().double_value
         self.gait_height = self.get_parameter('gait_height').get_parameter_value().double_value
         self.ground_penetration = self.get_parameter('ground_penetration').get_parameter_value().double_value
+
+        self.add_on_set_parameters_callback(self.parametersCallback)
 
         self.body_imu_rotation = Vector3()
 
@@ -174,6 +178,15 @@ class TrotGait(Node):
         self.msg.time_from_start.append(self.t1)
 
         self.get_logger().info("Ready to walk!", once=True)
+
+    def parametersCallback(self, params):
+        for param in params:
+            if param.name == "gait_period": self.gait_period = param.value
+            elif param.name == "gait_height": self.gait_height = param.value
+            
+            self.get_logger().info(param.name + " set to " + str(param.value))
+        return SetParametersResult(successful=True)
+
 
     def create_body_matrix(self):
         self.coord_orig = np.array([[0.0, 0.0],
