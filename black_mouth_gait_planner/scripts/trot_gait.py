@@ -2,15 +2,16 @@
 import rclpy
 import time
 import numpy as np
+import math
 from rclpy.node import Node
 from builtin_interfaces.msg import Duration
 from rcl_interfaces.msg import SetParametersResult
 from geometry_msgs.msg import Vector3, Point, Twist
+from sensor_msgs.msg import Imu
 from black_mouth_control.msg import BodyControl
 from black_mouth_kinematics.msg import BodyLegIKTrajectory, BodyLegIK
 from black_mouth_gait_planner.srv import ComputeGaitTrajectory
 from black_mouth_teleop.msg import TeleopState
-
 
 
 class TrotGait(Node):
@@ -49,6 +50,20 @@ class TrotGait(Node):
                                                                  '/teleop_state',
                                                                  self.current_state_cb,
                                                                  10)
+
+        self.desired_rotation_publisher = self.create_publisher(Vector3,
+                                                                '/body_desired_rotation',
+                                                                10)
+
+        self.imu_subscriber = self.create_subscription(Imu,
+                                                       '/imu/data',
+                                                       self.imu_cb,
+                                                       10)
+        self.imu_msg = Imu()
+
+        self.imu_timer = self.create_timer(1.0, self.update_control_setpoint, 10)
+        self.imu_timer.cancel()
+
         self.current_state_msg = TeleopState()
 
         self.gait_x_length = 0
@@ -201,6 +216,34 @@ class TrotGait(Node):
     def bodyCallback(self, msg):
         if self.use_imu:
             self.body_imu_rotation = msg.body_rotation
+    
+    def imu_cb(self,msg):
+        self.imu_msg = msg
+
+    def euler_from_quaternion(self, x, y, z, w):
+
+        t0 = +2.0 * (w * x + y * z)
+        t1 = +1.0 - 2.0 * (x * x + y * y)
+        roll = math.atan2(t0, t1)
+     
+        t2 = +2.0 * (w * y - z * x)
+        t2 = +1.0 if t2 > +1.0 else t2
+        t2 = -1.0 if t2 < -1.0 else t2
+        pitch = math.asin(t2)
+     
+        t3 = +2.0 * (w * z + x * y)
+        t4 = +1.0 - 2.0 * (y * y + z * z)
+        yaw = math.atan2(t3, t4)
+     
+        return roll, pitch, yaw
+
+    def update_control_setpoint(self):
+        _, pitch, _ = self.euler_from_quaternion(
+            self.imu_msg.orientation.x,
+            self.imu_msg.orientation.y,
+            self.imu_msg.orientation.z,
+            self.imu_msg.orientation.w)
+        self.desired_rotation_publisher.publish(Vector3(y=pitch))
 
     def cmd_vel_cb(self, msg):
         self.cmd_vel_msg = msg
@@ -209,6 +252,7 @@ class TrotGait(Node):
         # if transitioning to WALKING state
         if self.current_state_msg.state != 5 and msg.state == 5:
             self.ik_timer.reset()
+            self.imu_timer.reset()
         self.current_state_msg = msg
 
     def update_positions(self, mat, linear_x, linear_y,  theta):
@@ -289,7 +333,9 @@ class TrotGait(Node):
                     self.BODY_request.height = 0.0
 
                     if self.current_state_msg.state != 5:
+                        self.desired_rotation_publisher.publish(Vector3())
                         self.ik_timer.cancel()
+                        self.imu_timer.cancel()
                 else:
                     self.FL_request.height = self.gait_height
                     self.FR_request.height = self.gait_height
