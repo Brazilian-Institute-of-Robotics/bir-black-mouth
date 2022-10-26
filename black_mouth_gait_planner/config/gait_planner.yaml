@@ -4,6 +4,6 @@ trot_gait_node:
     gait_period: 0.5
     gait_height: 0.05
     ground_penetration: 0.005
-    # fixed_forward_body: 0.02
-    # resolution_first_fraction: 0.33
-    # period_first_fraction: 0.66
+    fixed_forward_body: 0.02
+    resolution_first_fraction: 0.33
+    period_first_fraction: 0.66

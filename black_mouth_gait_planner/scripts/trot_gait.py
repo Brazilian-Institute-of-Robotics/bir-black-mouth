@@ -22,11 +22,17 @@ class TrotGait(Node):
         self.declare_parameter('gait_period', 0.5)
         self.declare_parameter('gait_height', 0.03)
         self.declare_parameter('ground_penetration', 0.03)
+        self.declare_parameter('fixed_forward_body', 0.02)
+        self.declare_parameter('resolution_first_fraction', 0.33)
+        self.declare_parameter('period_first_fraction', 0.66)
 
         self.use_imu = self.get_parameter('use_imu').get_parameter_value().bool_value
         self.gait_period = self.get_parameter('gait_period').get_parameter_value().double_value
         self.gait_height = self.get_parameter('gait_height').get_parameter_value().double_value
         self.ground_penetration = self.get_parameter('ground_penetration').get_parameter_value().double_value
+        self.fixed_forward_body = self.get_parameter('fixed_forward_body').get_parameter_value().double_value
+        self.resolution_first_fraction = self.get_parameter('resolution_first_fraction').get_parameter_value().double_value
+        self.period_first_fraction = self.get_parameter('period_first_fraction').get_parameter_value().double_value
 
         self.add_on_set_parameters_callback(self.parametersCallback)
 
@@ -70,12 +76,10 @@ class TrotGait(Node):
         self.gait_theta_length = 0
         self.gait_y_length = 0
 
-        self.fixed_forward_body = 0.02
-
         self.cmd_vel_msg = Twist()
 
-        timer_period = 0.02
-        self.ik_timer = self.create_timer(timer_period, self.timerCallback)
+        self.timer_period = 0.02
+        self.ik_timer = self.create_timer(self.timer_period, self.timerCallback)
         self.ik_timer.cancel()
 
         self.start_time = time.time()
@@ -91,14 +95,12 @@ class TrotGait(Node):
                 return
             self.get_logger().info(f"{self.traj_client.srv_name} service not available, waiting...")
 
-        self.gait_res = int(self.gait_period/timer_period)  # secs
+        self.gait_res = int(self.gait_period/self.timer_period)  # secs
         # self.gait_res = 7  # secs
 
         self.lower_body = 0.002
         self.forward_body = 0.0
         self.lower_leg = -0.0045
-        self.resolution_first_fraction = 0.33
-        self.period_first_fraction = 0.66
 
         self.Length = 0.2291
         self.Width = 0.140
@@ -178,7 +180,7 @@ class TrotGait(Node):
         self.state = 0
         self.start_time = 0.0
         self.point_counter = 0
-        self.t1 = Duration(sec=0, nanosec=int(timer_period*1e9))
+        self.t1 = Duration(sec=0, nanosec=int(self.timer_period*1e9))
 
         # Set initial position
         self.msg = BodyLegIKTrajectory()
@@ -198,8 +200,15 @@ class TrotGait(Node):
         for param in params:
             if param.name == "gait_period": self.gait_period = param.value
             elif param.name == "gait_height": self.gait_height = param.value
+            elif param.name == "use_imu": self.use_imu = param.value
+            elif param.name == "ground_penetration": self.ground_penetration = param.value
+            elif param.name == "fixed_forward_body": self.fixed_forward_body = param.value
+            elif param.name == "resolution_first_fraction": self.resolution_first_fraction = param.value
+            elif param.name == "period_first_fraction": self.period_first_fraction = param.value
             
             self.get_logger().info(param.name + " set to " + str(param.value))
+
+        self.gait_res = int(self.gait_period/self.timer_period)
         return SetParametersResult(successful=True)
 
 
