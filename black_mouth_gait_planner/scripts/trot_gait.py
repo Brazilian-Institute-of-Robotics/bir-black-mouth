@@ -67,7 +67,7 @@ class TrotGait(Node):
                                                        10)
         self.imu_msg = Imu()
 
-        self.imu_timer = self.create_timer(1.0, self.update_control_setpoint, 10)
+        self.imu_timer = self.create_timer(1.0, self.update_control_setpoint)
         self.imu_timer.cancel()
 
         self.current_state_msg = TeleopState()
