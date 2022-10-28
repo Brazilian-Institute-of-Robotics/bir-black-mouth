@@ -288,8 +288,8 @@ class TrotGait(Node):
         result = np.ones((mat.shape[0], 3))
         result[:, :-1] = mat
 
-        rotMat = np.array([[np.cos(-theta), -1*np.sin(-theta), 0],
-                           [np.sin(-theta), np.cos(-theta), 0],
+        rotMat = np.array([[np.cos(theta), -1*np.sin(theta), 0],
+                           [np.sin(theta), np.cos(theta), 0],
                            [0, 0, 1]])
 
         x = linear_x*np.cos(theta) - linear_y*np.sin(theta)
@@ -417,7 +417,7 @@ class TrotGait(Node):
                 self.progress_time_vector = np.array(
                                 [t.sec + t.nanosec*1e-9 for t in self.BODY_response.time_from_start]
                             ) / self.gait_period
-                self.BODY_rotation = -self.gait_theta_length/2 * self.progress_time_vector
+                self.BODY_rotation = self.gait_theta_length/2 * self.progress_time_vector
 
             elif self.state == 1:
                 self.FR_request.initial_point = self.msg.body_leg_ik_trajectory[
@@ -446,8 +446,8 @@ class TrotGait(Node):
                 future = self.traj_client.call_async(self.BODY_request)
                 rclpy.spin_until_future_complete(self.support_node, future)
                 self.BODY_response = future.result()
-                self.BODY_rotation = -1*((self.gait_theta_length/2 *
-                                      self.progress_time_vector) + self.gait_theta_length/2)
+                self.BODY_rotation = (self.gait_theta_length/2 *
+                                      self.progress_time_vector) + self.gait_theta_length/2
 
             elif self.state == 3:
                 self.FL_request.initial_point = self.msg.body_leg_ik_trajectory[
