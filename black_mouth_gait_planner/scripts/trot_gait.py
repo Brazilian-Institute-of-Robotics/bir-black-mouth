@@ -34,6 +34,7 @@ class TrotGait(Node):
         self.resolution_first_fraction = self.get_parameter('resolution_first_fraction').get_parameter_value().double_value
         self.period_first_fraction = self.get_parameter('period_first_fraction').get_parameter_value().double_value
 
+        self.update_params = False
         self.add_on_set_parameters_callback(self.parametersCallback)
 
         self.body_imu_rotation = Vector3()
@@ -168,7 +169,7 @@ class TrotGait(Node):
                                                 y=self.updated_pos['BODY'][1],
                                                 z=self.lower_body)
         self.BODY_request.period = self.gait_period
-        self.BODY_request.height = 0.005  # Ground penetration height
+        self.BODY_request.height = self.ground_penetration
         self.BODY_request.resolution = self.gait_res
         self.BODY_request.resolution_first_fraction = 1.0
         self.BODY_request.period_first_fraction = 1.0
@@ -196,19 +197,41 @@ class TrotGait(Node):
 
         self.get_logger().info("Ready to walk!", once=True)
 
+    def updateGaitParams(self):
+        self.gait_res = int(self.gait_period/self.timer_period)
+        self.progress_time_vector = np.array(
+                                        [t.sec + t.nanosec*1e-9 for t in self.BODY_response.time_from_start]
+                                    ) / self.gait_period
+
+        self.FL_request.period = self.gait_period
+        self.FL_request.height = self.gait_height
+        self.FL_request.resolution = self.gait_res
+        
+        self.FR_request.period = self.gait_period
+        self.FR_request.height = self.gait_height
+        self.FR_request.resolution = self.gait_res
+        
+        self.BL_request.period = self.gait_period
+        self.BL_request.height = self.gait_height
+        self.BL_request.resolution = self.gait_res
+        
+        self.BR_request.period = self.gait_period
+        self.BR_request.height = self.gait_height
+        self.BR_request.resolution = self.gait_res
+        
+        self.BODY_request.period = self.gait_period
+        self.BODY_request.height = self.ground_penetration
+        self.BODY_request.resolution = self.gait_res
+
     def parametersCallback(self, params):
         for param in params:
             if param.name == "gait_period": self.gait_period = param.value
             elif param.name == "gait_height": self.gait_height = param.value
             elif param.name == "use_imu": self.use_imu = param.value
             elif param.name == "ground_penetration": self.ground_penetration = param.value
-            elif param.name == "fixed_forward_body": self.fixed_forward_body = param.value
-            elif param.name == "resolution_first_fraction": self.resolution_first_fraction = param.value
-            elif param.name == "period_first_fraction": self.period_first_fraction = param.value
-            
             self.get_logger().info(param.name + " set to " + str(param.value))
-
-        self.gait_res = int(self.gait_period/self.timer_period)
+        
+        self.update_params = True
         return SetParametersResult(successful=True)
 
 
@@ -339,9 +362,7 @@ class TrotGait(Node):
                     self.FR_request.height = 0.0
                     self.BL_request.height = 0.0
                     self.BR_request.height = 0.0
-                    self.BODY_request.height = 0.0
-
-                    if self.current_state_msg.state != 5:
+                    self.BODY_request.height = self.ground_penetration.state != 5:
                         self.desired_rotation_publisher.publish(Vector3())
                         self.ik_timer.cancel()
                         self.imu_timer.cancel()
@@ -350,9 +371,7 @@ class TrotGait(Node):
                     self.FR_request.height = self.gait_height
                     self.BL_request.height = self.gait_height
                     self.BR_request.height = self.gait_height
-                    self.BODY_request.height = 0.005
-
-                # Reset whole gait
+                    self.BODY_request.height = self.ground_penetration gait
                 self.msg.body_leg_ik_trajectory[0] = BodyLegIK()
                 self.msg.body_leg_ik_trajectory[0].leg_points.reference_link = 1
                 self.msg.body_leg_ik_trajectory[0].body_position = self.point_to_vector3(
@@ -376,6 +395,10 @@ class TrotGait(Node):
                     self.gait_x_length,
                     self.gait_y_length,
                     self.gait_theta_length)
+                
+                if self.update_params:
+                    self.updateGaitParams()
+                    self.update_params = False
 
                 self.state = 0
             else:
