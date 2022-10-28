@@ -193,7 +193,7 @@ class TrotGait(Node):
         self.msg.body_leg_ik_trajectory[0].leg_points.back_right_leg = self.BR_request.initial_point
         self.msg.body_leg_ik_trajectory[0].body_position = self.point_to_vector3(
             self.BODY_request.initial_point)
-        self.msg.time_from_start.append(self.t1)
+        self.msg.time_from_start.append(Duration())
 
         self.get_logger().info("Ready to walk!", once=True)
 

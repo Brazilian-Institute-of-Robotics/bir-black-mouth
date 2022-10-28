@@ -280,6 +280,8 @@ hardware_interface::CallbackReturn BlackMouthHW::on_activate(
     RCLCPP_INFO(rclcpp::get_logger("BlackMouthHW"),
                 "Activating ...please wait...");
 
+    const std::lock_guard<std::mutex> lock(mutex_);
+
     // command and state should be equal when starting
     for (uint i = 0; i < hw_joints_.size(); i++) {
         hw_joints_[i].command = hw_joints_[i].state;
@@ -313,6 +315,8 @@ hardware_interface::CallbackReturn BlackMouthHW::on_deactivate(
     //     return hardware_interface::CallbackReturn::FAILURE;
     // }
 
+    const std::lock_guard<std::mutex> lock(mutex_);
+
     // REBOOT Motor
     for (uint i = 0; i < hw_joints_.size(); i++) {
         dxl_comm_result_ = packet_handler_->reboot(port_handler_, hw_joints_[i].id, &dxl_error_);
@@ -340,6 +344,8 @@ hardware_interface::return_type BlackMouthHW::read(
     // auto start = std::chrono::steady_clock::now();
     (void)period;
     (void)time;
+
+    const std::lock_guard<std::mutex> lock(mutex_);
 
     // Read data from dynamixels
     dxl_comm_result_ = presentPositionSyncRead_->txRxPacket();
@@ -400,6 +406,8 @@ hardware_interface::return_type BlackMouthHW::write(
 
     (void)period;
     (void)time;
+
+    const std::lock_guard<std::mutex> lock(mutex_);
 
     for (uint i = 0; i < hw_joints_.size(); i++) {
         // Convert command to dynamixel byte data
