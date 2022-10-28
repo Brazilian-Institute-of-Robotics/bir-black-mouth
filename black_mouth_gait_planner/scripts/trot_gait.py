@@ -199,9 +199,6 @@ class TrotGait(Node):
 
     def updateGaitParams(self):
         self.gait_res = int(self.gait_period/self.timer_period)
-        self.progress_time_vector = np.array(
-                                        [t.sec + t.nanosec*1e-9 for t in self.BODY_response.time_from_start]
-                                    ) / self.gait_period
 
         self.FL_request.period = self.gait_period
         self.FL_request.height = self.gait_height
@@ -362,7 +359,8 @@ class TrotGait(Node):
                     self.FR_request.height = 0.0
                     self.BL_request.height = 0.0
                     self.BR_request.height = 0.0
-                    self.BODY_request.height = self.ground_penetration.state != 5:
+                    self.BODY_request.height = 0.0
+                    if self.current_state_msg.state != 5:
                         self.desired_rotation_publisher.publish(Vector3())
                         self.ik_timer.cancel()
                         self.imu_timer.cancel()
@@ -371,7 +369,8 @@ class TrotGait(Node):
                     self.FR_request.height = self.gait_height
                     self.BL_request.height = self.gait_height
                     self.BR_request.height = self.gait_height
-                    self.BODY_request.height = self.ground_penetration gait
+                    self.BODY_request.height = self.ground_penetration
+
                 self.msg.body_leg_ik_trajectory[0] = BodyLegIK()
                 self.msg.body_leg_ik_trajectory[0].leg_points.reference_link = 1
                 self.msg.body_leg_ik_trajectory[0].body_position = self.point_to_vector3(
@@ -380,6 +379,10 @@ class TrotGait(Node):
                     x=-self.last_step_l/2, z=self.lower_leg)
                 self.msg.body_leg_ik_trajectory[0].leg_points.back_left_leg = Point(
                     x=-self.last_step_l/2, z=self.lower_leg)
+
+                if self.update_params:
+                    self.updateGaitParams()
+                    self.update_params = False
 
                 # Get new X, Y, Yaw values
                 self.gait_x_length = self.cmd_vel_msg.linear.x * \
@@ -396,9 +399,6 @@ class TrotGait(Node):
                     self.gait_y_length,
                     self.gait_theta_length)
                 
-                if self.update_params:
-                    self.updateGaitParams()
-                    self.update_params = False
 
                 self.state = 0
             else:
@@ -414,6 +414,9 @@ class TrotGait(Node):
                 future = self.traj_client.call_async(self.BODY_request)
                 rclpy.spin_until_future_complete(self.support_node, future)
                 self.BODY_response = future.result()
+                self.progress_time_vector = np.array(
+                                [t.sec + t.nanosec*1e-9 for t in self.BODY_response.time_from_start]
+                            ) / self.gait_period
                 self.BODY_rotation = -self.gait_theta_length/2 * self.progress_time_vector
 
             elif self.state == 1:
