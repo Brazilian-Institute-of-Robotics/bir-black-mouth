@@ -93,8 +93,6 @@ private:
   uint8_t _walk_button;
   uint8_t _restart_button;
 
-  bool _resting;
-  
   bool _use_filter;
   double _filter_alpha;
 
