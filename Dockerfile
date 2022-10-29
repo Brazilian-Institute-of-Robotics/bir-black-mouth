@@ -21,9 +21,7 @@ RUN . /opt/ros/$ROS_DISTRO/setup.sh && \
     --from-paths src --ignore-src \
     && rm -rf /var/lib/apt/lists/* && \
     apt-get install ros-$ROS_DISTRO-gazebo* -y && \ 
-    apt-get install git -y && \
-    apt-get install python3-pip -y && \
-    pip3 install setuptools==58.2.0 -y
+    apt-get install git -y
 
 RUN touch /rsource.sh
 RUN echo "#!/bin/bash \n\n\
