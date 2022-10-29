@@ -105,9 +105,9 @@ def generate_launch_description():
                               description='Whether to launch imu or not'),
         # imu,
         robot_state_publisher,
-        bm_controllers,
-        inverse_kinematics,
-        body_control,
-        gait_planner,
+        TimerAction(period=1.0, actions=[bm_controllers]),
+        TimerAction(period=2.0, actions=[inverse_kinematics]),
+        TimerAction(period=3.0, actions=[body_control]),
+        TimerAction(period=4.0, actions=[gait_planner]),
         TimerAction(period=5.0, actions=[joy_teleop])
     ])

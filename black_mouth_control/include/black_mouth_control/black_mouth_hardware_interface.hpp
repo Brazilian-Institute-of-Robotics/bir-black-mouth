@@ -9,6 +9,7 @@
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include <string>
 #include <vector>
+#include <mutex>
 
 #include "dynamixel_sdk/dynamixel_sdk.h"
 
@@ -115,6 +116,8 @@ class BlackMouthHW : public hardware_interface::SystemInterface {
     // Dynamixel communication parameters
     int dxl_comm_result_ = COMM_TX_FAIL;
     uint8_t dxl_error_ = 0;
+
+    std::mutex mutex_;
 };
 
 }  // namespace black_mouth_control
