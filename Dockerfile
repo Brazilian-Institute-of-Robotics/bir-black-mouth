@@ -5,10 +5,14 @@ ARG PROJECT=black_mouth
 ARG WS_PATH=/home/${PROJECT}_${ROS_DISTRO}
 
 WORKDIR ${WS_PATH}/src
+COPY ${PROJECT}_bringup/package.xml ./${PROJECT}_bringup/package.xml
 COPY ${PROJECT}_control/package.xml ./${PROJECT}_control/package.xml
+COPY ${PROJECT}_data_analysis/package.xml ./${PROJECT}_data_analysis/package.xml
 COPY ${PROJECT}_description/package.xml ./${PROJECT}_description/package.xml
+COPY ${PROJECT}_gait_planner/package.xml ./${PROJECT}_gait_planner/package.xml
 COPY ${PROJECT}_gazebo/package.xml ./${PROJECT}_gazebo/package.xml
 COPY ${PROJECT}_kinematics/package.xml ./${PROJECT}_kinematics/package.xml
+COPY ${PROJECT}_teleop/package.xml ./${PROJECT}_teleop/package.xml
 
 WORKDIR ${WS_PATH}
 RUN . /opt/ros/$ROS_DISTRO/setup.sh && \
@@ -17,7 +21,7 @@ RUN . /opt/ros/$ROS_DISTRO/setup.sh && \
     --from-paths src --ignore-src \
     && rm -rf /var/lib/apt/lists/* && \
     apt-get install ros-$ROS_DISTRO-gazebo* -y && \ 
-    apt-get install git -y 
+    apt-get install git -y
 
 RUN touch /rsource.sh
 RUN echo "#!/bin/bash \n\n\
