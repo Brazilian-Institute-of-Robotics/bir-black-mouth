@@ -7,6 +7,11 @@
     <xacro:property name="body_width" value="0.168"/>
     <xacro:property name="body_height" value="0.064"/>
 
+    <xacro:property name="L" value="0.2291"/>
+    <xacro:property name="W" value="0.14"/>
+    <xacro:property name="H" value="0.17"/>
+    <xacro:property name="L1" value="0.048"/>
+
     <xacro:property name="hip_length" value="0.0415"/>
     <xacro:property name="femur_length" value="0.120"/>
     <xacro:property name="tibia_length" value="0.120"/>
@@ -304,6 +309,36 @@
             <pose>0 0 0 0 0 0</pose>
         </sensor>
     </gazebo>
+
+    <!-- Default feet positions -->
+    <link name="front_right_foot_default"/>
+    <link name="front_left_foot_default"/>
+    <link name="back_right_foot_default"/>
+    <link name="back_left_foot_default"/>
+
+    <joint name="joint_front_right_foot_default" type="fixed">
+        <parent link="base_link"/>
+        <child link="front_right_foot_default"/>
+        <origin xyz="${L/2} -${W/2 + L1} ${-H}" rpy="0.0 0.0 0.0"/>
+    </joint>
+
+    <joint name="joint_front_left_foot_default" type="fixed">
+        <parent link="base_link"/>
+        <child link="front_left_foot_default"/>
+        <origin xyz="${L/2} ${W/2 + L1} ${-H}" rpy="0.0 0.0 0.0"/>
+    </joint>
+
+    <joint name="joint_back_right_foot_default" type="fixed">
+        <parent link="base_link"/>
+        <child link="back_right_foot_default"/>
+        <origin xyz="-${L/2} -${W/2 + L1} ${-H}" rpy="0.0 0.0 0.0"/>
+    </joint>
+
+    <joint name="joint_back_left_foot_default" type="fixed">
+        <parent link="base_link"/>
+        <child link="back_left_foot_default"/>
+        <origin xyz="-${L/2} ${W/2 + L1} ${-H}" rpy="0.0 0.0 0.0"/>
+    </joint>
 
     <!-- Ros2 Control -->
     <xacro:include filename="$(find black_mouth_control)/urdf/real_robot.urdf.xacro"/>
