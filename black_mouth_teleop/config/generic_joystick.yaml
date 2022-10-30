@@ -3,8 +3,8 @@ joy_teleop_node:
     filter_alpha: 0.90
     joy_type: generic
     max_vel:
-      lin_x: 0.05
-      lin_y: 0.03
+      lin_x: 0.10
+      lin_y: 0.05
       ang_z: 0.25
     gait_range:
       max_height: 0.065

@@ -52,7 +52,7 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   _ik_msg.body_leg_ik_trajectory.resize(1);
   _ik_msg.time_from_start.resize(1);
 
-  _default_max_vel_map      = { {"lin_x", 0.05}, {"lin_y", 0.05}, {"ang_z", 0.5} };
+  _default_max_vel_map      = { {"lin_x", 0.10}, {"lin_y", 0.10}, {"ang_z", 0.5} };
   _default_gait_range_map   = { {"max_height", 0.05}, {"min_height", 0.025}, 
                                 {"max_period", 1.0}, {"min_period", 0.25} };
 
@@ -90,6 +90,7 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   this->get_parameter("filter_alpha", _filter_alpha);
 
   _use_filter = _filter_alpha > 0.0;
+  _max_vel_multiplier = 1.0;
 
   RCLCPP_INFO(this->get_logger(), "Using %s joystick", _joy_type.c_str());
   if (_filter_alpha)
@@ -280,8 +281,24 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
     else if (msg->buttons[_walk_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::WALKING;
+          
+      auto parameters = _gait_parameters_client->get_parameters({"gait_period"});
+      std::future_status status = parameters.wait_for(50ms);
+
+      if (status == std::future_status::ready)
+      {
+        double gait_period = parameters.get().at(0).as_double();
+        _max_vel_multiplier = _gait_range_map["min_period"]/gait_period;
+      }
+      else
+      {
+        RCLCPP_WARN(this->get_logger(), "Failed to get gait period param, timeout. Setting max velocity multiplier to 1.0");
+        _max_vel_multiplier = 1.0;
+      }
       _default_pose_timer->cancel();
       _vel_timer->reset();
+
+
     }
     else if (msg->buttons[_restart_button]) {
       _state.state = black_mouth_teleop::msg::TeleopState::INIT;
@@ -468,12 +485,17 @@ void JoyTeleop::walkingState(const sensor_msgs::msg::Joy::SharedPtr msg)
       {
         gait_period = std::min(_gait_range_map["max_period"], gait_period+0.25);
         _gait_parameters_client->set_parameters({rclcpp::Parameter("gait_period", gait_period)});
+        _max_vel_multiplier = _gait_range_map["min_period"]/gait_period;
+        RCLCPP_INFO(this->get_logger(), "Setting max velocity multiplier to %f", _max_vel_multiplier);
       }
       else if(msg->buttons[_gait_params_map["gait_period_dec"]])
       {
         gait_period = std::max(_gait_range_map["min_period"], gait_period-0.25);
         _gait_parameters_client->set_parameters({rclcpp::Parameter("gait_period", gait_period)});
+        _max_vel_multiplier = _gait_range_map["min_period"]/gait_period;
+        RCLCPP_INFO(this->get_logger(), "Setting max velocity multiplier to %f", _max_vel_multiplier);
       }
+
     }
     else
     {
@@ -482,9 +504,9 @@ void JoyTeleop::walkingState(const sensor_msgs::msg::Joy::SharedPtr msg)
     }
   }
 
-  _vel_msg.linear.x = _max_vel_map["lin_x"]*msg->axes[_axis_linear_map["x"]];
-  _vel_msg.linear.y = _max_vel_map["lin_y"]*msg->axes[_axis_linear_map["y"]];
-  _vel_msg.angular.z = _max_vel_map["ang_z"]*msg->axes[_axis_angular_map["yaw"]];
+  _vel_msg.linear.x = _max_vel_multiplier*_max_vel_map["lin_x"]*msg->axes[_axis_linear_map["x"]];
+  _vel_msg.linear.y = _max_vel_multiplier*_max_vel_map["lin_y"]*msg->axes[_axis_linear_map["y"]];
+  _vel_msg.angular.z = _max_vel_multiplier*_max_vel_map["ang_z"]*msg->axes[_axis_angular_map["yaw"]];
 }
 
 

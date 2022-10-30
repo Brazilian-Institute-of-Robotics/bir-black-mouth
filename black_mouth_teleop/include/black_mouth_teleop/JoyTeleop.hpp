@@ -96,6 +96,8 @@ private:
   bool _use_filter;
   double _filter_alpha;
 
+  double _max_vel_multiplier;
+
 };
 
 #endif // JOY_TELEOP_HPP
