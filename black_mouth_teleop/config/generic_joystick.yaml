@@ -25,7 +25,7 @@ joy_teleop_node:
       gait_period_inc: 7
       gait_period_dec: 6
     restart: 9
-    rest: 3
+    move: 3
     lock: 2
     body: 0
     walk: 1

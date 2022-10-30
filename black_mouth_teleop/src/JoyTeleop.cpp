@@ -43,7 +43,7 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
 
   _ik_timer = this->create_wall_timer(50ms,  std::bind(&JoyTeleop::publishIK, this));
   _vel_timer = this->create_wall_timer(200ms, std::bind(&JoyTeleop::publishVel, this));
-  _default_pose_timer = this->create_wall_timer(30ms, std::bind(&JoyTeleop::publishDefaultPose, this));
+  _default_pose_timer = this->create_wall_timer(5s, std::bind(&JoyTeleop::publishDefaultPose, this));
 
   _ik_timer->cancel();
   _vel_timer->cancel();
@@ -70,7 +70,7 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   this->declare_parameters("gait_params", _default_gait_params_map);
   this->declare_parameter("joy_type", "generic");
   this->declare_parameter("lock", 0);
-  this->declare_parameter("rest", 1);
+  this->declare_parameter("move", 1);
   this->declare_parameter("body", 2);
   this->declare_parameter("walk", 3);
   this->declare_parameter("restart", 9);
@@ -83,7 +83,7 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   this->get_parameters("gait_params", _gait_params_map);
   this->get_parameter("joy_type", _joy_type);
   this->get_parameter("lock", _lock_button);
-  this->get_parameter("rest", _rest_button);
+  this->get_parameter("move", _move_button);
   this->get_parameter("body", _body_button);
   this->get_parameter("walk", _walk_button);
   this->get_parameter("restart", _restart_button);
@@ -215,7 +215,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 
   if (_state.state == black_mouth_teleop::msg::TeleopState::INIT)
   {
-    if (msg->buttons[_rest_button])
+    if (msg->buttons[_lock_button] || msg->buttons[_move_button] || msg->buttons[_body_button] || msg->buttons[_walk_button] || msg->buttons[_restart_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
 
@@ -259,15 +259,16 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 
   else if (_state.state == black_mouth_teleop::msg::TeleopState::RESTING)
   {
-
-    _default_pose_timer->cancel();
     if (msg->buttons[_lock_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::BODY_LOCKED;
+      _default_pose_timer->cancel();
     }
     else if (msg->buttons[_body_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY;
+    
+      _default_pose_timer->cancel();
       
       _reset_body_control_pid_client->async_send_request(std::make_shared<std_srvs::srv::Empty::Request>());
 
@@ -279,10 +280,13 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
     else if (msg->buttons[_walk_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::WALKING;
+      _default_pose_timer->cancel();
       _vel_timer->reset();
     }
     else if (msg->buttons[_restart_button]) {
       _state.state = black_mouth_teleop::msg::TeleopState::INIT;
+
+      _default_pose_timer->cancel();
 
       // Deactivate leg controllers
       auto switch_controller_request = controller_manager_msgs::srv::SwitchController::Request();
@@ -304,16 +308,17 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       result_hw_state_goal.wait_for(1s);
 
     }
-    else if (msg->buttons[_rest_button])
+    else if (msg->buttons[_move_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::MOVING_BODY;
+      _default_pose_timer->cancel();
       _ik_timer->reset();
     }
   }
 
   else if (_state.state == black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY)
   {
-    if (msg->buttons[_rest_button] || msg->buttons[_body_button])
+    if (msg->buttons[_body_button] || msg->buttons[_restart_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
 
@@ -327,36 +332,36 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 
   else if (_state.state == black_mouth_teleop::msg::TeleopState::MOVING_BODY)
   {
-    if (msg->buttons[_rest_button])
+    if (msg->buttons[_lock_button])
+    {
+      _state.state = black_mouth_teleop::msg::TeleopState::BODY_LOCKED;
+      _ik_timer->cancel();
+    }
+    else if (msg->buttons[_move_button] || msg->buttons[_restart_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
       _ik_timer->cancel();
       _default_pose_timer->reset();
-    }
-    else if (msg->buttons[_lock_button])
-    {
-      _state.state = black_mouth_teleop::msg::TeleopState::BODY_LOCKED;
-      _ik_timer->cancel();
     }
   }
 
   else if (_state.state == black_mouth_teleop::msg::TeleopState::BODY_LOCKED)
   {
-    if (msg->buttons[_rest_button])
-    {
-      _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
-      _default_pose_timer->reset();
-    }
-    else if (msg->buttons[_lock_button] || msg->buttons[_body_button])
+    if (msg->buttons[_move_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::MOVING_BODY;
       _ik_timer->reset();
+    }
+    else if (msg->buttons[_lock_button] || msg->buttons[_restart_button])
+    {
+      _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
+      _default_pose_timer->reset();
     }
   }
 
   else if (_state.state == black_mouth_teleop::msg::TeleopState::WALKING)
   {
-    if (msg->buttons[_rest_button] || msg->buttons[_walk_button])
+    if (msg->buttons[_walk_button] || msg->buttons[_restart_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
       _vel_timer->cancel();

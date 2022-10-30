@@ -88,7 +88,7 @@ private:
   std::string _joy_type;
 
   uint8_t _lock_button;
-  uint8_t _rest_button;
+  uint8_t _move_button;
   uint8_t _body_button;
   uint8_t _walk_button;
   uint8_t _restart_button;
