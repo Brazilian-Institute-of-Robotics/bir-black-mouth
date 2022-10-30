@@ -213,8 +213,9 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
   auto last_state = _state.state;
 
-  if (_state.state == black_mouth_teleop::msg::TeleopState::INIT)
+  switch (_state.state)
   {
+  case black_mouth_teleop::msg::TeleopState::INIT:
     if (msg->buttons[_lock_button] || msg->buttons[_move_button] || msg->buttons[_body_button] || msg->buttons[_walk_button] || msg->buttons[_restart_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
@@ -255,10 +256,9 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       }
       RCLCPP_INFO(this->get_logger(), "Ready!");
     }
-  }
-
-  else if (_state.state == black_mouth_teleop::msg::TeleopState::RESTING)
-  {
+    break;
+  
+  case black_mouth_teleop::msg::TeleopState::RESTING:
     if (msg->buttons[_lock_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::BODY_LOCKED;
@@ -314,10 +314,9 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       _default_pose_timer->cancel();
       _ik_timer->reset();
     }
-  }
+    break;
 
-  else if (_state.state == black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY)
-  {
+  case black_mouth_teleop::msg::TeleopState::CONTROLLING_BODY:
     if (msg->buttons[_body_button] || msg->buttons[_restart_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
@@ -328,10 +327,9 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 
       _default_pose_timer->reset();
     }
-  }
+    break;
 
-  else if (_state.state == black_mouth_teleop::msg::TeleopState::MOVING_BODY)
-  {
+  case black_mouth_teleop::msg::TeleopState::MOVING_BODY:
     if (msg->buttons[_lock_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::BODY_LOCKED;
@@ -343,10 +341,9 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       _ik_timer->cancel();
       _default_pose_timer->reset();
     }
-  }
+    break;
 
-  else if (_state.state == black_mouth_teleop::msg::TeleopState::BODY_LOCKED)
-  {
+  case black_mouth_teleop::msg::TeleopState::BODY_LOCKED:
     if (msg->buttons[_move_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::MOVING_BODY;
@@ -357,16 +354,19 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
       _default_pose_timer->reset();
     }
-  }
+    break;
 
-  else if (_state.state == black_mouth_teleop::msg::TeleopState::WALKING)
-  {
+  case black_mouth_teleop::msg::TeleopState::WALKING:
     if (msg->buttons[_walk_button] || msg->buttons[_restart_button])
     {
       _state.state = black_mouth_teleop::msg::TeleopState::RESTING;
       _vel_timer->cancel();
       _default_pose_timer->reset();
     }
+    break;
+
+  default:
+    break;
   }
 
   return (last_state != _state.state);
