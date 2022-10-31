@@ -1,0 +1,2 @@
+caramel_kinematics/BodyLegIK[] body_leg_ik_trajectory
+builtin_interfaces/Duration[] time_from_start

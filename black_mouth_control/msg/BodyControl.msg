@@ -1,3 +1,0 @@
-black_mouth_control/PID pid_roll
-black_mouth_control/PID pid_pitch
-geometry_msgs/Vector3 body_rotation

@@ -2,7 +2,7 @@
 
 ROSDISTRO="humble"
 
-PROJECT="black_mouth"
+PROJECT="caramel"
 
 PROJECT_PATH="$HOME/workspaces/${PROJECT}_${ROSDISTRO}"
 

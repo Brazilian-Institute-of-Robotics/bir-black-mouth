@@ -1,7 +1,7 @@
 ARG ROS_DISTRO=humble
 FROM osrf/ros:$ROS_DISTRO-desktop
 
-ARG PROJECT=black_mouth
+ARG PROJECT=caramel
 ARG WS_PATH=/home/${PROJECT}_${ROS_DISTRO}
 
 WORKDIR ${WS_PATH}/src
@@ -20,7 +20,6 @@ RUN . /opt/ros/$ROS_DISTRO/setup.sh && \
     rosdep install -y \
     --from-paths src --ignore-src \
     && rm -rf /var/lib/apt/lists/* && \
-    apt-get install ros-$ROS_DISTRO-gazebo* -y && \ 
     apt-get install git -y
 
 RUN touch /rsource.sh

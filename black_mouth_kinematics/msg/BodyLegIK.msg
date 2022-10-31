@@ -1,3 +1,0 @@
-geometry_msgs/Vector3 body_position
-geometry_msgs/Vector3 body_rotation
-black_mouth_kinematics/AllLegPoints leg_points
