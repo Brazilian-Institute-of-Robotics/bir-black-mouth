@@ -6,6 +6,7 @@ import math
 from rclpy.node import Node
 from builtin_interfaces.msg import Duration
 from rcl_interfaces.msg import SetParametersResult
+from rcl_interfaces.srv import GetParameters
 from geometry_msgs.msg import Vector3, Point, Twist
 from sensor_msgs.msg import Imu
 from black_mouth_control.msg import BodyControl
@@ -23,8 +24,13 @@ class TrotGait(Node):
         self.declare_parameter('gait_height', 0.03)
         self.declare_parameter('ground_penetration', 0.03)
         self.declare_parameter('fixed_forward_body', 0.02)
+        self.declare_parameter('body_height', 0.0)
         self.declare_parameter('resolution_first_fraction', 0.33)
         self.declare_parameter('period_first_fraction', 0.66)
+        self.declare_parameters('adjust_feet_height', [("front_right", 0.0),
+                                                       ("front_left", 0.0),
+                                                       ("back_left", 0.0),
+                                                       ("back_right", 0.0)])
 
         self.use_imu = self.get_parameter(
             'use_imu').get_parameter_value().bool_value
@@ -36,10 +42,23 @@ class TrotGait(Node):
             'ground_penetration').get_parameter_value().double_value
         self.fixed_forward_body = self.get_parameter(
             'fixed_forward_body').get_parameter_value().double_value
+        self.body_height = self.get_parameter(
+            'body_height').get_parameter_value().double_value
         self.resolution_first_fraction = self.get_parameter(
             'resolution_first_fraction').get_parameter_value().double_value
         self.period_first_fraction = self.get_parameter(
             'period_first_fraction').get_parameter_value().double_value
+        
+        self.adjust_feet_height = self.get_parameters(['adjust_feet_height.front_right',
+                                                       'adjust_feet_height.front_left',
+                                                       'adjust_feet_height.back_left',
+                                                       'adjust_feet_height.back_right'])
+
+        self.adjust_feet = dict()
+        self.adjust_feet['FR'] = self.adjust_feet_height[0].get_parameter_value().double_value
+        self.adjust_feet['FL'] = self.adjust_feet_height[1].get_parameter_value().double_value
+        self.adjust_feet['BL'] = self.adjust_feet_height[2].get_parameter_value().double_value
+        self.adjust_feet['BR'] = self.adjust_feet_height[3].get_parameter_value().double_value
 
         self.update_params = False
         self.add_on_set_parameters_callback(self.parametersCallback)
@@ -97,13 +116,15 @@ class TrotGait(Node):
             self.timer_period, self.timerCallback)
         self.ik_timer.cancel()
 
+        self.gait_res = int(self.gait_period/self.timer_period)
+
         self.start_time = time.time()
         self.point_counter = 0
 
         self.support_node = Node('trot_gait_node_support')
+        
         self.traj_client = self.support_node.create_client(
             ComputeGaitTrajectory, 'compute_gait_trajectory')
-
         while not self.traj_client.wait_for_service(1.0):
             if not rclpy.ok():
                 self.get_logger().error(
@@ -112,17 +133,18 @@ class TrotGait(Node):
             self.get_logger().info(
                 f"{self.traj_client.srv_name} service not available, waiting...")
 
-        self.gait_res = int(self.gait_period/self.timer_period)  # secs
-        # self.gait_res = 7  # secs
+        self.ik_server_params_client = self.support_node.create_client(
+            GetParameters, 'compute_ik_server/get_parameters')
+        while not self.ik_server_params_client.wait_for_service(1.0):
+            if not rclpy.ok():
+                self.get_logger().error(
+                    f"Interrupted while waiting for the {self.ik_server_params_client.srv_name} service. Exiting.")
+                return
+            self.get_logger().info(
+                f"{self.ik_server_params_client.srv_name} service not available, waiting...")
 
-        self.lower_body = 0.002
-        self.forward_body = 0.0
-        self.lower_leg = -0.0045
+        self.Length, self.Width, self.L1 = self.getIKParams()
 
-        self.Length = 0.2291
-        self.Width = 0.140
-        self.L1 = 0.048
-        self.origin = 0.0
         self.last_step_l = 0.0
         self.create_body_matrix()
         self.update_positions(
@@ -133,9 +155,10 @@ class TrotGait(Node):
 
         # ---------------------------------------------------------------------------
         self.FL_request = ComputeGaitTrajectory.Request()
-        self.FL_request.initial_point = Point()
+        self.FL_request.initial_point = Point(z=self.adjust_feet['FL'])
         self.FL_request.landing_point = Point(x=self.updated_pos['FL'][0],
-                                              y=self.updated_pos['FL'][1])
+                                              y=self.updated_pos['FL'][1],
+                                              z=self.adjust_feet['FL'])
         self.FL_request.period = self.gait_period
         self.FL_request.height = self.gait_height
         self.FL_request.resolution = self.gait_res
@@ -144,10 +167,10 @@ class TrotGait(Node):
         self.FL_response = None
         # ---------------------------------------------------------------------------
         self.FR_request = ComputeGaitTrajectory.Request()
-        self.FR_request.initial_point = Point(z=self.lower_leg)
+        self.FR_request.initial_point = Point(z=self.adjust_feet['FR'])
         self.FR_request.landing_point = Point(x=self.updated_pos['FR'][0],
                                               y=self.updated_pos['FR'][1],
-                                              z=self.lower_leg)
+                                              z=self.adjust_feet['FR'])
         self.FR_request.period = self.gait_period
         self.FR_request.height = self.gait_height
         self.FR_request.resolution = self.gait_res
@@ -156,10 +179,10 @@ class TrotGait(Node):
         self.FR_response = None
         # ---------------------------------------------------------------------------
         self.BL_request = ComputeGaitTrajectory.Request()
-        self.BL_request.initial_point = Point(z=self.lower_leg)
+        self.BL_request.initial_point = Point(z=self.adjust_feet['BL'])
         self.BL_request.landing_point = Point(x=self.updated_pos['BL'][0],
                                               y=self.updated_pos['BL'][1],
-                                              z=self.lower_leg)
+                                              z=self.adjust_feet['BL'])
         self.BL_request.period = self.gait_period
         self.BL_request.height = self.gait_height
         self.BL_request.resolution = self.gait_res
@@ -168,9 +191,10 @@ class TrotGait(Node):
         self.BL_response = None
         # ---------------------------------------------------------------------------
         self.BR_request = ComputeGaitTrajectory.Request()
-        self.BR_request.initial_point = Point()
+        self.BR_request.initial_point = Point(z=self.adjust_feet['BR'])
         self.BR_request.landing_point = Point(x=self.updated_pos['BR'][0],
-                                              y=self.updated_pos['BR'][1])
+                                              y=self.updated_pos['BR'][1],
+                                              z=self.adjust_feet['BR'])
         self.BR_request.period = self.gait_period
         self.BR_request.height = self.gait_height
         self.BR_request.resolution = self.gait_res
@@ -180,10 +204,10 @@ class TrotGait(Node):
         # ---------------------------------------------------------------------------
         self.BODY_request = ComputeGaitTrajectory.Request()
         self.BODY_request.initial_point = Point(
-            x=self.forward_body, z=self.lower_body)
-        self.BODY_request.landing_point = Point(x=self.updated_pos['BODY'][0]+self.forward_body,
+            x=self.fixed_forward_body, z=self.body_height)
+        self.BODY_request.landing_point = Point(x=self.updated_pos['BODY'][0]+self.fixed_forward_body,
                                                 y=self.updated_pos['BODY'][1],
-                                                z=self.lower_body)
+                                                z=self.body_height)
         self.BODY_request.period = self.gait_period
         self.BODY_request.height = self.ground_penetration
         self.BODY_request.resolution = self.gait_res
@@ -198,7 +222,6 @@ class TrotGait(Node):
         self.walking = 0.0
         self.start_time = 0.0
         self.point_counter = 0
-        self.t1 = Duration(sec=0, nanosec=int(self.timer_period*1e9))
 
         # Set initial position
         self.msg = BodyLegIKTrajectory()
@@ -251,6 +274,21 @@ class TrotGait(Node):
 
         self.update_params = True
         return SetParametersResult(successful=True)
+
+    def getIKParams(self):
+        ik_params_req = GetParameters.Request()
+        ik_params_req.names = ["body_dimensions.L", "body_dimensions.W", "leg_dimensions.L1"]
+        
+        future = self.ik_server_params_client.call_async(ik_params_req)
+        rclpy.spin_until_future_complete(self.support_node, future)
+        params = future.result()
+
+        body_length = params.values[0].double_value
+        body_width = params.values[1].double_value
+        leg_l1 = params.values[2].double_value
+        
+        return body_length, body_width, leg_l1
+
 
     def create_body_matrix(self):
         self.coord_orig = np.array([[0.0, 0.0],
@@ -401,23 +439,19 @@ class TrotGait(Node):
                 self.msg.body_leg_ik_trajectory[0] = BodyLegIK()
                 self.msg.body_leg_ik_trajectory[0].leg_points.reference_link = 1
                 self.msg.body_leg_ik_trajectory[0].body_position = self.point_to_vector3(
-                    Point(x=self.fixed_forward_body - self.last_step_l/2, z=self.lower_body))
+                    Point(x=self.fixed_forward_body - self.last_step_l/2, z=self.body_height))
                 self.msg.body_leg_ik_trajectory[0].leg_points.front_right_leg = Point(
                     x=(self.default_feet_pose_msg.front_right_leg.x + self.fixed_forward_body)*self.walking - self.last_step_l/2,
                     y=self.default_feet_pose_msg.front_right_leg.y,
-                    z=self.lower_leg)
-                # self.msg.body_leg_ik_trajectory[0].leg_points.front_left_leg = Point(
-                #     x=self.default_feet_pose_msg.front_left_leg.x*0.0,
-                #     y=self.default_feet_pose_msg.front_left_leg.y*0.0,
-                #     z=0.0)
+                    z=self.adjust_feet['FR'])
+                self.msg.body_leg_ik_trajectory[0].leg_points.front_left_leg = Point(
+                    z=self.adjust_feet['FL'])
                 self.msg.body_leg_ik_trajectory[0].leg_points.back_left_leg = Point(
                     x=(self.default_feet_pose_msg.back_left_leg.x + self.fixed_forward_body)*self.walking - self.last_step_l/2,
                     y=self.default_feet_pose_msg.back_left_leg.y,
-                    z=self.lower_leg)
-                # self.msg.body_leg_ik_trajectory[0].leg_points.back_right_leg = Point(
-                #     x=self.default_feet_pose_msg.back_right_leg.x*0.0,
-                #     y=self.default_feet_pose_msg.back_right_leg.y*0.0,
-                #     z=0.0)
+                    z=self.adjust_feet['BL'])
+                self.msg.body_leg_ik_trajectory[0].leg_points.back_right_leg = Point(
+                    z=self.adjust_feet['BR'])
 
                 if self.update_params:
                     self.updateGaitParams()

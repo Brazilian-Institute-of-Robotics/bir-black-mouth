@@ -5,5 +5,11 @@ trot_gait_node:
     gait_height: 0.05
     ground_penetration: 0.005
     fixed_forward_body: 0.02
+    body_height: 0.002
     resolution_first_fraction: 0.33
     period_first_fraction: 0.66
+    adjust_feet_height:
+      front_right: -0.0045
+      front_left: 0.0
+      back_left: -0.0045
+      back_right: 0.0
