@@ -34,6 +34,12 @@ def generate_launch_description():
     joy_type = LaunchConfiguration('joy_type', default="generic")
 
 
+    feet_listener = Node(
+        package="black_mouth_description",
+        executable="default_feet_poses_transform.py",
+        output="screen",
+    )
+    
     robot_state_publisher = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
@@ -104,6 +110,7 @@ def generate_launch_description():
         DeclareLaunchArgument(name='launch_imu', default_value='True', 
                               description='Whether to launch imu or not'),
         imu,
+        feet_listener,
         robot_state_publisher,
         TimerAction(period=1.0, actions=[bm_controllers]),
         TimerAction(period=2.0, actions=[inverse_kinematics]),
