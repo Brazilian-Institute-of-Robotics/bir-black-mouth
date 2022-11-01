@@ -25,6 +25,7 @@ class TrotGait(Node):
         self.declare_parameter('ground_penetration', 0.03)
         self.declare_parameter('fixed_forward_body', 0.02)
         self.declare_parameter('body_height', 0.0)
+        self.declare_parameter('feet_y_inside', 0.0)
         self.declare_parameter('resolution_first_fraction', 0.33)
         self.declare_parameter('period_first_fraction', 0.66)
         self.declare_parameters('adjust_feet_height', [("front_right", 0.0),
@@ -44,6 +45,8 @@ class TrotGait(Node):
             'fixed_forward_body').get_parameter_value().double_value
         self.body_height = self.get_parameter(
             'body_height').get_parameter_value().double_value
+        self.feet_y_inside = self.get_parameter(
+            'feet_y_inside').get_parameter_value().double_value
         self.resolution_first_fraction = self.get_parameter(
             'resolution_first_fraction').get_parameter_value().double_value
         self.period_first_fraction = self.get_parameter(
@@ -155,9 +158,10 @@ class TrotGait(Node):
 
         # ---------------------------------------------------------------------------
         self.FL_request = ComputeGaitTrajectory.Request()
-        self.FL_request.initial_point = Point(z=self.adjust_feet['FL'])
+        self.FL_request.initial_point = Point(z=self.adjust_feet['FL'],
+                                              y=-self.feet_y_inside)
         self.FL_request.landing_point = Point(x=self.updated_pos['FL'][0],
-                                              y=self.updated_pos['FL'][1],
+                                              y=self.updated_pos['FL'][1]-self.feet_y_inside,
                                               z=self.adjust_feet['FL'])
         self.FL_request.period = self.gait_period
         self.FL_request.height = self.gait_height
@@ -167,9 +171,10 @@ class TrotGait(Node):
         self.FL_response = None
         # ---------------------------------------------------------------------------
         self.FR_request = ComputeGaitTrajectory.Request()
-        self.FR_request.initial_point = Point(z=self.adjust_feet['FR'])
+        self.FR_request.initial_point = Point(z=self.adjust_feet['FR'],
+                                              y=self.feet_y_inside)
         self.FR_request.landing_point = Point(x=self.updated_pos['FR'][0],
-                                              y=self.updated_pos['FR'][1],
+                                              y=self.updated_pos['FR'][1]+self.feet_y_inside,
                                               z=self.adjust_feet['FR'])
         self.FR_request.period = self.gait_period
         self.FR_request.height = self.gait_height
@@ -179,9 +184,10 @@ class TrotGait(Node):
         self.FR_response = None
         # ---------------------------------------------------------------------------
         self.BL_request = ComputeGaitTrajectory.Request()
-        self.BL_request.initial_point = Point(z=self.adjust_feet['BL'])
+        self.BL_request.initial_point = Point(z=self.adjust_feet['BL'],
+                                              y=-self.feet_y_inside)
         self.BL_request.landing_point = Point(x=self.updated_pos['BL'][0],
-                                              y=self.updated_pos['BL'][1],
+                                              y=self.updated_pos['BL'][1]-self.feet_y_inside,
                                               z=self.adjust_feet['BL'])
         self.BL_request.period = self.gait_period
         self.BL_request.height = self.gait_height
@@ -191,9 +197,10 @@ class TrotGait(Node):
         self.BL_response = None
         # ---------------------------------------------------------------------------
         self.BR_request = ComputeGaitTrajectory.Request()
-        self.BR_request.initial_point = Point(z=self.adjust_feet['BR'])
+        self.BR_request.initial_point = Point(z=self.adjust_feet['BR'],
+                                              y=self.feet_y_inside)
         self.BR_request.landing_point = Point(x=self.updated_pos['BR'][0],
-                                              y=self.updated_pos['BR'][1],
+                                              y=self.updated_pos['BR'][1]+self.feet_y_inside,
                                               z=self.adjust_feet['BR'])
         self.BR_request.period = self.gait_period
         self.BR_request.height = self.gait_height
@@ -445,12 +452,14 @@ class TrotGait(Node):
                     y=self.default_feet_pose_msg.front_right_leg.y,
                     z=self.adjust_feet['FR'])
                 self.msg.body_leg_ik_trajectory[0].leg_points.front_left_leg = Point(
+                    y=-self.feet_y_inside,
                     z=self.adjust_feet['FL'])
                 self.msg.body_leg_ik_trajectory[0].leg_points.back_left_leg = Point(
                     x=(self.default_feet_pose_msg.back_left_leg.x + self.fixed_forward_body)*self.walking - self.last_step_l/2,
                     y=self.default_feet_pose_msg.back_left_leg.y,
                     z=self.adjust_feet['BL'])
                 self.msg.body_leg_ik_trajectory[0].leg_points.back_right_leg = Point(
+                    y=self.feet_y_inside,
                     z=self.adjust_feet['BR'])
 
                 if self.update_params:
@@ -495,7 +504,7 @@ class TrotGait(Node):
                 self.FR_request.initial_point = self.msg.body_leg_ik_trajectory[
                     0].leg_points.front_right_leg
                 self.FR_request.landing_point.x = self.updated_pos['FR'][0] / 2
-                self.FR_request.landing_point.y = self.updated_pos['FR'][1]
+                self.FR_request.landing_point.y = self.updated_pos['FR'][1] + self.feet_y_inside
                 future = self.traj_client.call_async(self.FR_request)
                 rclpy.spin_until_future_complete(self.support_node, future)
                 self.FR_response = future.result()
@@ -503,7 +512,7 @@ class TrotGait(Node):
                 self.BL_request.initial_point = self.msg.body_leg_ik_trajectory[
                     0].leg_points.back_left_leg
                 self.BL_request.landing_point.x = self.updated_pos['BL'][0] / 2
-                self.BL_request.landing_point.y = self.updated_pos['BL'][1]
+                self.BL_request.landing_point.y = self.updated_pos['BL'][1] - self.feet_y_inside
                 future = self.traj_client.call_async(self.BL_request)
                 rclpy.spin_until_future_complete(self.support_node, future)
                 self.BL_response = future.result()
@@ -525,7 +534,7 @@ class TrotGait(Node):
                 self.FL_request.initial_point = self.msg.body_leg_ik_trajectory[
                     0].leg_points.front_left_leg
                 self.FL_request.landing_point.x = self.updated_pos['FL'][0]
-                self.FL_request.landing_point.y = self.updated_pos['FL'][1]
+                self.FL_request.landing_point.y = self.updated_pos['FL'][1] - self.feet_y_inside
                 future = self.traj_client.call_async(self.FL_request)
                 rclpy.spin_until_future_complete(self.support_node, future)
                 self.FL_response = future.result()
@@ -533,7 +542,7 @@ class TrotGait(Node):
                 self.BR_request.initial_point = self.msg.body_leg_ik_trajectory[
                     0].leg_points.back_right_leg
                 self.BR_request.landing_point.x = self.updated_pos['BR'][0]
-                self.BR_request.landing_point.y = self.updated_pos['BR'][1]
+                self.BR_request.landing_point.y = self.updated_pos['BR'][1] + self.feet_y_inside
                 future = self.traj_client.call_async(self.BR_request)
                 rclpy.spin_until_future_complete(self.support_node, future)
                 self.BR_response = future.result()
