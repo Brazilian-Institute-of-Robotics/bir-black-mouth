@@ -337,6 +337,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
     if (msg->buttons[_body_button] || msg->buttons[_restart_button])
     {
       _state.state = caramel_teleop::msg::TeleopState::RESTING;
+      _default_pose_publisher->publish(std_msgs::msg::Empty());
 
       auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
       request->data = false;
@@ -355,6 +356,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
     else if (msg->buttons[_move_button] || msg->buttons[_restart_button])
     {
       _state.state = caramel_teleop::msg::TeleopState::RESTING;
+      _default_pose_publisher->publish(std_msgs::msg::Empty());
       _ik_timer->cancel();
       _default_pose_timer->reset();
     }
@@ -369,6 +371,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
     else if (msg->buttons[_lock_button] || msg->buttons[_restart_button])
     {
       _state.state = caramel_teleop::msg::TeleopState::RESTING;
+      _default_pose_publisher->publish(std_msgs::msg::Empty());
       _default_pose_timer->reset();
     }
     break;
@@ -377,6 +380,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
     if (msg->buttons[_walk_button] || msg->buttons[_restart_button])
     {
       _state.state = caramel_teleop::msg::TeleopState::RESTING;
+      _default_pose_publisher->publish(std_msgs::msg::Empty());
       _vel_timer->cancel();
       _default_pose_timer->reset();
     }

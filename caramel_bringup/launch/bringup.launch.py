@@ -30,7 +30,7 @@ def generate_launch_description():
     default_body_control_config = os.path.join(caramel_control_pkg_share, 'config', 'body_control.yaml')
     body_control_config = LaunchConfiguration('body_control_config', default=default_body_control_config)
 
-    use_sim_time = LaunchConfiguration('use_sim_time', default='false')
+    use_sim_time = LaunchConfiguration('use_sim_time', default='False')
     joy_type = LaunchConfiguration('joy_type', default="generic")
 
 
@@ -73,7 +73,16 @@ def generate_launch_description():
         name="body_control_node",
         parameters=[body_control_config],
         output="screen",
-        remappings=[('imu/data', 'imu/out' if PythonExpression([use_sim_time, ' == True']) else 'imu/data')]
+        condition=UnlessCondition(PythonExpression([use_sim_time, ' == True']))
+    )
+    body_control_remapped = Node(
+        package="caramel_control",
+        executable="body_control",
+        name="body_control_node",
+        parameters=[body_control_config],
+        output="screen",
+        remappings=[('imu/data', 'imu/out')],
+        condition=IfCondition(PythonExpression([use_sim_time, ' == True']))
     )
 
     gait_planner = IncludeLaunchDescription(
@@ -114,7 +123,7 @@ def generate_launch_description():
         robot_state_publisher,
         TimerAction(period=1.0, actions=[caramel_controllers]),
         TimerAction(period=2.0, actions=[inverse_kinematics]),
-        TimerAction(period=3.0, actions=[body_control]),
+        TimerAction(period=3.0, actions=[body_control, body_control_remapped]),
         TimerAction(period=4.0, actions=[gait_planner]),
         TimerAction(period=5.0, actions=[joy_teleop])
     ])
