@@ -1,0 +1,9 @@
+<library path="caramel_control_hw">
+  <class name="caramel_control/CaramelHW"
+         type="caramel_control::CaramelHW"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      The interface between ros2_control and the Dynamixel motors of Caramel.
+    </description>
+  </class>
+</library>

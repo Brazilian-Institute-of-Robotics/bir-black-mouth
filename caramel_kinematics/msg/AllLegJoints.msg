@@ -1,0 +1,4 @@
+caramel_kinematics/LegJoints front_right_leg
+caramel_kinematics/LegJoints front_left_leg
+caramel_kinematics/LegJoints back_left_leg
+caramel_kinematics/LegJoints back_right_leg

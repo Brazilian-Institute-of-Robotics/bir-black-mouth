@@ -2,8 +2,8 @@
 
 #### Create workspace and build docker image
 ```bash
-$ mkdir -p ~/workspaces/black_mouth_humble/src/
-$ cd ~/workspaces/black_mouth_humble/src/
+$ mkdir -p ~/workspaces/caramel_humble/src/
+$ cd ~/workspaces/caramel_humble/src/
 $ git clone git@github.com:Brazilian-Institute-of-Robotics/bir-black-mouth.git
 $ cd bir-black-mouth
 $ . build_docker.sh

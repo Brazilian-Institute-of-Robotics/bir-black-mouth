@@ -1,0 +1,346 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="quadruped">
+
+    <xacro:property name="M_PI" value="3.1415"/>
+
+    <xacro:property name="body_length" value="0.272"/>
+    <xacro:property name="body_width" value="0.168"/>
+    <xacro:property name="body_height" value="0.064"/>
+
+    <xacro:property name="L" value="0.2291"/>
+    <xacro:property name="W" value="0.14"/>
+    <xacro:property name="H" value="0.17"/>
+    <xacro:property name="L1" value="0.048"/>
+
+    <xacro:property name="hip_length" value="0.0415"/>
+    <xacro:property name="femur_length" value="0.120"/>
+    <xacro:property name="tibia_length" value="0.120"/>
+    <xacro:property name="femur_thickness" value="0.022"/>
+    <xacro:property name="femur_offset" value="0.0053"/>
+
+    <xacro:property name="leg_x_offset" value="0.11455"/>
+    <xacro:property name="leg_y_offset" value="0.07"/>
+    <xacro:property name="leg_z_offset" value="0.0208"/>
+
+    <xacro:property name="effort_limit" value="2"/>
+
+
+    <xacro:macro name="leg" params="prefix left front *joint_pose">
+
+        <link name="${prefix}_hip_fixed">
+            <collision>
+                <geometry>
+                    <sphere radius="0.001"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <mass value="0.001"/>
+                <inertia ixx="1e-6" ixy="0.0" ixz="0.0" iyy="1e-6" iyz="0.0" izz="1e-6"/>
+            </inertial>
+        </link>
+
+        <joint name="${prefix}_hip_fixed_joint" type="fixed">
+            <parent link="base_link"/>
+            <child link="${prefix}_hip_fixed"/>
+            <xacro:insert_block name="joint_pose"/>
+        </joint>
+    
+        <link name="${prefix}_hip">
+
+            <xacro:if value="${front}">
+                <xacro:if value="${left}">
+                    <xacro:property name="hip_rpy" value="0.0 0.0 0.0"/>
+                </xacro:if>
+                <xacro:unless value="${left}">
+                    <xacro:property name="hip_rpy" value="${M_PI} 0.0 0.0"/>
+                </xacro:unless>
+            </xacro:if>
+            <xacro:unless value="${front}">
+                <xacro:if value="${left}">
+                    <xacro:property name="hip_rpy" value="${M_PI} 0.0 ${M_PI}"/>
+                </xacro:if>
+
+                <xacro:unless value="${left}">
+                    <xacro:property name="hip_rpy" value="0.0 0.0 ${M_PI}"/>
+                </xacro:unless>
+            </xacro:unless>
+
+            <visual>
+                <origin xyz="0.0 0.0 0.0" rpy="${hip_rpy}"/>
+                <geometry>
+                    <mesh filename="file://$(find caramel_description)/meshes/hip.dae" />
+                </geometry>
+            </visual>
+            <collision>
+                <xacro:if value="${front}">
+                    <origin xyz="-0.0149 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                </xacro:if>
+                <xacro:unless value="${front}">
+                    <origin xyz="0.0149 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                </xacro:unless>
+                <geometry>
+                    <box size="0.0538 0.036 0.036"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <xacro:if value="${front}">
+                    <origin xyz="-0.011 0.0 0.0" rpy="${hip_rpy}"/>
+                </xacro:if>
+                <xacro:unless value="${front}">
+                    <origin xyz="0.011 0.0 0.0" rpy="${hip_rpy}"/>
+                </xacro:unless>
+                <mass value="0.077"/>
+                <inertia ixx="1.365e-5" ixy="-6.888e-7" ixz="2.025e-8" iyy="1.824e-5" iyz="-8.308e-9" izz="2.204e-5"/>
+            </inertial>
+        </link>
+
+        <gazebo reference="${prefix}_hip">
+            <mu1>0.4</mu1>
+            <mu2>0.4</mu2>
+            <selfCollide>true</selfCollide>
+        </gazebo>
+
+        <joint name="${prefix}_hip_roll_joint" type="revolute">
+            <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+            <parent link="${prefix}_hip_fixed"/>
+            <child link="${prefix}_hip"/>
+            <axis xyz="1 0 0"/>
+            <limit lower="${-M_PI/4}" upper="${M_PI/4}" velocity="5.75" effort="${effort_limit}"/>
+            <xacro:insert_block name="joint_pose"/>
+            <dynamics damping="0.1" friction="0.01" /> 
+        </joint>
+
+
+        <link name="${prefix}_femur">
+            <visual>
+                <origin xyz="0.0 0 ${-femur_offset}" rpy="0.0 0.0 0.0 "/>
+                <geometry>
+                    <xacro:if value="${left}">
+                        <mesh filename="file://$(find caramel_description)/meshes/left_femur.dae" />
+                    </xacro:if>
+                    <xacro:unless value="${left}">
+                        <mesh filename="file://$(find caramel_description)/meshes/right_femur.dae" />
+                    </xacro:unless>
+                </geometry>
+            </visual>
+            <collision>
+                <xacro:if value="${left}">
+                    <origin xyz="0.0 0.0 ${-femur_offset}" rpy="0.0 0.0 0.0"/>
+                </xacro:if>
+                <xacro:unless value="${left}">
+                    <origin xyz="0.0 0.0 ${-femur_offset}" rpy="0.0 0.0 ${M_PI}"/>
+                </xacro:unless>
+                <geometry>
+                    <mesh filename="file://$(find caramel_description)/meshes/femur.stl"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <xacro:if value="${left}">
+                    <mass value="0.118"/>
+                    <origin xyz="-1.830e-4 0.002 -0.019" rpy="0.0 0.0 0.0"/>
+                    <inertia ixx="1.604e-4" ixy="-5.665e-8" ixz="0.00000115" iyy="1.647e-4" iyz="1.108e-5" izz="2.100e-5"/>
+                </xacro:if>
+                <xacro:unless value="${left}">
+                    <mass value="0.118"/>
+                    <origin xyz="-1.830e-4 -0.002 -0.019" rpy="0.0 0.0 0.0"/>
+                    <inertia ixx="1.604e-4" ixy="3.969e-8" ixz="1.151e-6" iyy="1.647e-4" iyz="-1.105e-5" izz="2.099e-5"/>
+                </xacro:unless>
+            </inertial>
+        </link>
+
+        <gazebo reference="${prefix}_femur">
+            <mu1>0.4</mu1>
+            <mu2>0.4</mu2>
+            <selfCollide>true</selfCollide>
+        </gazebo>
+
+        <joint name="${prefix}_hip_pitch_joint" type="revolute">
+            <xacro:if value="${left}">
+                <origin xyz="0 ${hip_length} 0.0" rpy="0.0 ${M_PI/4} 0.0"/>
+            </xacro:if>
+            <xacro:unless value="${left}">
+                <origin xyz="0 ${-hip_length} 0.0" rpy="0.0 ${M_PI/4} 0.0"/>
+            </xacro:unless>
+            <parent link="${prefix}_hip"/>
+            <child link="${prefix}_femur"/>
+            <axis xyz="0 1 0"/>
+            <limit lower="${-M_PI/3}" upper="${M_PI/3}" velocity="5.75" effort="${effort_limit}"/>
+            <dynamics damping="0.1" friction="0.01" /> 
+        </joint>
+
+        <link name="${prefix}_tibia">
+
+            <visual>
+                <origin xyz="0.0 0.0 0.0 " rpy="0.0 0.0 0.0"/>
+                <geometry>
+                    <mesh filename="file://$(find caramel_description)/meshes/tibia.dae" />
+                </geometry>
+            </visual>
+            <collision>
+                <origin xyz="0.0 0.0 0.0 " rpy="0.0 0.0 0.0"/>
+                <geometry>
+                    <mesh filename="file://$(find caramel_description)/meshes/tibia.stl"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <mass value="0.035"/>
+                <origin xyz="0.005 0.0 -0.06" rpy="0.0 0.0 0.0"/>
+                <inertia ixx="8.305e-5" ixy="-4.892e-10" ixz="6.002e-6" iyy="8.447e-5" iyz="-4.088e-10" izz="2.687e-6"/>
+            </inertial>
+        </link>
+
+        <gazebo reference="${prefix}_tibia">
+            <mu1>1.0</mu1>
+            <mu2>1.0</mu2>
+            <minDepth>0.0002</minDepth>
+            <kp value="1000000.0"/>
+            <kd value="100.0"/>
+            <selfCollide>true</selfCollide>
+        </gazebo>
+
+        <joint name="${prefix}_elbow_joint" type="revolute">
+            <xacro:if value="${left}">
+                <origin xyz="0.00 ${femur_thickness/2 - 0.0042} ${-femur_length}" rpy="0.0 ${-M_PI/2} 0.0"/>
+            </xacro:if>
+            <xacro:unless value="${left}">
+                <origin xyz="0.00 ${-femur_thickness/2 + 0.0042} ${-femur_length}" rpy="0.0 ${-M_PI/2} 0.0"/>
+            </xacro:unless>
+            <parent link="${prefix}_femur"/>
+            <child link="${prefix}_tibia"/>
+            <axis xyz="0 1 0"/>
+            <limit lower="${-M_PI/5}" upper="${M_PI/5}" velocity="5.75" effort="${effort_limit}"/>
+            <dynamics damping="0.00" friction="0.01" />
+        </joint>
+
+
+        <link name="${prefix}_foot"/>
+
+        <joint name="${prefix}_foot_joint" type="fixed">
+            <parent link="${prefix}_tibia"/>
+            <child link="${prefix}_foot"/>
+            <origin xyz="0.0 0.0 ${-tibia_length}" rpy="0.0 ${M_PI/4} 0.0"/>
+        </joint>
+    </xacro:macro>
+
+    <link name="base_footprint">
+
+    </link>
+
+    <link name="base_link">
+        <visual>
+            <origin xyz="0.0 0.0 ${-leg_z_offset}" rpy="0.0 0.0 0.0"/>                
+            <geometry>
+                <mesh filename="file://$(find caramel_description)/meshes/base_link.dae" />
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0.0 0.0 ${-leg_z_offset}" rpy="0.0 0.0 0.0"/>                
+            <geometry>
+                <mesh filename="file://$(find caramel_description)/meshes/base_link.stl"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="1.28"/>
+            <origin xyz="0.0015 1.622e-4 ${0.0238-leg_z_offset}" rpy="0.0 0.0 0.0"/>
+            <inertia ixx="0.00327123" ixy="-2.696e-6" ixz="-1.456e-5" iyy="0.00459934" iyz="-1.166e-5" izz="0.00718769"/>
+        </inertial>
+    </link>
+
+    <gazebo reference="base_footprint">
+        <mu1>0.4</mu1>
+        <mu2>0.4</mu2>
+        <selfCollide>true</selfCollide>
+    </gazebo>
+
+    <gazebo reference="base_link">
+        <mu1>0.4</mu1>
+        <mu2>0.4</mu2>
+        <selfCollide>true</selfCollide>
+    </gazebo>
+
+    <joint name="base_footprint_joint" type="fixed">
+        <parent link="base_footprint"/>
+        <child link="base_link"/>
+        <origin xyz="0.0 0.0 0.17" rpy="0.0 0.0 0.0"/>
+    </joint>
+
+    <xacro:leg prefix="front_left" left="${True}" front="${True}">
+        <origin xyz="${leg_x_offset} ${leg_y_offset} 0.0" rpy="0.0 0.0 0.0"/>
+    </xacro:leg>
+
+    <xacro:leg prefix="front_right" left="${False}" front="${True}">
+        <origin xyz="${leg_x_offset} ${-leg_y_offset} 0.0" rpy="0.0 0.0 0.0"/>
+    </xacro:leg>
+
+    <xacro:leg prefix="back_left" left="${True}" front="${False}">
+        <origin xyz="${-leg_x_offset} ${leg_y_offset} 0.0" rpy="0.0 0.0 0.0"/>
+    </xacro:leg>
+
+    <xacro:leg prefix="back_right" left="${False}" front="${False}" >
+        <origin xyz="${-leg_x_offset} ${-leg_y_offset} 0.0" rpy="0.0 0.0 0.0"/>
+    </xacro:leg>  
+
+    <link name="imu_link"/>
+
+    <joint name="imu_joint" type="fixed">
+        <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <parent link="base_link"/>
+        <child link="imu_link"/>
+        <axis xyz="0.075 0.0 0.0738"/>
+    </joint>
+
+    <gazebo reference="imu_link">
+        <gravity>true</gravity>
+        <sensor name="imu_sensor" type="imu">
+            <always_on>true</always_on>
+            <update_rate>100</update_rate>
+            <visualize>true</visualize>
+            <topic>__default_topic__</topic>
+            <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+                <topicName>imu</topicName>
+                <bodyName>imu_link</bodyName>
+                <updateRateHZ>10.0</updateRateHZ>
+                <gaussianNoise>0.0</gaussianNoise>
+                <xyzOffset>0 0 0</xyzOffset>
+                <rpyOffset>0 0 0</rpyOffset>
+                <frameName>imu_link</frameName>
+                <initialOrientationAsReference>false</initialOrientationAsReference>
+            </plugin>
+            <pose>0 0 0 0 0 0</pose>
+        </sensor>
+    </gazebo>
+
+    <!-- Default feet positions -->
+    <link name="front_right_foot_default"/>
+    <link name="front_left_foot_default"/>
+    <link name="back_right_foot_default"/>
+    <link name="back_left_foot_default"/>
+
+    <joint name="joint_front_right_foot_default" type="fixed">
+        <parent link="base_link"/>
+        <child link="front_right_foot_default"/>
+        <origin xyz="${L/2} -${W/2 + L1} ${-H}" rpy="0.0 0.0 0.0"/>
+    </joint>
+
+    <joint name="joint_front_left_foot_default" type="fixed">
+        <parent link="base_link"/>
+        <child link="front_left_foot_default"/>
+        <origin xyz="${L/2} ${W/2 + L1} ${-H}" rpy="0.0 0.0 0.0"/>
+    </joint>
+
+    <joint name="joint_back_right_foot_default" type="fixed">
+        <parent link="base_link"/>
+        <child link="back_right_foot_default"/>
+        <origin xyz="-${L/2} -${W/2 + L1} ${-H}" rpy="0.0 0.0 0.0"/>
+    </joint>
+
+    <joint name="joint_back_left_foot_default" type="fixed">
+        <parent link="base_link"/>
+        <child link="back_left_foot_default"/>
+        <origin xyz="-${L/2} ${W/2 + L1} ${-H}" rpy="0.0 0.0 0.0"/>
+    </joint>
+
+    <!-- Ros2 Control -->
+    <xacro:include filename="$(find caramel_control)/urdf/real_robot.urdf.xacro"/>
+
+</robot>
