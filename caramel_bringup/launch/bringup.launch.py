@@ -45,7 +45,8 @@ def generate_launch_description():
         executable="robot_state_publisher",
         output="screen",
         parameters=[{'use_sim_time': use_sim_time,
-                     'robot_description': Command(['xacro ', robot_model])}],
+                     'robot_description': Command(['xacro ', robot_model]),
+                     'publish_frequency': 50.0}],
     )
 
     imu = IncludeLaunchDescription(
