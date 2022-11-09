@@ -223,7 +223,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 
       _ik_timer->cancel();
       _vel_timer->cancel();
-      _default_pose_timer->reset();
+      // _default_pose_timer->reset();
 
       // Activate hardware interface
       auto set_hw_state_request = controller_manager_msgs::srv::SetHardwareComponentState::Request();
@@ -343,7 +343,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       request->data = false;
       _set_body_control_publish_ik_client->async_send_request(request);
 
-      _default_pose_timer->reset();
+      // _default_pose_timer->reset();
     }
     break;
 
@@ -358,7 +358,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       _state.state = caramel_teleop::msg::TeleopState::RESTING;
       _default_pose_publisher->publish(std_msgs::msg::Empty());
       _ik_timer->cancel();
-      _default_pose_timer->reset();
+      // _default_pose_timer->reset();
     }
     break;
 
@@ -372,7 +372,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
     {
       _state.state = caramel_teleop::msg::TeleopState::RESTING;
       _default_pose_publisher->publish(std_msgs::msg::Empty());
-      _default_pose_timer->reset();
+      // _default_pose_timer->reset();
     }
     break;
 
@@ -382,7 +382,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       _state.state = caramel_teleop::msg::TeleopState::RESTING;
       _default_pose_publisher->publish(std_msgs::msg::Empty());
       _vel_timer->cancel();
-      _default_pose_timer->reset();
+      // _default_pose_timer->reset();
     }
     break;
 
