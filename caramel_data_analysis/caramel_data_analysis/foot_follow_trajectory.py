@@ -156,7 +156,7 @@ def main(args=None):
                     " y: " + str(follow_trajectory_node.y_landing_point)
                  
         fieldnames = ['tipo_passo', 'tempo', 'x_final', 'y_final', 'z_max']
-        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)    
         writer.writerow({'tipo_passo': tipo_passo, 
                          'tempo': follow_trajectory_node.elapsed_time, 
                          'x_final': follow_trajectory_node.default_feet_pose_msg.front_left_leg.x, 

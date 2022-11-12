@@ -9,18 +9,17 @@ from launch.events import Shutdown
 
 
 def generate_launch_description():
-    x_arg = LaunchConfiguration('x', default='0.0')
-    y_arg = LaunchConfiguration('y', default='0.0')
+    use_stabilization_arg = LaunchConfiguration('use_stabilization', default='0.0')
 
     path = '/home/ubuntu/bm_ws/src/bir-black-mouth/caramel_data_analysis/bags/'
     currentDateAndTime = datetime.now()
     currentTime = currentDateAndTime.strftime("%H:%M:%S")
     bag_name = LaunchConfiguration('bag_name', default=currentTime)
 
-    traj_test_node = Node(
+    vel_stability_node = Node(
         package="caramel_data_analysis",
-        executable="foot_follow_trajectory",
-        parameters=[{'x': x_arg, 'y': y_arg}],
+        executable="stability_velocity",
+        parameters=[{'use_stabilization': use_stabilization_arg}],
         output="both",
     )
 
@@ -32,20 +31,18 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        DeclareLaunchArgument(name='x', default_value='0.0',
-                              description='Distante in X'),
-        DeclareLaunchArgument(name='y', default_value='0.0',
-                              description='Distante in Y'),
+        DeclareLaunchArgument(name='use_stabilization', default_value='False',
+                              description='Whether to use or not'),
         DeclareLaunchArgument(name='bag_name', default_value=currentTime,
                               description='Name of the bag'),
         init_bag_record,
-        TimerAction(period=1.0, actions=[traj_test_node]),
+        TimerAction(period=1.0, actions=[vel_stability_node]),
         
         RegisterEventHandler(
             OnProcessExit(
-                target_action=traj_test_node,
+                target_action=vel_stability_node,
                 on_exit=[EmitEvent(event=Shutdown(
-                        reason='Trajectory Finished!'))
+                        reason='Velocity Stability Test Finished!'))
                 ]
             )
         )

@@ -24,7 +24,8 @@ setup(
     entry_points={
         'console_scripts': [
             'body_control_setpoint = caramel_data_analysis.body_control_setpoint:main',
-            'foot_follow_trajectory = caramel_data_analysis.foot_follow_trajectory:main'
+            'foot_follow_trajectory = caramel_data_analysis.foot_follow_trajectory:main',
+            'stability_velocity = caramel_data_analysis.stability_velocity:main'
         ],
     },
 )
