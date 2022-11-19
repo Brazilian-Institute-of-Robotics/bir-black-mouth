@@ -30,8 +30,8 @@ class StabilityVelocity(Node):
         self.use_imu_client = self.create_client(SetParameters,
                                                  'trot_gait_node/set_parameters')
 
-        # self.vel_timer = self.create_timer(
-        #    0.02, self.timerCallback)
+        self.vel_timer = self.create_timer(
+           0.02, self.timerCallback)
 
         self.declare_parameter('use_stabilization', False)
         self.use_stabilization = self.get_parameter(
@@ -46,22 +46,22 @@ class StabilityVelocity(Node):
         self.max_roll = 0.0
         self.min_roll = 0.0
 
-        while not self.use_imu_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('trot gait set parameters service not available, waiting again...')
+        # while not self.use_imu_client.wait_for_service(timeout_sec=1.0):
+        #     self.get_logger().info('trot gait set parameters service not available, waiting again...')
 
-        self.req = SetParameters.Request()
-        param = Parameter()
-        param.name = "use_imu"
-        param.value.bool_value = self.use_stabilization
-        self.req.parameters.append(param)
+        # self.req = SetParameters.Request()
+        # param = Parameter()
+        # param.name = "use_imu"
+        # param.value.bool_value = self.use_stabilization
+        # self.req.parameters.append(param)
 
-        self.future = self.use_imu_client.call_async(self.req)
-        rclpy.spin_until_future_complete(self, self.future)
+        # self.future = self.use_imu_client.call_async(self.req)
+        # rclpy.spin_until_future_complete(self, self.future)
 
         self.vel_publisher.publish(self.vel_msg)
 
-    # def timerCallback(self):
-    #     self.vel_publisher.publish(self.vel_msg)
+    def timerCallback(self):
+        self.vel_publisher.publish(self.vel_msg)
 
     def IMUCallback(self, msg):
         self.rotation_msg.x, self.rotation_msg.y, self.rotation_msg.z = self.euler_from_quaternion(msg.orientation.x, 
@@ -110,7 +110,7 @@ def main():
     
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except:
         last_time = time.time()
         elapsed_time = last_time - initial_time
         roll_oscilation = node.max_roll - node.min_roll
@@ -121,7 +121,7 @@ def main():
         print(f"\tRoll: {rad2Degree(node.min_roll)} ~ {rad2Degree(node.max_roll)}, {rad2Degree(roll_oscilation)} ")
         print(f"\tPitch: {rad2Degree(node.min_pitch)} ~ {rad2Degree(node.max_pitch)}, {rad2Degree(pitch_oscilation)} ")
 
-        with open('/home/ubuntu/bm_ws/src/bir-black-mouth/caramel_data_analysis/csv/stability_velocity.csv', 
+        with open('/home/ubuntu/bm_ws/src/bir-black-mouth/caramel_data_analysis/csv/stability_velocity_iregular_imu.csv', 
                 'a', newline='') as csv_file:
             fieldnames = ['estabilidade', 'tempo', 'roll_max', 'roll_min', 'roll_oscilation', 'pitch_max', 'pitch_min', 'pitch_oscilation']
             writer = csv.DictWriter(csv_file, fieldnames=fieldnames)

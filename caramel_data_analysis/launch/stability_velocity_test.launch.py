@@ -36,7 +36,7 @@ def generate_launch_description():
         DeclareLaunchArgument(name='bag_name', default_value=currentTime,
                               description='Name of the bag'),
         init_bag_record,
-        TimerAction(period=1.0, actions=[vel_stability_node]),
+        TimerAction(period=5.0, actions=[vel_stability_node]),
         
         RegisterEventHandler(
             OnProcessExit(
