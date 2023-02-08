@@ -1,7 +1,9 @@
 # Caramel
 Caramel is a project of an open-source quadruped robot for research, developed at the Centro Universitário SENAI CIMATEC in partnership with the Centro de Competência em Robótica e Sistemas Autônomos.
 
-<img src="./images/caramel-apt.jpeg" alt="caramel-robot" width=400"/>
+<p align="center">
+    <img src="./images/caramel-apt.jpeg" alt="caramel-robot" width="250"/>
+</p>
 
 The robot is entirely teleoperated by a Joystick, and is governed by a state machine.
 
