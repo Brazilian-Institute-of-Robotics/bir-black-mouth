@@ -8,7 +8,7 @@ Caramel is a project of an open-source quadruped robot for research, developed a
 </p>
 
 
-## <font color="orange"> **Features**</font>
+## <span style="color: orange">**Features**</span>
 - **ROS Platform**
    
     The robot Caramel is **ROS2** based, on Humble distribution. This project used resources like the Gazebo Simulator, ros2_control framework
@@ -22,7 +22,7 @@ Caramel is a project of an open-source quadruped robot for research, developed a
 
     The software of Caramel is open source, all code is available to visitors
 
-## <font color="orange"> **Skills** </font>
+## <span style="color: orange">**Skills** </span>
 The Caramel is teleoperated by a Joystick and has three operation modes, **Moving Body**, **Controlling Body** and **Walking**.
 
 ### Moving Body
@@ -69,7 +69,7 @@ $ ros2 launch caramel_bringup bringup.launch.py
 You can specify the joystick you are using by including `joy_type=(ps4, x360 or generic)' in the line above.
 
 # Instalation
-## <font color="orange"> **Packages contents** </font>
+## <span style="color: orange">**Packages contents** </span>
 The Caramel packages are organized as follow:
 - **caramel_bringup:** Package for starting the Caramel robot
 - **caramel_control:** Contains the body control and hardware interface
@@ -80,7 +80,7 @@ The Caramel packages are organized as follow:
 - **caramel_kinematics:** Contains quadruped's inverse kinematics
 - **caramel_teleop:** Package teleoperation with a joystick 
 
-## <font color="orange"> **Install with Docker** </font>
+## <span style="color: orange">**Install with Docker** </span>
 #### Create workspace and build docker image
 ```bash
 $ mkdir -p ~/workspaces/caramel_humble/src/
@@ -100,7 +100,7 @@ $ . run_docker.sh
 $ source /rsource.sh
 ```
 
-## <font color="orange"> **Install without Docker** </font>
+## <span style="color: orange">**Install without Docker** </span>
 #### Create a workspace and clone the repository
 ```bash
 $ mkdir -p ~/caramel_ws/src/
