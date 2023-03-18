@@ -26,18 +26,18 @@ Caramel is a project of an open-source quadruped robot for research, developed a
 The Caramel is teleoperated by a Joystick and has three operation modes, **Moving Body**, **Controlling Body** and **Walking**.
 
 ### Moving Body
-In this mode you can move the robot's body in three directions and rotate it in three directions, keeping its feets on the ground.
+In this mode you can move the robot's body in three directions and rotate it in three directions, keeping its feet on the ground.
+    <img src="./images/moving_body.gif" alt="Moving-Body" width="600"/>
 
-**VIDEO**
+
 ### Controlling Body
-The robot Caramel in this mode controls it's body to keep it parallel to the ground.
-
-**VIDEO**
+The Caramel robot in this mode controls its body to keep itself stable, aligned on  x and y coordinates.
+    <img src="./images/controlling_body.gif" alt="controll-Body" width="600"/>
 
 ### Walking
-In this mode you can move the Caramel along to x,y coordinates, increave and decrease step heigh and speed. 
+In this mode you can move the Caramel along to x,y coordinates, increase and decrease step heigh and speed. 
+    <img src="./images/trot.gif" alt="walking" width="600"/>
 
-**VIDEO**
 
 # How to use Caramel :dog2:
 
