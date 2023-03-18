@@ -126,5 +126,5 @@ This project was developed as a Course Completion Work of the Electrical Enginee
              Lucas Lins Souza
 
 <p align="center">
-    <img src=".images/autors.jpeg" alt="authors" width="250"/>
+    <img src="./images/autors.jpeg" alt="authors" width="250"/>
 </p>
