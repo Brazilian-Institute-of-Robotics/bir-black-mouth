@@ -1,21 +1,42 @@
+[![humble-devel Status](https://github.com/ROBOTIS-GIT/turtlebot3/workflows/humble-devel/badge.svg)](https://github.com/Brazilian-Institute-of-Robotics/bir-black-mouth/tree/devel)
+
 # Caramel
 Caramel is a project of an open-source quadruped robot for research, developed at the Centro Universitário SENAI CIMATEC in partnership with the Centro de Competência em Robótica e Sistemas Autônomos.
 
 <p align="center">
-    <img src="./images/caramel-apt.jpeg" alt="caramel-robot" width="250"/>
+    <img src="./images/caramel-top-image.png" alt="caramel-robot" width="600"/>
 </p>
 
-The robot is entirely teleoperated by a Joystick, and is governed by a state machine.
 
-**STATE MACHINE IMAGE**
+## Features
+- ROS Platform
+   
+    The robot Caramel is **ROS2** based, on Humble distribution. This project used resources like the Gazebo Simulator, ros2_control framework
+- Small Size
+
+    The dimension of Caramel is X X X , a little dog robot. 
+- Extensibility
+
+    There are possibilities for improvement, such as equipping it with sensors and implement new controllers.
+- Open Source
+
+    The software of Caramel is open source, all code is available to visitors
+
+## Skills
+The Caramel is teleoperated by a Joystick and has three operation modes, **Moving Body**, **Controlling Body** and **Walking**.
 
 ### Moving Body
-**VIDEO**
+In this mode you can move the robot's body in three directions and rotate it in three directions, keeping its feets on the ground.
 
+**VIDEO**
 ### Controlling Body
+The robot Caramel in this mode controls it's body to keep it parallel to the ground.
+
 **VIDEO**
 
 ### Walking
+In this mode you can move the Caramel along to x,y coordinates, increave and decrease step heigh and speed. 
+
 **VIDEO**
 
 # How to use Caramel
@@ -103,3 +124,7 @@ This project was developed as a Course Completion Work of the Electrical Enginee
 **Authors:** Brenda Silva de Alencar, 
              Felipe Mohr Santos Muniz Barreto, 
              Lucas Lins Souza
+
+<p align="center">
+    <img src=".images/autors.jpeg" alt="authors" width="250"/>
+</p>
