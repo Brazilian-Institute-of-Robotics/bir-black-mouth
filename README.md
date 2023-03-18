@@ -27,16 +27,19 @@ The Caramel is teleoperated by a Joystick and has three operation modes, **Movin
 
 ### Moving Body
 In this mode you can move the robot's body in three directions and rotate it in three directions, keeping its feet on the ground.
-    <img src="./images/moving_body.gif" alt="Moving-Body" width="600"/>
+
+    <img src="./images/moving_body.gif" alt="Moving-Body" width="500"/>
 
 
 ### Controlling Body
 The Caramel robot in this mode controls its body to keep itself stable, aligned on  x and y coordinates.
-    <img src="./images/controlling_body.gif" alt="controll-Body" width="600"/>
+
+    <img src="./images/controlling-body.gif" alt="controll-Body" width="00"/>
 
 ### Walking
 In this mode you can move the Caramel along to x,y coordinates, increase and decrease step heigh and speed. 
-    <img src="./images/trot.gif" alt="walking" width="600"/>
+
+    <img src="./images/trot.gif" alt="walking" width="00"/>
 
 
 # How to use Caramel :dog2:
