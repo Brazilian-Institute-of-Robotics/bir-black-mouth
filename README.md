@@ -1,6 +1,6 @@
 [![humble-devel Status](https://github.com/ROBOTIS-GIT/turtlebot3/workflows/humble-devel/badge.svg)](https://github.com/Brazilian-Institute-of-Robotics/bir-black-mouth/tree/devel)
 
-# Caramel
+# **Caramel**  :dog2:
 Caramel is a project of an open-source quadruped robot for research, developed at the Centro Universitário SENAI CIMATEC in partnership with the Centro de Competência em Robótica e Sistemas Autônomos.
 
 <p align="center">
@@ -8,21 +8,21 @@ Caramel is a project of an open-source quadruped robot for research, developed a
 </p>
 
 
-## Features
-- ROS Platform
+## <font color="orange"> **Features**</font>
+- **ROS Platform**
    
     The robot Caramel is **ROS2** based, on Humble distribution. This project used resources like the Gazebo Simulator, ros2_control framework
-- Small Size
+- **Small Size**
 
     The dimension of Caramel is X X X , a little dog robot. 
-- Extensibility
+- **Extensibility**
 
     There are possibilities for improvement, such as equipping it with sensors and implement new controllers.
-- Open Source
+- **Open Source**
 
     The software of Caramel is open source, all code is available to visitors
 
-## Skills
+## <font color="orange"> **Skills** </font>
 The Caramel is teleoperated by a Joystick and has three operation modes, **Moving Body**, **Controlling Body** and **Walking**.
 
 ### Moving Body
@@ -39,7 +39,7 @@ In this mode you can move the Caramel along to x,y coordinates, increave and dec
 
 **VIDEO**
 
-# How to use Caramel
+# How to use Caramel :dog2:
 
 The robot is configured to automatically connect to a network with the name *caramel* and password *caramel123*. So, you can change the network name and password on your router or use your mobile device's hotspot.
 
@@ -69,7 +69,7 @@ $ ros2 launch caramel_bringup bringup.launch.py
 You can specify the joystick you are using by including `joy_type=(ps4, x360 or generic)' in the line above.
 
 # Instalation
-## Packages contents
+## <font color="orange"> **Packages contents** </font>
 The Caramel packages are organized as follow:
 - **caramel_bringup:** Package for starting the Caramel robot
 - **caramel_control:** Contains the body control and hardware interface
@@ -80,7 +80,7 @@ The Caramel packages are organized as follow:
 - **caramel_kinematics:** Contains quadruped's inverse kinematics
 - **caramel_teleop:** Package teleoperation with a joystick 
 
-## Install with Docker
+## <font color="orange"> **Install with Docker** </font>
 #### Create workspace and build docker image
 ```bash
 $ mkdir -p ~/workspaces/caramel_humble/src/
@@ -100,7 +100,7 @@ $ . run_docker.sh
 $ source /rsource.sh
 ```
 
-## Install without Docker
+## <font color="orange"> **Install without Docker** </font>
 #### Create a workspace and clone the repository
 ```bash
 $ mkdir -p ~/caramel_ws/src/
