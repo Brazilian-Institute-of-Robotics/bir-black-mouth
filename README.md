@@ -1,24 +1,39 @@
-# Caramel
+[![humble-devel Status](https://github.com/ROBOTIS-GIT/turtlebot3/workflows/humble-devel/badge.svg)](https://github.com/Brazilian-Institute-of-Robotics/bir-black-mouth/tree/devel)
+
+# **Caramel**  :dog2:
 Caramel is a project of an open-source quadruped robot for research, developed at the Centro Universitário SENAI CIMATEC in partnership with the Centro de Competência em Robótica e Sistemas Autônomos.
 
-<p align="center">
-    <img src="./images/caramel-apt.jpeg" alt="caramel-robot" width="250"/>
+<p align="left">
+    <img src="./images/caramel-top-image.png" alt="caramel-robot" width="1000"/>
 </p>
 
-The robot is entirely teleoperated by a Joystick, and is governed by a state machine.
+## <span style="color: orange">**Features**</span>
+- **ROS Platform:** The robot Caramel is **ROS 2** based, on Humble distribution.
+- **Small Size:** Caramel is a little dog robot.
+- **Extensibility:** There are possibilities for improvement, such as equipping it with sensors and implement new controllers.
+- **Open Source:** The software of Caramel is open source, all code is available to visitors.
 
-**STATE MACHINE IMAGE**
+## <span style="color: orange">**Skills** </span>
+The Caramel is teleoperated by a Joystick and has three operation modes, **Moving Body**, **Controlling Body** and **Walking**.
 
 ### Moving Body
-**VIDEO**
+In this mode you can move and rotate the Caramel's body in the three axes, keeping its feet on the ground.
+
+![ik](./images/moving_body.gif)
 
 ### Controlling Body
-**VIDEO**
+In this mode the Caramel robot controls its body to keep itself stable, aligned on x and y axes.
 
+![control](./images/controlling-body.gif)
+ 
 ### Walking
-**VIDEO**
+In this mode you can walk with Caramel through the environmnent. 
 
-# How to use Caramel
+![trot](./images/trot.gif)
+
+You can watch some videos demonstrating Caramel's features in this playlist: [Caramel - Quadruped Robot](https://www.youtube.com/playlist?list=PLEWAX1tu2DF515E2DEeh-FGmlugKjlrDz)
+
+# How to use Caramel :dog2:
 
 The robot is configured to automatically connect to a network with the name *caramel* and password *caramel123*. So, you can change the network name and password on your router or use your mobile device's hotspot.
 
@@ -48,7 +63,7 @@ $ ros2 launch caramel_bringup bringup.launch.py
 You can specify the joystick you are using by including `joy_type=(ps4, x360 or generic)' in the line above.
 
 # Instalation
-## Packages contents
+## <span style="color: orange">**Packages contents** </span>
 The Caramel packages are organized as follow:
 - **caramel_bringup:** Package for starting the Caramel robot
 - **caramel_control:** Contains the body control and hardware interface
@@ -59,7 +74,7 @@ The Caramel packages are organized as follow:
 - **caramel_kinematics:** Contains quadruped's inverse kinematics
 - **caramel_teleop:** Package teleoperation with a joystick 
 
-## Install with Docker
+## <span style="color: orange">**Install with Docker** </span>
 #### Create workspace and build docker image
 ```bash
 $ mkdir -p ~/workspaces/caramel_humble/src/
@@ -79,7 +94,7 @@ $ . run_docker.sh
 $ source /rsource.sh
 ```
 
-## Install without Docker
+## <span style="color: orange">**Install without Docker** </span>
 #### Create a workspace and clone the repository
 ```bash
 $ mkdir -p ~/caramel_ws/src/
@@ -94,7 +109,7 @@ $ colcon build
 ```
 
 # Authors
-This project was developed as a Course Completion Work of the Electrical Engineering course. To see the final paper, check [this repository](https://github.com/Brazilian-Institute-of-Robotics/bir-black-mouth-docs/tree/fix/spelling)
+This project was developed as a Course Completion Work of the Electrical Engineering course. To see the final paper, check [this repository](https://github.com/Brazilian-Institute-of-Robotics/bir-black-mouth-docs)
 
 **Advisor:** MSc. Paulo Andrade Souza
 
@@ -103,3 +118,7 @@ This project was developed as a Course Completion Work of the Electrical Enginee
 **Authors:** Brenda Silva de Alencar, 
              Felipe Mohr Santos Muniz Barreto, 
              Lucas Lins Souza
+
+<p align="left">
+    <img src="./images/autors.jpeg" alt="authors" width="600"/>
+</p>
