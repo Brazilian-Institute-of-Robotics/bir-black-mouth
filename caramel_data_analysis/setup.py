@@ -11,7 +11,8 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
-        ('share/' + package_name, ['package.xml'])
+        ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name), glob('launch/*launch.[pxy][yma]*'))
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -22,7 +23,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'body_control_setpoint = caramel_data_analysis.body_control_setpoint:main'
+            'body_control_setpoint = caramel_data_analysis.body_control_setpoint:main',
+            'foot_follow_trajectory = caramel_data_analysis.foot_follow_trajectory:main',
+            'stability_velocity = caramel_data_analysis.stability_velocity:main'
         ],
     },
 )

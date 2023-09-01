@@ -24,7 +24,7 @@ class FeetListener(Node):
 
         self.tf_pub = self.create_publisher(AllLegPoints, 'feet_poses', 1)
 
-        self.timer = self.create_timer(0.004, self.publishPoses)
+        self.timer = self.create_timer(0.01, self.publishPoses)
 
     def publishPoses(self):
         

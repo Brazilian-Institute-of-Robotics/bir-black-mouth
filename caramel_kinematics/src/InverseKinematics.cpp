@@ -99,7 +99,7 @@ void InverseKinematics::computeIK()
   {
     request->body_leg_ik = this->_cmd_ik_msg.body_leg_ik_trajectory.at(i);  
     auto result = this->_ik_client->async_send_request(request);
-    std::future_status status = result.wait_for(10ms);
+    std::future_status status = result.wait_for(15ms);
     
     if (status == std::future_status::ready)
       _all_leg_joints.at(i) = result.get()->leg_joints;

@@ -45,7 +45,8 @@ def generate_launch_description():
         executable="robot_state_publisher",
         output="screen",
         parameters=[{'use_sim_time': use_sim_time,
-                     'robot_description': Command(['xacro ', robot_model])}],
+                     'robot_description': Command(['xacro ', robot_model]),
+                     'publish_frequency': 50.0}],
     )
 
     imu = IncludeLaunchDescription(
@@ -110,7 +111,7 @@ def generate_launch_description():
                               description='Absolute path to quadruped config file'),
         DeclareLaunchArgument(name='body_control_config', default_value=default_body_control_config, 
                               description='Absolute path to body control config file'),
-        DeclareLaunchArgument(name='launch_joy_node', default_value='True',
+        DeclareLaunchArgument(name='launch_joy_node', default_value='False',
                               description='Whether to launch joy node or not'),
         DeclareLaunchArgument(name='launch_joy_teleop', default_value='True',
                               description="Whether to launch bm joy teleop or not"),

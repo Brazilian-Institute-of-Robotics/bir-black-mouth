@@ -87,15 +87,6 @@ class TrotGait(Node):
                                                                  self.current_state_cb,
                                                                  10)
 
-        self.desired_rotation_publisher = self.create_publisher(Vector3,
-                                                                '/body_desired_rotation',
-                                                                10)
-
-        self.imu_subscriber = self.create_subscription(Imu,
-                                                       '/imu/data',
-                                                       self.imu_cb,
-                                                       10)
-        self.imu_msg = Imu()
 
         self.default_feet_pose_subscriber = self.create_subscription(AllLegPoints,
                                                                      'feet_poses',
@@ -103,8 +94,6 @@ class TrotGait(Node):
                                                                      10)
         self.default_feet_pose_msg = AllLegPoints()
 
-        self.imu_timer = self.create_timer(1.0, self.update_control_setpoint)
-        self.imu_timer.cancel()
 
         self.current_state_msg = TeleopState()
 
@@ -312,9 +301,9 @@ class TrotGait(Node):
     def bodyCallback(self, msg):
         if self.use_imu:
             self.body_imu_rotation = msg.body_rotation
+        else:
+            self.body_imu_rotation = Vector3()
 
-    def imu_cb(self, msg):
-        self.imu_msg = msg
         
     def default_feet_points(self, msg):
         self.default_feet_pose_msg = msg
@@ -336,13 +325,6 @@ class TrotGait(Node):
 
         return roll, pitch, yaw
 
-    def update_control_setpoint(self):
-        _, pitch, _ = self.euler_from_quaternion(
-            self.imu_msg.orientation.x,
-            self.imu_msg.orientation.y,
-            self.imu_msg.orientation.z,
-            self.imu_msg.orientation.w)
-        self.desired_rotation_publisher.publish(Vector3(y=pitch))
 
     def cmd_vel_cb(self, msg):
         self.cmd_vel_msg = msg
@@ -351,7 +333,6 @@ class TrotGait(Node):
         # if transitioning to WALKING state
         if self.current_state_msg.state != 5 and msg.state == 5:
             self.ik_timer.reset()
-            self.imu_timer.reset()
         self.current_state_msg = msg
 
     def update_positions(self, mat, linear_x, linear_y,  theta):
@@ -373,13 +354,6 @@ class TrotGait(Node):
             result[i] = transMat@rotMat@result[i]
         result[-1] = result[0]
 
-        # TODO check with kinematics
-        # diff_coord = np.zeros((5, 2))
-        # diff_coord[0] = result[0, :-1] - mat[0, :-1]  # FR
-        # diff_coord[1] = result[1, :-1] - mat[1, :-1]  # FL
-        # diff_coord[2] = result[2, :-1] - mat[2, :-1]  # BL
-        # diff_coord[3] = result[3, :-1] - mat[3, :-1]  # BODY
-        # diff_coord[4] = result[4, :-1] - mat[4, :-1]  # BR
 
         diff_coord = result[:, :-1] - self.coord_orig
         # print(diff_coord, '\n')
@@ -431,10 +405,8 @@ class TrotGait(Node):
                     self.BR_request.height = 0.0
                     self.BODY_request.height = 0.0
                     self.walking = 0.0
-                    if self.current_state_msg.state != 5:
-                        self.desired_rotation_publisher.publish(Vector3())
+                    if self.current_state_msg.state != 5 and self.current_state_msg.state != 1:
                         self.ik_timer.cancel()
-                        self.imu_timer.cancel()
                 else:
                     self.FL_request.height = self.gait_height
                     self.FR_request.height = self.gait_height
