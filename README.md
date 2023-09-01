@@ -3,43 +3,35 @@
 # **Caramel**  :dog2:
 Caramel is a project of an open-source quadruped robot for research, developed at the Centro Universitário SENAI CIMATEC in partnership with the Centro de Competência em Robótica e Sistemas Autônomos.
 
-<p align="center">
-    <img src="./images/caramel-top-image.png" alt="caramel-robot" width="600"/>
+<p align="left">
+    <img src="./images/caramel-top-image.png" alt="caramel-robot" width="1000"/>
 </p>
 
-
 ## <span style="color: orange">**Features**</span>
-- **ROS Platform**
-   
-    The robot Caramel is **ROS2** based, on Humble distribution. This project used resources like the Gazebo Simulator, ros2_control framework
-- **Small Size**
-
-    The dimension of Caramel is X X X , a little dog robot. 
-- **Extensibility**
-
-    There are possibilities for improvement, such as equipping it with sensors and implement new controllers.
-- **Open Source**
-
-    The software of Caramel is open source, all code is available to visitors
+- **ROS Platform:** The robot Caramel is **ROS 2** based, on Humble distribution.
+- **Small Size:** Caramel is a little dog robot.
+- **Extensibility:** There are possibilities for improvement, such as equipping it with sensors and implement new controllers.
+- **Open Source:** The software of Caramel is open source, all code is available to visitors.
 
 ## <span style="color: orange">**Skills** </span>
 The Caramel is teleoperated by a Joystick and has three operation modes, **Moving Body**, **Controlling Body** and **Walking**.
 
 ### Moving Body
-In this mode you can move the robot's body in three directions and rotate it in three directions, keeping its feet on the ground.
+In this mode you can move and rotate the Caramel's body in the three axes, keeping its feet on the ground.
 
 ![ik](./images/moving_body.gif)
 
 ### Controlling Body
-The Caramel robot in this mode controls its body to keep itself stable, aligned on  x and y coordinates.
+In this mode the Caramel robot controls its body to keep itself stable, aligned on x and y axes.
 
 ![control](./images/controlling-body.gif)
  
 ### Walking
-In this mode you can move the Caramel along to x,y coordinates, increase and decrease step heigh and speed. 
-
+In this mode you can walk with Caramel through the environmnent. 
 
 ![trot](./images/trot.gif)
+
+You can watch some videos demonstrating Caramel's features in this playlist: [Caramel - Quadruped Robot](https://www.youtube.com/playlist?list=PLEWAX1tu2DF515E2DEeh-FGmlugKjlrDz)
 
 # How to use Caramel :dog2:
 
@@ -117,7 +109,7 @@ $ colcon build
 ```
 
 # Authors
-This project was developed as a Course Completion Work of the Electrical Engineering course. To see the final paper, check [this repository](https://github.com/Brazilian-Institute-of-Robotics/bir-black-mouth-docs/tree/fix/spelling)
+This project was developed as a Course Completion Work of the Electrical Engineering course. To see the final paper, check [this repository](https://github.com/Brazilian-Institute-of-Robotics/bir-black-mouth-docs)
 
 **Advisor:** MSc. Paulo Andrade Souza
 
@@ -127,6 +119,6 @@ This project was developed as a Course Completion Work of the Electrical Enginee
              Felipe Mohr Santos Muniz Barreto, 
              Lucas Lins Souza
 
-<p align="center">
-    <img src="./images/autors.jpeg" alt="authors" width="400"/>
+<p align="left">
+    <img src="./images/autors.jpeg" alt="authors" width="600"/>
 </p>
