@@ -1,0 +1,9 @@
+uint8 BASE_LINK_AS_REFERENCE=0
+uint8 FOOT_LINK_AS_REFERENCE=1
+uint8 HIP_LINK_AS_REFERENCE=2
+
+uint8 reference_link
+geometry_msgs/Point front_right_leg
+geometry_msgs/Point front_left_leg
+geometry_msgs/Point back_left_leg
+geometry_msgs/Point back_right_leg

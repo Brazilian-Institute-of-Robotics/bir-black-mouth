@@ -1,0 +1,3 @@
+geometry_msgs/Vector3 body_position
+geometry_msgs/Vector3 body_rotation
+caramel_kinematics/AllLegPoints leg_points

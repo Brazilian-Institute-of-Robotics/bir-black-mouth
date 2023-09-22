@@ -1,0 +1,9 @@
+#!/bin/bash
+
+ROSDISTRO="humble"
+
+PROJECT="caramel"
+
+PROJECT_PATH="$HOME/workspaces/${PROJECT}_${ROSDISTRO}"
+
+CONTAINER_USER=${PROJECT}_${ROSDISTRO}

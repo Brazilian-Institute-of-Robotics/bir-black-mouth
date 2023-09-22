@@ -1,0 +1,31 @@
+joy_teleop_node:
+  ros__parameters:
+    filter_alpha: 0.90
+    joy_type: generic
+    max_vel:
+      lin_x: 0.10
+      lin_y: 0.05
+      ang_z: 0.25
+    gait_range:
+      max_height: 0.065
+      min_height: 0.025
+      max_period: 1.0
+      min_period: 0.25
+    axis_linear:
+      x: 1
+      y: 0
+      z: 2
+    axis_angular:
+      roll: 4
+      pitch: 5
+      yaw: 3
+    gait_params:
+      gait_height_inc: 5
+      gait_height_dec: 4
+      gait_period_inc: 7
+      gait_period_dec: 6
+    restart: 9
+    move: 3
+    lock: 2
+    body: 0
+    walk: 1
