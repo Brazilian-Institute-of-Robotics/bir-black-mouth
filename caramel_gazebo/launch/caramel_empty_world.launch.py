@@ -10,52 +10,36 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
+    # Caminhos dos pacotes
+    ros_ign_gazebo_pkg_share = FindPackageShare('ros_ign_gazebo').find('ros_ign_gazebo')
     caramel_gazebo_pkg_share = FindPackageShare('caramel_gazebo').find('caramel_gazebo')
     caramel_bringup_pkg_share = FindPackageShare('caramel_bringup').find('caramel_bringup')
     caramel_description_pkg_share = FindPackageShare('caramel_description').find('caramel_description')
     caramel_control_pkg_share = FindPackageShare('caramel_control').find('caramel_control')
     caramel_kinematics_pkg_share = FindPackageShare('caramel_kinematics').find('caramel_kinematics')
     
-    default_world = os.path.join(caramel_gazebo_pkg_share, 'worlds/empty.world')
+    # Caminhos padrão dos arquivos
+    default_world = os.path.join(caramel_gazebo_pkg_share, 'worlds/mario_world.sdf')  # Mudança para .sdf
     default_rviz_config = os.path.join(caramel_description_pkg_share, 'rviz/urdf_config.rviz')
     default_model = os.path.join(caramel_description_pkg_share, "urdf", "caramel.urdf.xacro")
     default_controllers = os.path.join(caramel_control_pkg_share, "config", "leg_controllers.yaml")
     default_quadruped_config = os.path.join(caramel_kinematics_pkg_share, 'config', 'quadruped.yaml')
     default_body_control_config = os.path.join(caramel_control_pkg_share, 'config', 'body_control.yaml')
     
-    gzserver = ExecuteProcess(
-        cmd=['gzserver',
-             '-s', 'libgazebo_ros_init.so',
-             '-s', 'libgazebo_ros_factory.so',
-             LaunchConfiguration('world'),
-             ''],
-        output='screen',
+
+    ignition = IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(ros_ign_gazebo_pkg_share, 'launch', 'ign_gazebo.launch.py')),
+                launch_arguments={'ign_args': ['-r ', LaunchConfiguration('world')]}.items(),
     )
 
-    gzclient = ExecuteProcess(
-        cmd=['gzclient'],
-        output='screen',
-    )
-
-    spawn_robot = Node(
-        package='gazebo_ros',
-        executable='spawn_entity.py',
-        name='urdf_spawner',
-        output='screen',
-        arguments=['-entity','quadruped',
-                   '-topic', '/robot_description',
-                   '-x', '0.0',
-                   '-y', '0.0',
-                   '-z', '0.0'],
-    )
-
-    rviz = Node(
-        package='rviz2',
-        executable='rviz2',
-        name='rviz2',
-        output='screen',
-        arguments=['-d', LaunchConfiguration('rviz_config')],
-        condition=IfCondition(LaunchConfiguration('use_rviz'))
+    # Spawn do robô
+    spawn_ignition = IncludeLaunchDescription(
+                        PythonLaunchDescriptionSource(
+                        os.path.join(caramel_gazebo_pkg_share, 'launch', 'spawn_ignition.launch.py')),
+                        launch_arguments={'model': LaunchConfiguration('model'),
+                                        'use_rviz': LaunchConfiguration('use_rviz'),
+                                        'rviz_config': LaunchConfiguration('rviz_config')}.items(),
     )
 
     bringup = IncludeLaunchDescription(
@@ -75,6 +59,7 @@ def generate_launch_description():
 
 
     return LaunchDescription([
+        # Declaração de parâmetros
         DeclareLaunchArgument(name='use_sim_time', default_value='True', 
                               description='Use simulation (Gazebo) clock if true'),
         DeclareLaunchArgument(name='world', default_value=default_world, 
@@ -99,9 +84,9 @@ def generate_launch_description():
                               description='Set the joystick type (generic, x360 or ps4)'),
         DeclareLaunchArgument(name='launch_imu', default_value='False', 
                               description='Whether to launch imu or not'),
-        gzserver,
-        gzclient,
-        spawn_robot,
+        
+        # Ações para iniciar simulação
+        ignition,
+        spawn_ignition,
         bringup,
-        rviz,
     ])

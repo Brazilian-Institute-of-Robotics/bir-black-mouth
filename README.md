@@ -35,7 +35,7 @@ You can watch some videos demonstrating Caramel's features in this playlist: [Ca
 
 # How to use Caramel :dog2:
 
-The robot is configured to automatically connect to a network with the name *caramel* and password *caramel123*. So, you can change the network name and password on your router or use your mobile device's hotspot.
+The robot is configured to automatically connect to a network with the name *Caramel* and password *caramel123*. So, you can change the network name and password on your router or use your mobile device's hotspot.
 
 Make sure that your notebook or PC is connected to the same network, and to identify the address where Caramel's RaspberryPi is connected, you can run the command:
 
