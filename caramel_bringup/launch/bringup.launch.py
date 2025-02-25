@@ -115,7 +115,7 @@ def generate_launch_description():
                               description='Whether to launch joy node or not'),
         DeclareLaunchArgument(name='launch_joy_teleop', default_value='True',
                               description="Whether to launch bm joy teleop or not"),
-        DeclareLaunchArgument(name='joy_type', default_value='generic', 
+        DeclareLaunchArgument(name='joy_type', default_value='x360', 
                               description='Set the joystick type (generic, x360 or ps4)'),
         DeclareLaunchArgument(name='launch_imu', default_value='True', 
                               description='Whether to launch imu or not'),
