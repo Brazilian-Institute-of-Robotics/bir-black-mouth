@@ -3,19 +3,24 @@
 <package format="3">
   <name>caramel_gazebo</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="brenda.s1602@outlook.com">cimatec</maintainer>
-  <license>TODO: License declaration</license>
+  <description>Pacote de simulação do Caramel no Ignition Gazebo</description>
+  <maintainer email="brenda.s1602@outlook.com">Cimatec</maintainer>
+  <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 
-  <depend>gazebo_ros</depend>
-  <depend>gazebo_msgs</depend>
-  <depend>gazebo_plugins</depend>
-  <depend>gazebo_ros2_control</depend>
+  <!-- Dependências para Ignition Gazebo -->
+  <depend>ros_ign_gazebo</depend>
+  <depend>ros_ign_gazebo_demos</depend>
+  <depend>ign_ros2_control</depend>
+  <depend>ign_ros2_control_demos</depend>
+
+  <exec_depend>ros2launch</exec_depend>
+  <exec_depend>ros_ign_bridge</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
