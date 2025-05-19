@@ -230,13 +230,13 @@
         <visual>
             <origin xyz="0.0 0.0 ${-leg_z_offset}" rpy="0.0 0.0 0.0"/>                
             <geometry>
-                <mesh filename="file://$(find caramel_description)/meshes/base_link.dae" />
+                <mesh filename="file://$(find caramel_description)/meshes/base.dae" />
             </geometry>
         </visual>
         <collision>
             <origin xyz="0.0 0.0 ${-leg_z_offset}" rpy="0.0 0.0 0.0"/>                
             <geometry>
-                <mesh filename="file://$(find caramel_description)/meshes/base_link.stl"/>
+                <mesh filename="file://$(find caramel_description)/meshes/base_collision.stl"/>
             </geometry>
         </collision>
         <inertial>
