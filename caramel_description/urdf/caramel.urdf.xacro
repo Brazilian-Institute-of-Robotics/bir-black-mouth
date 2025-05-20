@@ -3,20 +3,20 @@
 
     <xacro:property name="M_PI" value="3.1415"/>
 
-    <xacro:property name="body_length" value="0.272"/>
-    <xacro:property name="body_width" value="0.168"/>
-    <xacro:property name="body_height" value="0.064"/>
+    <xacro:property name="body_length" value="0.290"/>
+    <xacro:property name="body_width" value="0.178"/>
+    <xacro:property name="body_height" value="0.063"/>
 
     <xacro:property name="L" value="0.2291"/>
     <xacro:property name="W" value="0.14"/>
     <xacro:property name="H" value="0.17"/>
     <xacro:property name="L1" value="0.048"/>
 
-    <xacro:property name="hip_length" value="0.0415"/>
-    <xacro:property name="femur_length" value="0.120"/>
-    <xacro:property name="tibia_length" value="0.120"/>
+    <xacro:property name="hip_length" value="0.045"/>
+    <xacro:property name="femur_length" value="0.126"/>
+    <xacro:property name="tibia_length" value="0.12"/>
     <xacro:property name="femur_thickness" value="0.022"/>
-    <xacro:property name="femur_offset" value="0.0053"/>
+    <xacro:property name="femur_offset" value="0.0"/>
 
     <xacro:property name="leg_x_offset" value="0.11455"/>
     <xacro:property name="leg_y_offset" value="0.07"/>
@@ -73,13 +73,13 @@
             </visual>
             <collision>
                 <xacro:if value="${front}">
-                    <origin xyz="-0.0149 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
                 </xacro:if>
                 <xacro:unless value="${front}">
-                    <origin xyz="0.0149 0.0 0.0" rpy="0.0 0.0 0.0"/>
+                    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
                 </xacro:unless>
                 <geometry>
-                    <box size="0.0538 0.036 0.036"/>
+                    <box size="0.06 0.034 0.0385"/>
                 </geometry>
             </collision>
             <inertial>
@@ -110,10 +110,9 @@
             <dynamics damping="0.1" friction="0.01" /> 
         </joint>
 
-
         <link name="${prefix}_femur">
             <visual>
-                <origin xyz="0.0 0 ${-femur_offset}" rpy="0.0 0.0 0.0 "/>
+                <origin xyz="0.0 0 ${-femur_offset}" rpy="0.0 0.0 0.0"/>
                 <geometry>
                     <xacro:if value="${left}">
                         <mesh filename="file://$(find caramel_description)/meshes/left_femur.dae" />
@@ -128,7 +127,7 @@
                     <origin xyz="0.0 0.0 ${-femur_offset}" rpy="0.0 0.0 0.0"/>
                 </xacro:if>
                 <xacro:unless value="${left}">
-                    <origin xyz="0.0 0.0 ${-femur_offset}" rpy="0.0 0.0 ${M_PI}"/>
+                    <origin xyz="0.0 0.0 ${-femur_offset}" rpy="0.0 0.0 0.0"/>
                 </xacro:unless>
                 <geometry>
                     <mesh filename="file://$(find caramel_description)/meshes/femur.stl"/>
@@ -240,9 +239,9 @@
             </geometry>
         </collision>
         <inertial>
-            <mass value="1.28"/>
-            <origin xyz="0.0015 1.622e-4 ${0.0238-leg_z_offset}" rpy="0.0 0.0 0.0"/>
-            <inertia ixx="0.00327123" ixy="-2.696e-6" ixz="-1.456e-5" iyy="0.00459934" iyz="-1.166e-5" izz="0.00718769"/>
+            <mass value="1.3"/>
+            <origin xyz="0.02 0 ${0.026-leg_z_offset}" rpy="0.0 0.0 0.0"/>
+            <inertia ixx="0.002671797" ixy="-1.86e-9" ixz="-5.8e-5" iyy="0.006415281" iyz="0" izz="0.008438753"/>
         </inertial>
     </link>
 

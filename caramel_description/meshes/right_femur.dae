@@ -5,8 +5,8 @@
     <contributor>
       <authoring_tool>ONSHAPE BY PTC INC, 1.198</authoring_tool>
     </contributor>
-    <created>2025-05-19T17:04:34</created>
-    <modified>2025-05-19T17:04:34</modified>
+    <created>2025-05-20T14:39:38</created>
+    <modified>2025-05-20T14:39:38</modified>
     <unit meter="1" name="meters"/>
     <up_axis>Z_UP</up_axis>
   </asset>
@@ -138,11 +138,11 @@
     <visual_scene id="ID1">
       <node id="ID2" name="Right leg femur urdf">
         <node>
-          <matrix>-5.60833e-16 1.71636e-17 1 0.00014771 1 -1.18932e-16 -1.38194e-16 2.88306e-05 1.66533e-16 1 -2.39208e-16 0.0014072 0 0 0 1</matrix>
+          <matrix>-1.11022e-16 1.71636e-17 1 0.000251642 1 -1.18932e-16 -5.55112e-16 0.00488653 1.66533e-16 1 -2.39208e-16 0.0014072 0 0 0 1</matrix>
           <instance_node url="#ID3"/>
         </node>
         <node>
-          <matrix>-5.60833e-16 1.71636e-17 1 0.00014771 1 1.66533e-16 2.27766e-16 2.88306e-05 1.66533e-16 1 3.15903e-16 -0.0188928 0 0 0 1</matrix>
+          <matrix>2.15972e-32 1.71636e-17 1 0.000251642 1 1.66533e-16 -3.33067e-16 0.00488653 1.66533e-16 1 3.15903e-16 -0.0188928 0 0 0 1</matrix>
           <instance_node url="#ID11"/>
         </node>
       </node>
