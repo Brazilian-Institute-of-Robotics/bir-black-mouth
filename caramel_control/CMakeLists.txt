@@ -28,6 +28,7 @@ set(dependencies
   dynamixel_sdk
   caramel_kinematics
   rosidl_default_generators
+  controller_manager_msgs
 )
 
 # find dependencies
@@ -52,6 +53,14 @@ add_library(${PROJECT_NAME}_hw
 
 add_executable(body_control src/BodyControl.cpp)
 ament_target_dependencies(body_control ${dependencies})
+
+add_executable(controller_toggler_node src/controller_toggler.cpp)
+ament_target_dependencies(
+  controller_toggler_node
+  rclcpp
+  std_srvs
+  controller_manager_msgs
+)
 
 target_include_directories(${PROJECT_NAME}_hw PRIVATE include)
 ament_target_dependencies(${PROJECT_NAME}_hw ${dependencies})
@@ -80,6 +89,11 @@ install(
 
 install(
   TARGETS body_control
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(
+  TARGETS controller_toggler_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
