@@ -217,7 +217,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       _ik_timer->cancel();
       _vel_timer->cancel();
       
-      RCLCPP_INFO(this->get_logger(), "Chamando serviço para ATIVAR os controladores...");
+      RCLCPP_INFO(this->get_logger(), "Activating controllers...");
       auto request_activate = std::make_shared<std_srvs::srv::SetBool::Request>();
       request_activate->data = true; // true = Ligar
       _toggle_controllers_client->async_send_request(request_activate);
@@ -276,7 +276,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 
       _default_pose_timer->cancel();
 
-      RCLCPP_INFO(this->get_logger(), "Chamando serviço para DESATIVAR os controladores...");
+      RCLCPP_INFO(this->get_logger(), "Disabling Controllers...");
       auto request_deactivate = std::make_shared<std_srvs::srv::SetBool::Request>();
       request_deactivate->data = false; // false = Desligar
       _toggle_controllers_client->async_send_request(request_deactivate);
