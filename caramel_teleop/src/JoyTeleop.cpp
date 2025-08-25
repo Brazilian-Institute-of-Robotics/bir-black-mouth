@@ -27,18 +27,17 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   _default_pose_publisher = this->create_publisher<std_msgs::msg::Empty>("cmd_default_pose", 10);
   _vel_publisher = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
 
-  _joy_subscriber = this->create_subscription<sensor_msgs::msg::Joy>("joy", 10, 
+  _joy_subscriber = this->create_subscription<sensor_msgs::msg::Joy>("joy", 10,
                           std::bind(&JoyTeleop::joyCallback, this, _1), _sub_options);
 
   _set_state_client = this->create_client<caramel_teleop::srv::SetTeleopState>("set_teleop_state");
   _set_body_control_publish_ik_client = this->create_client<std_srvs::srv::SetBool>("set_body_control_publish_ik");
   _reset_body_control_pid_client = this->create_client<std_srvs::srv::Empty>("reset_body_control_pid");
 
-  _set_hw_state_client = this->create_client<controller_manager_msgs::srv::SetHardwareComponentState>("controller_manager/set_hardware_component_state");
-  _switch_controller_client = this->create_client<controller_manager_msgs::srv::SwitchController>("controller_manager/switch_controller");
+  _toggle_controllers_client = this->create_client<std_srvs::srv::SetBool>("/toggle_controllers");
 
   _gait_parameters_client = std::make_shared<rclcpp::AsyncParametersClient>(this, "trot_gait_node",
-                                                                                rmw_qos_profile_services_default, 
+                                                                                rmw_qos_profile_services_default,
                                                                                 _callback_group);
 
   _ik_timer = this->create_wall_timer(50ms,  std::bind(&JoyTeleop::publishIK, this));
@@ -53,7 +52,7 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   _ik_msg.time_from_start.resize(1);
 
   _default_max_vel_map      = { {"lin_x", 0.10}, {"lin_y", 0.10}, {"ang_z", 0.5} };
-  _default_gait_range_map   = { {"max_height", 0.05}, {"min_height", 0.025}, 
+  _default_gait_range_map   = { {"max_height", 0.05}, {"min_height", 0.025},
                                 {"max_period", 1.0}, {"min_period", 0.25} };
 
   _default_axis_linear_map  = { {"x", 0},     {"y", 1},     {"z", 2} };
@@ -149,30 +148,6 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
     RCLCPP_INFO(this->get_logger(), "gait_planner set_parameters service not available, waiting again...");
   }
 
-  while(!_set_hw_state_client->wait_for_service(1s))
-  {
-    if(!rclcpp::ok())
-    {
-      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the %s service. Exiting.", 
-      _set_hw_state_client->get_service_name());
-      return;
-    }
-    RCLCPP_INFO(this->get_logger(), "%s service not available, waiting again...",
-      _set_hw_state_client->get_service_name());
-  }
-
-  while(!_switch_controller_client->wait_for_service(1s))
-  {
-    if(!rclcpp::ok())
-    {
-      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the %s service. Exiting.", 
-      _switch_controller_client->get_service_name());
-      return;
-    }
-    RCLCPP_INFO(this->get_logger(), "%s service not available, waiting again...",
-      _switch_controller_client->get_service_name());
-  }
-
   auto request = std::make_shared<caramel_teleop::srv::SetTeleopState::Request>();
   request->state = _state;
   _set_state_client->async_send_request(request);
@@ -183,8 +158,23 @@ JoyTeleop::~JoyTeleop()
 {
 }
 
+// *** FUNÇÃO AUXILIAR ADICIONADA ***
+bool JoyTeleop::buttonPressed(int button_index, const sensor_msgs::msg::Joy::SharedPtr& msg)
+{
+  // Verifica se o botão está pressionado AGORA e NÃO ESTAVA pressionado ANTES
+  return msg->buttons[button_index] == 1 && _last_buttons[button_index] == 0;
+}
+
 void JoyTeleop::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
+  // *** LÓGICA DE DETECÇÃO DE EVENTO ADICIONADA ***
+  // Se for a primeira mensagem, apenas inicializamos o vetor e retornamos.
+  if (_last_buttons.empty() || _last_buttons.size() != msg->buttons.size())
+  {
+    _last_buttons = msg->buttons;
+    return;
+  }
+
   if (this->stateTransition(msg))
   {
     auto request = std::make_shared<caramel_teleop::srv::SetTeleopState::Request>();
@@ -207,49 +197,33 @@ void JoyTeleop::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
   else
     RCLCPP_ERROR(this->get_logger(), "Invalid Teleop State");
 
+  // No final, atualiza o estado dos botões para a próxima iteração
+  _last_buttons = msg->buttons;
 }
 
 
 bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
+  // *** LÓGICA DE TRANSIÇÃO MODIFICADA PARA USAR buttonPressed ***
   auto last_state = _state.state;
 
   switch (_state.state)
   {
   case caramel_teleop::msg::TeleopState::INIT:
-    if (msg->buttons[_lock_button] || msg->buttons[_move_button] || msg->buttons[_body_button] || msg->buttons[_walk_button] || msg->buttons[_restart_button])
+    if (buttonPressed(_lock_button, msg) || buttonPressed(_move_button, msg) || buttonPressed(_body_button, msg) || buttonPressed(_walk_button, msg) || buttonPressed(_restart_button, msg))
     {
       _state.state = caramel_teleop::msg::TeleopState::RESTING;
 
       _ik_timer->cancel();
       _vel_timer->cancel();
-      // _default_pose_timer->reset();
-
-      // Activate hardware interface
-      auto set_hw_state_request = controller_manager_msgs::srv::SetHardwareComponentState::Request();
-      set_hw_state_request.name = "CaramelSystem";
-      set_hw_state_request.target_state.id = 3; // 3 = Active
-
-      RCLCPP_INFO(this->get_logger(), "Activating hardware_interface...");
-      auto result_hw_state_goal = _set_hw_state_client->async_send_request(std::make_shared<controller_manager_msgs::srv::SetHardwareComponentState::Request>(set_hw_state_request));
-      result_hw_state_goal.wait_for(1s);
-
-      // Activate leg controllers
-      auto switch_controller_request = controller_manager_msgs::srv::SwitchController::Request();
-      switch_controller_request.activate_asap = true;
-      switch_controller_request.strictness = 1; // BEST EFFORT
-      switch_controller_request.activate_controllers.push_back("front_left_joint_trajectory_controller");
-      switch_controller_request.activate_controllers.push_back("front_right_joint_trajectory_controller");
-      switch_controller_request.activate_controllers.push_back("back_left_joint_trajectory_controller");
-      switch_controller_request.activate_controllers.push_back("back_right_joint_trajectory_controller");
-
-      RCLCPP_INFO(this->get_logger(), "Activating controllers...");
-      auto result_switch_goal = _switch_controller_client->async_send_request(std::make_shared<controller_manager_msgs::srv::SwitchController::Request>(switch_controller_request));
-      result_switch_goal.wait_for(1s);
+      
+      RCLCPP_INFO(this->get_logger(), "Chamando serviço para ATIVAR os controladores...");
+      auto request_activate = std::make_shared<std_srvs::srv::SetBool::Request>();
+      request_activate->data = true; // true = Ligar
+      _toggle_controllers_client->async_send_request(request_activate);
 
       _default_pose_publisher->publish(std_msgs::msg::Empty());
 
-      // Delay
       RCLCPP_INFO(this->get_logger(), "Going to default position...");
       auto delay_time = std::chrono::system_clock::now() + 3s;
       while (std::chrono::system_clock::now() < delay_time){
@@ -260,12 +234,12 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
     break;
   
   case caramel_teleop::msg::TeleopState::RESTING:
-    if (msg->buttons[_lock_button])
+    if (buttonPressed(_lock_button, msg))
     {
       _state.state = caramel_teleop::msg::TeleopState::BODY_LOCKED;
       _default_pose_timer->cancel();
     }
-    else if (msg->buttons[_body_button])
+    else if (buttonPressed(_body_button, msg))
     {
       _state.state = caramel_teleop::msg::TeleopState::CONTROLLING_BODY;
     
@@ -276,9 +250,8 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
       request->data = true;
       _set_body_control_publish_ik_client->async_send_request(request);
-
     }
-    else if (msg->buttons[_walk_button])
+    else if (buttonPressed(_walk_button, msg))
     {
       _state.state = caramel_teleop::msg::TeleopState::WALKING;
           
@@ -297,35 +270,18 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       }
       _default_pose_timer->cancel();
       _vel_timer->reset();
-
-
     }
-    else if (msg->buttons[_restart_button]) {
+    else if (buttonPressed(_restart_button, msg)) {
       _state.state = caramel_teleop::msg::TeleopState::INIT;
 
       _default_pose_timer->cancel();
 
-      // Deactivate leg controllers
-      auto switch_controller_request = controller_manager_msgs::srv::SwitchController::Request();
-      switch_controller_request.strictness = 1; // BEST EFFORT
-      switch_controller_request.deactivate_controllers.push_back("front_left_joint_trajectory_controller");
-      switch_controller_request.deactivate_controllers.push_back("front_right_joint_trajectory_controller");
-      switch_controller_request.deactivate_controllers.push_back("back_left_joint_trajectory_controller");
-      switch_controller_request.deactivate_controllers.push_back("back_right_joint_trajectory_controller");
-
-      auto result_switch_goal = _switch_controller_client->async_send_request(std::make_shared<controller_manager_msgs::srv::SwitchController::Request>(switch_controller_request));
-      result_switch_goal.wait_for(1s);
-
-      // Deactivate hardware interface
-      auto set_hw_state_request = controller_manager_msgs::srv::SetHardwareComponentState::Request();
-      set_hw_state_request.name = "CaramelSystem";
-      set_hw_state_request.target_state.id = 2; // Inactive 
-
-      auto result_hw_state_goal = _set_hw_state_client->async_send_request(std::make_shared<controller_manager_msgs::srv::SetHardwareComponentState::Request>(set_hw_state_request));
-      result_hw_state_goal.wait_for(1s);
-
+      RCLCPP_INFO(this->get_logger(), "Chamando serviço para DESATIVAR os controladores...");
+      auto request_deactivate = std::make_shared<std_srvs::srv::SetBool::Request>();
+      request_deactivate->data = false; // false = Desligar
+      _toggle_controllers_client->async_send_request(request_deactivate);
     }
-    else if (msg->buttons[_move_button])
+    else if (buttonPressed(_move_button, msg))
     {
       _state.state = caramel_teleop::msg::TeleopState::MOVING_BODY;
       _default_pose_timer->cancel();
@@ -334,7 +290,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
     break;
 
   case caramel_teleop::msg::TeleopState::CONTROLLING_BODY:
-    if (msg->buttons[_body_button] || msg->buttons[_restart_button])
+    if (buttonPressed(_body_button, msg) || buttonPressed(_restart_button, msg))
     {
       _state.state = caramel_teleop::msg::TeleopState::RESTING;
       _default_pose_publisher->publish(std_msgs::msg::Empty());
@@ -342,47 +298,42 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
       request->data = false;
       _set_body_control_publish_ik_client->async_send_request(request);
-
-      // _default_pose_timer->reset();
     }
     break;
 
   case caramel_teleop::msg::TeleopState::MOVING_BODY:
-    if (msg->buttons[_lock_button])
+    if (buttonPressed(_lock_button, msg))
     {
       _state.state = caramel_teleop::msg::TeleopState::BODY_LOCKED;
       _ik_timer->cancel();
     }
-    else if (msg->buttons[_move_button] || msg->buttons[_restart_button])
+    else if (buttonPressed(_move_button, msg) || buttonPressed(_restart_button, msg))
     {
       _state.state = caramel_teleop::msg::TeleopState::RESTING;
       _default_pose_publisher->publish(std_msgs::msg::Empty());
       _ik_timer->cancel();
-      // _default_pose_timer->reset();
     }
     break;
 
   case caramel_teleop::msg::TeleopState::BODY_LOCKED:
-    if (msg->buttons[_move_button])
+    if (buttonPressed(_move_button, msg))
     {
       _state.state = caramel_teleop::msg::TeleopState::MOVING_BODY;
       _ik_timer->reset();
     }
-    else if (msg->buttons[_lock_button] || msg->buttons[_restart_button])
+    else if (buttonPressed(_lock_button, msg) || buttonPressed(_restart_button, msg))
     {
       _state.state = caramel_teleop::msg::TeleopState::RESTING;
       _default_pose_publisher->publish(std_msgs::msg::Empty());
-      // _default_pose_timer->reset();
     }
     break;
 
   case caramel_teleop::msg::TeleopState::WALKING:
-    if (msg->buttons[_walk_button] || msg->buttons[_restart_button])
+    if (buttonPressed(_walk_button, msg) || buttonPressed(_restart_button, msg))
     {
       _state.state = caramel_teleop::msg::TeleopState::RESTING;
       _default_pose_publisher->publish(std_msgs::msg::Empty());
       _vel_timer->cancel();
-      // _default_pose_timer->reset();
     }
     break;
 
@@ -499,7 +450,6 @@ void JoyTeleop::walkingState(const sensor_msgs::msg::Joy::SharedPtr msg)
         _max_vel_multiplier = _gait_range_map["min_period"]/gait_period;
         RCLCPP_INFO(this->get_logger(), "Setting max velocity multiplier to %f", _max_vel_multiplier);
       }
-
     }
     else
     {

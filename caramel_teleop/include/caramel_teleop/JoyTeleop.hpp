@@ -1,20 +1,27 @@
 #ifndef JOY_TELEOP_HPP
 #define JOY_TELEOP_HPP
 
+// Bibliotecas Padrão C++
+#include <memory>
+#include <string>
+#include <map>
+#include <cstdint>
+#include <vector> // Adicionado para suportar std::vector
+
+// Bibliotecas do ROS2
 #include "rclcpp/rclcpp.hpp"
 #include "std_srvs/srv/empty.hpp"
 #include "std_srvs/srv/set_bool.hpp"
 #include "std_msgs/msg/empty.hpp"
 #include "sensor_msgs/msg/joy.hpp"
 #include "geometry_msgs/msg/twist.hpp"
+
+// Mensagens, serviços e classes customizadas do seu projeto
 #include "caramel_kinematics/msg/body_leg_ik_trajectory.hpp"
 #include "caramel_teleop/msg/teleop_state.hpp"
 #include "caramel_teleop/srv/set_teleop_state.hpp"
 #include "caramel_teleop/EMAFilter.hpp"
-#include "controller_manager_msgs/srv/set_hardware_component_state.hpp"
-#include "controller_manager_msgs/srv/switch_controller.hpp"
 
-#include <memory>
 
 class JoyTeleop : public rclcpp::Node
 {
@@ -23,6 +30,7 @@ public:
   ~JoyTeleop();
   
 private:
+  // Declaração dos métodos (funções)
   void joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg);
   void filterIK();
   void publishIK();
@@ -37,6 +45,10 @@ private:
   void movingBodyState(const sensor_msgs::msg::Joy::SharedPtr msg);
   void walkingState(const sensor_msgs::msg::Joy::SharedPtr msg);
 
+  // Declaração da função auxiliar para detectar o pressionar do botão
+  bool buttonPressed(int button_index, const sensor_msgs::msg::Joy::SharedPtr& msg);
+
+  // Declaração das variáveis membro
   rclcpp::CallbackGroup::SharedPtr _callback_group;
   rclcpp::SubscriptionOptions _sub_options;
 
@@ -53,11 +65,9 @@ private:
   rclcpp::Client<caramel_teleop::srv::SetTeleopState>::SharedPtr _set_state_client;
   rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr _set_body_control_publish_ik_client;
   rclcpp::Client<std_srvs::srv::Empty>::SharedPtr _reset_body_control_pid_client;
+  rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr _toggle_controllers_client;
   
   rclcpp::AsyncParametersClient::SharedPtr _gait_parameters_client;
-
-  rclcpp::Client<controller_manager_msgs::srv::SetHardwareComponentState>::SharedPtr _set_hw_state_client;
-  rclcpp::Client<controller_manager_msgs::srv::SwitchController>::SharedPtr _switch_controller_client;
 
   caramel_teleop::msg::TeleopState _state;
 
@@ -98,6 +108,8 @@ private:
 
   double _max_vel_multiplier;
 
+  // Variável para guardar o estado anterior dos botões
+  std::vector<int> _last_buttons;
 };
 
 #endif // JOY_TELEOP_HPP
