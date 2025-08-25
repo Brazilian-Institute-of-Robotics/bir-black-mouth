@@ -65,6 +65,13 @@ def generate_launch_description():
     #     output='screen'
     # )
 
+    controller_toggler = Node(
+        package="caramel_control",
+        executable="controller_toggler_node",
+        name="controller_toggler_node",
+        output="screen",
+    )
+
 
     return LaunchDescription([
         DeclareLaunchArgument(name='model', default_value=default_model, 
@@ -77,5 +84,6 @@ def generate_launch_description():
         load_back_left_joint_trajectory_controller,
         load_back_right_joint_trajectory_controller,
         # load_all_joint_trajectory_controller,
-        control_node
+        control_node,
+        controller_toggler,
     ])
