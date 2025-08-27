@@ -68,7 +68,7 @@
 
     <ros2_control name="CaramelSystem" type="system">
         <hardware>
-            <plugin>ign_ros2_control/IgnitionSystem</plugin>
+            <plugin>gz_ros2_control/GazeboSimSystem</plugin>
         </hardware>
         <xacro:leg_joints prefix="front_left"/>
         <xacro:leg_joints prefix="front_right"/>
@@ -77,7 +77,7 @@
     </ros2_control>
 
     <gazebo>
-        <plugin filename="libign_ros2_control-system.so" name="ign_ros2_control::IgnitionROS2ControlPlugin">
+        <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
             <robot_param>robot_description</robot_param>
             <robot_param_node>robot_state_publisher</robot_param_node>
             <parameters>$(find caramel_control)/config/leg_controllers.yaml</parameters>

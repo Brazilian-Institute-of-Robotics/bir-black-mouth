@@ -26,7 +26,7 @@ public:
       "/toggle_controllers",
       std::bind(&ControllerToggler::toggle_controllers_callback, this, std::placeholders::_1, std::placeholders::_2));
 
-    RCLCPP_INFO(this->get_logger(), "toggle_controllers ready.");
+    RCLCPP_INFO(this->get_logger(), "Serviço /toggle_controllers pronto para receber comandos.");
   }
 
 private:
@@ -39,19 +39,19 @@ private:
     
     if (request->data == true)
     {
-      RCLCPP_INFO(this->get_logger(), "Activating Controllers...");
+      RCLCPP_INFO(this->get_logger(), "Recebido pedido para ATIVAR os controladores...");
       switch_request->activate_controllers = _controller_names;
       switch_request->activate_asap = true;
     }
     else
     {
-      RCLCPP_INFO(this->get_logger(), "Deactivating Controllers...");
+      RCLCPP_INFO(this->get_logger(), "Recebido pedido para DESATIVAR os controladores...");
       switch_request->deactivate_controllers = _controller_names;
     }
 
     // Espera o serviço do controller_manager estar disponível
     if (!_switch_controller_client->wait_for_service(1s)) {
-      RCLCPP_ERROR(this->get_logger(), "Controller manager service not available.");
+      RCLCPP_ERROR(this->get_logger(), "Serviço /controller_manager/switch_controller não disponível.");
       response->success = false;
       response->message = "Controller manager service not available.";
       return;
@@ -66,21 +66,21 @@ private:
     {
       if (future_result.get()->ok)
       {
-        std::string action = request->data ? "Activated" : "Deactivated";
-        RCLCPP_INFO(this->get_logger(), "Controllers  %s successfully activated!", action.c_str());
+        std::string action = request->data ? "ativados" : "desativados";
+        RCLCPP_INFO(this->get_logger(), "Controladores %s com sucesso!", action.c_str());
         response->success = true;
         response->message = "Controllers switched successfully.";
       }
       else
       {
-        RCLCPP_ERROR(this->get_logger(), "Failed to switch controllers.");
+        RCLCPP_ERROR(this->get_logger(), "Falha ao trocar estado dos controladores.");
         response->success = false;
         response->message = "Failed to switch controllers.";
       }
     }
     else
     {
-      RCLCPP_ERROR(this->get_logger(), "Timeout switch_controller.");
+      RCLCPP_ERROR(this->get_logger(), "Timeout ao chamar o serviço switch_controller.");
       response->success = false;
       response->message = "Service call to switch_controller timed out.";
     }
