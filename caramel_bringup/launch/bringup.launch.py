@@ -126,5 +126,5 @@ def generate_launch_description():
         TimerAction(period=2.0, actions=[inverse_kinematics]),
         TimerAction(period=3.0, actions=[body_control, body_control_remapped]),
         TimerAction(period=4.0, actions=[gait_planner]),
-        # TimerAction(period=5.0, actions=[joy_teleop])
+        TimerAction(period=5.0, actions=[joy_teleop])
     ])
