@@ -101,7 +101,7 @@ def generate_launch_description():
 
 
     return LaunchDescription([
-        DeclareLaunchArgument(name='use_sim_time', default_value='False', 
+        DeclareLaunchArgument(name='use_sim_time', default_value='True', 
                               description='Use simulation (Gazebo) clock if true'),
         DeclareLaunchArgument(name='model', default_value=default_model, 
                               description='Absolute path to robot urdf file'),
@@ -117,7 +117,7 @@ def generate_launch_description():
                               description="Whether to launch bm joy teleop or not"),
         DeclareLaunchArgument(name='joy_type', default_value='x360', 
                               description='Set the joystick type (generic, x360 or ps4)'),
-        DeclareLaunchArgument(name='launch_imu', default_value='True', 
+        DeclareLaunchArgument(name='launch_imu', default_value='False', 
                               description='Whether to launch imu or not'),
         imu,
         feet_listener,
