@@ -101,7 +101,7 @@ def generate_launch_description():
 
 
     return LaunchDescription([
-        DeclareLaunchArgument(name='use_sim_time', default_value='True', 
+        DeclareLaunchArgument(name='use_sim_time', default_value='False', 
                               description='Use simulation (Gazebo) clock if true'),
         DeclareLaunchArgument(name='model', default_value=default_model, 
                               description='Absolute path to robot urdf file'),
@@ -111,15 +111,15 @@ def generate_launch_description():
                               description='Absolute path to quadruped config file'),
         DeclareLaunchArgument(name='body_control_config', default_value=default_body_control_config, 
                               description='Absolute path to body control config file'),
-        DeclareLaunchArgument(name='launch_joy_node', default_value='False',
+        DeclareLaunchArgument(name='launch_joy_node', default_value='True',
                               description='Whether to launch joy node or not'),
         DeclareLaunchArgument(name='launch_joy_teleop', default_value='True',
                               description="Whether to launch bm joy teleop or not"),
-        DeclareLaunchArgument(name='joy_type', default_value='x360', 
+        DeclareLaunchArgument(name='joy_type', default_value='generic', 
                               description='Set the joystick type (generic, x360 or ps4)'),
         DeclareLaunchArgument(name='launch_imu', default_value='False', 
                               description='Whether to launch imu or not'),
-        imu,
+        # imu,
         feet_listener,
         robot_state_publisher,
         TimerAction(period=1.0, actions=[caramel_controllers]),
