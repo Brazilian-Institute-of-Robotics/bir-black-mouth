@@ -22,6 +22,7 @@ set(dependencies
   geometry_msgs
   sensor_msgs
   std_srvs
+  std_msgs
   hardware_interface
   pluginlib
   rclcpp_lifecycle
@@ -60,6 +61,7 @@ ament_target_dependencies(
   rclcpp
   std_srvs
   controller_manager_msgs
+  std_msgs # <--- CORREÇÃO AQUI
 )
 
 target_include_directories(${PROJECT_NAME}_hw PRIVATE include)
