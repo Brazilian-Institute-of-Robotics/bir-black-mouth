@@ -16,10 +16,10 @@ public:
         // Parâmetros com valores corrigidos
         this->declare_parameter("altura_maxima", 0.05);
         this->declare_parameter("altura_minima", -0.03);
-        this->declare_parameter("frequencia", 0.2);
+        this->declare_parameter("frequencia", 0.1);
 
         pub_ = this->create_publisher<IK_MSG>("/cmd_ik", 10);
-        v
+        timer_ = this->create_wall_timer(20ms, std::bind(&FlexaoNode::timer_callback, this));
 
         RCLCPP_INFO(this->get_logger(), "Nó de Flexão iniciado (apenas em Z, valores corrigidos).");
     }
@@ -61,7 +61,7 @@ private:
         
         builtin_interfaces::msg::Duration time;
         time.sec = 0;
-        time.nanosec = 500 * 1000000; // 50ms de duração
+        time.nanosec = 0; // 50ms de duração
         msg->time_from_start.push_back(time);
         
         pub_->publish(std::move(msg));
