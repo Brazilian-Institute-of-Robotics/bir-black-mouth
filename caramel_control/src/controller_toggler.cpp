@@ -16,11 +16,8 @@ class ControllerToggler : public rclcpp::Node
 public:
   ControllerToggler() : Node("controller_toggler_node")
   {
-    // --- INÍCIO DA MODIFICAÇÃO ---
-    // Cria um grupo de callback que permite reentrada (quebra o deadlock)
     _callback_group = this->create_callback_group(
       rclcpp::CallbackGroupType::Reentrant);
-    // --- FIM DA MODIFICAÇÃO ---
 
     _controller_names = {
       "front_left_joint_trajectory_controller",
@@ -35,8 +32,6 @@ public:
     _set_hw_state_client = this->create_client<controller_manager_msgs::srv::SetHardwareComponentState>("/controller_manager/set_hardware_component_state");
     _default_pose_publisher = this->create_publisher<std_msgs::msg::Empty>("/cmd_default_pose", 10);
 
-    // --- INÍCIO DA MODIFICAÇÃO ---
-    // Associa o serviço ao novo grupo de callback
     rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service =
       this->create_service<std_srvs::srv::SetBool>(
         "/toggle_controllers",
@@ -44,7 +39,6 @@ public:
         rmw_qos_profile_services_default,
         _callback_group);
     _toggle_service = service;
-    // --- FIM DA MODIFICAÇÃO ---
 
     RCLCPP_INFO(this->get_logger(), "Serviço /toggle_controllers pronto para ligar e desligar o robô.");
   }
@@ -75,9 +69,9 @@ private:
       }
       RCLCPP_INFO(this->get_logger(), "Passo 2/3: Controladores ativados.");
       
+      // Este é o passo crucial que estava faltando nos nossos testes anteriores
       RCLCPP_INFO(this->get_logger(), "Passo 3/3: Enviando comando para a posição padrão...");
       _default_pose_publisher->publish(std_msgs::msg::Empty());
-      
       rclcpp::sleep_for(3s); 
       
       RCLCPP_INFO(this->get_logger(), "ROBÔ PRONTO: Sequência de ativação concluída.");
@@ -153,7 +147,7 @@ private:
     return false;
   }
 
-  rclcpp::CallbackGroup::SharedPtr _callback_group; // <-- NOVO
+  rclcpp::CallbackGroup::SharedPtr _callback_group;
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr _toggle_service;
   rclcpp::Client<controller_manager_msgs::srv::SwitchController>::SharedPtr _switch_controller_client;
   rclcpp::Client<controller_manager_msgs::srv::SetHardwareComponentState>::SharedPtr _set_hw_state_client;
@@ -165,13 +159,10 @@ private:
 int main(int argc, char **argv)
 {
   rclcpp::init(argc, argv);
-  
   auto node = std::make_shared<ControllerToggler>();
-  
   rclcpp::executors::MultiThreadedExecutor executor;
   executor.add_node(node);
   executor.spin();
-
   rclcpp::shutdown();
   return 0;
 }
