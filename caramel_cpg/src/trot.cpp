@@ -17,12 +17,12 @@ public:
   {
     // ==== Parâmetros ====
     this->declare_parameter<double>("step_amplitude_x", 0.04);
-    this->declare_parameter<double>("stance_lift_z", 0.005);
-    this->declare_parameter<double>("swing_lift_z", 0.05);
+    this->declare_parameter<double>("stance_lift_z", 0.009);
+    this->declare_parameter<double>("swing_lift_z", 0.03);
     this->declare_parameter<double>("body_height", 0.0);
     this->declare_parameter<double>("mu", 10.0);
-    this->declare_parameter<double>("r_desired", 1.0);
-    this->declare_parameter<double>("coupling_K", 20.0);
+    this->declare_parameter<double>("r_desired", 1.5);
+    this->declare_parameter<double>("coupling_K", 6.0);
     this->declare_parameter<double>("dt", 0.02);
     this->declare_parameter<double>("omega_stance", 2.0 * M_PI * 0.8);  // 0.8 Hz
     this->declare_parameter<double>("omega_swing", 2.0 * M_PI * 1.2);   // 1.2 Hz
@@ -30,10 +30,6 @@ public:
     // === Fase desejada (trote) ===
     std::vector<double> default_phase_des = {0.0, M_PI, M_PI, 0.0};
     this->declare_parameter<std::vector<double>>("phase_desired", default_phase_des);
-
-    // === Offset de fase (ajuste estático de postura) ===
-    std::vector<double> default_phase_offset = {0.1, -0.1, 0.1, -0.1}; 
-    this->declare_parameter<std::vector<double>>("phase_offset", default_phase_offset);
 
     // === Publicador e Timer ===
     pub_ = this->create_publisher<IK_MSG>("/cmd_ik", 10);
@@ -83,12 +79,6 @@ private:
     for (int i = 0; i < num_osc_ && i < (int)phase_desired.size(); ++i)
       phi_des[i] = phase_desired[i];
 
-    // ==== Leitura dos offsets de fase ====
-    auto phase_offset_vec = this->get_parameter("phase_offset").as_double_array();
-    VectorXd phase_offset(num_osc_);
-    for (int i = 0; i < num_osc_ && i < (int)phase_offset_vec.size(); ++i)
-      phase_offset[i] = phase_offset_vec[i];
-
     // ==== Integração do CPG ====
     VectorXd dr(num_osc_);
     VectorXd dphi(num_osc_);
@@ -97,6 +87,7 @@ private:
     {
       dr[i] = mu * (r_des - r_[i]) * r_[i];
 
+      // escolha da frequência conforme fase (stance/swing)
       double omega_i = (std::sin(phi_[i]) > 0.0) ? omega_swing : omega_stance;
 
       double coupling_sum = 0.0;
@@ -114,6 +105,7 @@ private:
     r_ += dr * dt;
     phi_ += dphi * dt;
 
+    // Normalizar fases para [-pi, pi]
     for (int i = 0; i < num_osc_; ++i)
       phi_[i] = std::fmod(phi_[i] + M_PI, 2.0 * M_PI) - M_PI;
 
@@ -123,7 +115,7 @@ private:
 
     for (int i = 0; i < num_osc_; ++i)
     {
-      double ph = phi_[i] + phase_offset[i]; // <--- offset aplicado aqui
+      double ph = phi_[i];
       double rscale = r_[i];
       bool swing_phase = (std::sin(ph) > 0.0);
 
