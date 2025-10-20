@@ -16,16 +16,23 @@ public:
   : Node("hopf_cpg_node")
   {
     // ==== Parâmetros ====
-    this->declare_parameter<double>("step_amplitude_x", 0.04);
-    this->declare_parameter<double>("stance_lift_z", 0.009);
-    this->declare_parameter<double>("swing_lift_z", 0.03);
-    this->declare_parameter<double>("body_height", 0.0);
-    this->declare_parameter<double>("mu", 10.0);
-    this->declare_parameter<double>("r_desired", 1.5);
-    this->declare_parameter<double>("coupling_K", 6.0);
-    this->declare_parameter<double>("dt", 0.02);
-    this->declare_parameter<double>("omega_stance", 2.0 * M_PI * 0.8);  // 0.8 Hz
-    this->declare_parameter<double>("omega_swing", 2.0 * M_PI * 1.2);   // 1.2 Hz
+    this->declare_parameter<double>("step_amplitude_x", 0.0);//
+    this->declare_parameter<double>("stance_lift_z", 0.0025);//0.04  //0.02
+    this->declare_parameter<double>("swing_lift_z", 0.055);//0.06 //
+    this->declare_parameter<double>("body_height", 0.0);//
+    this->declare_parameter<double>("mu", 10.0);//
+    this->declare_parameter<double>("r_desired", 1.0);//amplitude total e'fixa
+    this->declare_parameter<double>("coupling_K", 1.0);// fixo
+    this->declare_parameter<double>("dt", 0.005);//fixo
+
+    // Frequências agora em HERTZ
+    this->declare_parameter<double>("omega_stance", 0.5);  // Hz
+    this->declare_parameter<double>("omega_swing", 2.0);   // Hz
+
+    // === Parâmetros de deslocamento da base ===
+    this->declare_parameter<double>("body_offset_x", 0.02);
+    this->declare_parameter<double>("body_offset_y", 0.0);
+    this->declare_parameter<double>("body_offset_z", 0.0);
 
     // === Fase desejada (trote) ===
     std::vector<double> default_phase_des = {0.0, M_PI, M_PI, 0.0};
@@ -53,7 +60,6 @@ public:
     double K = this->get_parameter("coupling_K").as_double();
     coupling_ = MatrixXd::Constant(num_osc_, num_osc_, K * 0.5);
     for (int i = 0; i < num_osc_; ++i) coupling_(i, i) = 0.0;
-    // diagonais fortes
     coupling_(0, 3) = coupling_(3, 0) = K;
     coupling_(1, 2) = coupling_(2, 1) = K;
 
@@ -71,9 +77,17 @@ private:
     double mu = this->get_parameter("mu").as_double();
     double r_des = this->get_parameter("r_desired").as_double();
     double dt = this->get_parameter("dt").as_double();
-    double omega_stance = this->get_parameter("omega_stance").as_double();
-    double omega_swing = this->get_parameter("omega_swing").as_double();
 
+    // Frequências em Hz → converter para rad/s
+    double omega_stance = 2.0 * M_PI * this->get_parameter("omega_stance").as_double();
+    double omega_swing = 2.0 * M_PI * this->get_parameter("omega_swing").as_double();
+
+    // ==== Offsets da base ====
+    double body_offset_x = this->get_parameter("body_offset_x").as_double();
+    double body_offset_y = this->get_parameter("body_offset_y").as_double();
+    double body_offset_z = this->get_parameter("body_offset_z").as_double();
+
+    // ==== Fases desejadas ====
     auto phase_desired = this->get_parameter("phase_desired").as_double_array();
     VectorXd phi_des(num_osc_);
     for (int i = 0; i < num_osc_ && i < (int)phase_desired.size(); ++i)
@@ -87,7 +101,7 @@ private:
     {
       dr[i] = mu * (r_des - r_[i]) * r_[i];
 
-      // escolha da frequência conforme fase (stance/swing)
+      // Frequência conforme fase (stance/swing)
       double omega_i = (std::sin(phi_[i]) > 0.0) ? omega_swing : omega_stance;
 
       double coupling_sum = 0.0;
@@ -140,6 +154,11 @@ private:
 
     ik_point.leg_points.back_left_leg.x = leg_x[3];
     ik_point.leg_points.back_left_leg.z = leg_z[3];
+
+    // ==== Aplicar deslocamento da base ====
+    ik_point.body_position.x = body_offset_x;
+    ik_point.body_position.y = body_offset_y;
+    ik_point.body_position.z = body_offset_z;
 
     msg->body_leg_ik_trajectory.push_back(ik_point);
 
