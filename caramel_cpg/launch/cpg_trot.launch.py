@@ -10,8 +10,8 @@ def generate_launch_description():
     return LaunchDescription([
         Node(
             package='caramel_cpg',
-            executable='trot_node',
-            name='trot_node',
+            executable='hopf_cpg_node',
+            name='hopf_cpg_node',
             output='screen',
             parameters=[config_path]
         )
