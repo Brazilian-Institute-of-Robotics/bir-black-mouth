@@ -5,16 +5,23 @@
 
 #include <memory>
 #include <cmath>
+#include <vector> // Adicionado por segurança
+#include <string> // Adicionado por segurança
 
 #define ANSI_COLOR_RESET "\x1b[0m"
 #define ANSI_COLOR_BLUE  "\x1b[34m"
 
+// --- MUDANÇA AQUI ---
+// O vetor de nomes precisa corresponder ao TeleopState.msg
 std::vector<std::string> states = {"INIT", 
                                    "RESTING", 
                                    "BODY_LOCKED", 
                                    "CONTROLLING_BODY", 
                                    "MOVING_BODY", 
-                                   "WALKING"};
+                                   "WALKING",
+                                   "CPG_WALKING"}; // <<< ADICIONADO "CPG_WALKING"
+// --- FIM DA MUDANÇA ---
+
 caramel_teleop::msg::TeleopState current_state;
 
 void setTeleopState(const std::shared_ptr<caramel_teleop::srv::SetTeleopState::Request> request,
@@ -23,8 +30,16 @@ void setTeleopState(const std::shared_ptr<caramel_teleop::srv::SetTeleopState::R
   (void) responde;
   current_state = request->state;
 
-  RCLCPP_INFO(rclcpp::get_logger("teleop_state_server"), "State: " ANSI_COLOR_BLUE "\x1b[34m"
- "\33[1m%s\33[0m" ANSI_COLOR_RESET, states.at(current_state.state).c_str());
+  // Adiciona uma checagem de segurança para evitar futuros crashes
+  if (current_state.state < states.size())
+  {
+    RCLCPP_INFO(rclcpp::get_logger("teleop_state_server"), "State: " ANSI_COLOR_BLUE "\x1b[34m"
+   "\33[1m%s\33[0m" ANSI_COLOR_RESET, states.at(current_state.state).c_str());
+  }
+  else
+  {
+    RCLCPP_ERROR(rclcpp::get_logger("teleop_state_server"), "Recebeu um estado inválido: %d", current_state.state);
+  }
 }
 
 void getTeleopState(const std::shared_ptr<caramel_teleop::srv::GetTeleopState::Request> request,

@@ -29,3 +29,4 @@ joy_teleop_node:
     lock: 0
     body: 3
     walk: 1
+    cpg_toggle: 10

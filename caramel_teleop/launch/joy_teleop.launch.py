@@ -12,16 +12,24 @@ def generate_launch_description():
 
     launch_joy_node = LaunchConfiguration('launch_joy_node')
 
-    joy_type = LaunchConfiguration('joy_type', default="generic")
-    joystick_config = [TextSubstitution(text=os.path.join(caramel_teleop_pkg_share, 'config', '')), 
-                       joy_type, TextSubstitution(text='_joystick.yaml')]
+    # Este é o 'joy_type' que é passado do launch principal (ex: 'x360')
+    joy_type = LaunchConfiguration('joy_type')
+    
+    # Constrói o caminho para o YAML do joystick (ex: x360_joystick.yaml)
+    joystick_config = [
+        TextSubstitution(text=os.path.join(caramel_teleop_pkg_share, 'config', '')), 
+        joy_type, 
+        TextSubstitution(text='_joystick.yaml')
+    ]
 
+    # Nó que lê o hardware do joystick
     joy_node = Node(
-        package='joy',
-        executable='joy_node',
+        package='joy_linux', # Pacote que precisa ser instalado
+        executable='joy_linux_node',
         name='joy_node',
-        output='both',
+        output='screen',
         parameters=[{
+          'dev': '/dev/input/js0', # Garante que está usando o js0
           'deadzone': 0.05,
           'autorepeat_rate': 0.0,
           'sticky_buttons': False,
@@ -30,24 +38,27 @@ def generate_launch_description():
         condition=IfCondition(PythonExpression([launch_joy_node, ' == True']))
     )
 
+    # Nó que publica o estado do teleop (INIT, RESTING, etc.)
     teleop_state_server = Node(
         package='caramel_teleop',
         executable='teleop_state_server',
         name='teleop_state_server',
-        output='both',
+        output='screen',
     )
 
+    # O seu supervisor principal (JoyTeleop.cpp)
     joy_teleop = Node(
         package='caramel_teleop',
         executable='joy_teleop',
         name='joy_teleop_node',
-        parameters=[joystick_config]
+        parameters=[joystick_config],
+        output='screen' # Habilita o output para vermos os logs
     )
 
     return launch.LaunchDescription([
         DeclareLaunchArgument(name='launch_joy_node', default_value='True',
                               description="Whether to launch joy node or not"),
-        DeclareLaunchArgument(name='joy_type', default_value='generic', 
+        DeclareLaunchArgument(name='joy_type', default_value='x360', 
                               description='Set the joystick type (generic, x360 or ps4)'),
         joy_node,
         teleop_state_server,

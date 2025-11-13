@@ -36,6 +36,7 @@ private:
   void controllingBodyState();
   void movingBodyState(const sensor_msgs::msg::Joy::SharedPtr msg);
   void walkingState(const sensor_msgs::msg::Joy::SharedPtr msg);
+  void cpgWalkingState(const sensor_msgs::msg::Joy::SharedPtr msg);
 
   rclcpp::CallbackGroup::SharedPtr _callback_group;
   rclcpp::SubscriptionOptions _sub_options;
@@ -46,6 +47,7 @@ private:
 
   rclcpp::Publisher<caramel_kinematics::msg::BodyLegIKTrajectory>::SharedPtr _ik_publisher;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr _vel_publisher;
+  rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr _cpg_vel_publisher;
   rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr _default_pose_publisher;
 
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr _joy_subscriber;
@@ -92,6 +94,7 @@ private:
   uint8_t _body_button;
   uint8_t _walk_button;
   uint8_t _restart_button;
+  uint8_t _cpg_toggle_button;
 
   bool _use_filter;
   double _filter_alpha;

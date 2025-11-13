@@ -2,7 +2,8 @@ import os
 from launch import LaunchDescription
 from launch.conditions import IfCondition, UnlessCondition
 from launch.substitutions import Command, LaunchConfiguration, PythonExpression
-from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument, TimerAction
+# Importe ExecuteProcess
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument, TimerAction, ExecuteProcess
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import Node
@@ -16,6 +17,8 @@ def generate_launch_description():
     caramel_gait_planner_pkg_share = FindPackageShare('caramel_gait_planner').find('caramel_gait_planner')
     caramel_teleop_pkg_share = FindPackageShare('caramel_teleop').find('caramel_teleop')
     caramel_bringup_pkg_share = FindPackageShare('caramel_bringup').find('caramel_bringup')
+    
+    caramel_cpg_pkg_share = FindPackageShare('caramel_cpg').find('caramel_cpg')
 
 
     default_model = os.path.join(caramel_description_pkg_share, "urdf", "caramel_real.urdf.xacro")
@@ -30,8 +33,12 @@ def generate_launch_description():
     default_body_control_config = os.path.join(caramel_control_pkg_share, 'config', 'body_control.yaml')
     body_control_config = LaunchConfiguration('body_control_config', default=default_body_control_config)
 
+    # --- CORRIGIDO: Apontando para o seu arquivo .yaml existente ---
+    default_cpg_config = os.path.join(caramel_cpg_pkg_share, 'config', 'hopf_cpg.yaml') # <<< NOME CORRIGIDO
+    cpg_config = LaunchConfiguration('cpg_config', default=default_cpg_config)
+
     use_sim_time = LaunchConfiguration('use_sim_time', default='False')
-    joy_type = LaunchConfiguration('joy_type', default="generic")
+    joy_type = LaunchConfiguration('joy_type', default="x360")
 
 
     feet_listener = Node(
@@ -86,17 +93,43 @@ def generate_launch_description():
         condition=IfCondition(PythonExpression([use_sim_time, ' == True']))
     )
 
+    # Este é o seu "Modo PID"
     gait_planner = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(caramel_gait_planner_pkg_share, 'launch', 'gait_planner.launch.py')),
     )
 
+    # Este é o seu "Modo CPG"
+    cpg_node = Node(
+        package='caramel_cpg',
+        executable='hopf_cpg_node',
+        name='hopf_cpg_node',
+        parameters=[cpg_config],
+        output="screen",
+        remappings=[
+            ('/cmd_vel', '/cmd_vel_cpg') # Remapeia a entrada para o tópico do CPG
+        ]
+    )
+
+    # Este é o seu supervisor que alterna entre os modos
     joy_teleop = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(caramel_teleop_pkg_share, 'launch', 'joy_teleop.launch.py')),
         launch_arguments={'launch_joy_node': LaunchConfiguration('launch_joy_node'),
                           'joy_type': joy_type}.items(),
         condition=IfCondition(LaunchConfiguration('launch_joy_teleop')),
+    )
+
+    # --- CORRIGIDO: Chamada de Serviço para Ativar Controladores ---
+    toggle_service_call = TimerAction(
+        period=1.5, # Executa 0.5s após carregar os controladores
+        actions=[
+            ExecuteProcess(
+                # As aspas simples em '{data: true}' foram removidas
+                cmd=['ros2', 'service', 'call', '/toggle_controllers', 'std_srvs/srv/SetBool', '{data: true}'],
+                output='screen'
+            )
+        ]
     )
 
 
@@ -111,11 +144,15 @@ def generate_launch_description():
                               description='Absolute path to quadruped config file'),
         DeclareLaunchArgument(name='body_control_config', default_value=default_body_control_config, 
                               description='Absolute path to body control config file'),
+        
+        DeclareLaunchArgument(name='cpg_config', default_value=default_cpg_config, 
+                              description='Absolute path to CPG config file'),
+        
         DeclareLaunchArgument(name='launch_joy_node', default_value='True',
                               description='Whether to launch joy node or not'),
         DeclareLaunchArgument(name='launch_joy_teleop', default_value='True',
                               description="Whether to launch bm joy teleop or not"),
-        DeclareLaunchArgument(name='joy_type', default_value='generic', 
+        DeclareLaunchArgument(name='joy_type', default_value='x360', 
                               description='Set the joystick type (generic, x360 or ps4)'),
         DeclareLaunchArgument(name='launch_imu', default_value='False', 
                               description='Whether to launch imu or not'),
@@ -123,8 +160,12 @@ def generate_launch_description():
         feet_listener,
         robot_state_publisher,
         TimerAction(period=1.0, actions=[caramel_controllers]),
+        toggle_service_call, # Ativa os controladores
         TimerAction(period=2.0, actions=[inverse_kinematics]),
-        # TimerAction(period=3.0, actions=[body_control, body_control_remapped]),
-        # TimerAction(period=4.0, actions=[gait_planner]),
-        # TimerAction(period=5.0, actions=[joy_teleop])
+        TimerAction(period=3.0, actions=[body_control, body_control_remapped]),
+        
+        # Inicia AMBOS os modos de caminhada
+        TimerAction(period=4.0, actions=[gait_planner, cpg_node]),
+        
+        TimerAction(period=5.0, actions=[joy_teleop]) # Inicia o supervisor por último
     ])

@@ -1,5 +1,6 @@
 #include "caramel_cpg/hopf_cpg_node.hpp"
 #include <Eigen/Dense>
+#include <cmath> // Necessário para std::fabs e std::sqrt
 
 using namespace Eigen;
 
@@ -26,14 +27,17 @@ HopfCPGNode::HopfCPGNode()
   this->declare_parameter<std::vector<double>>("phase_desired", default_phase_des);
 
   sub_vel_ = this->create_subscription<TWIST_MSG>(
-    "/cmd_vel",
+    "/cmd_vel", // Lembre-se que o launch remapeia isso para /cmd_vel_cpg
     10,
     std::bind(&HopfCPGNode::cmd_vel_callback, this, std::placeholders::_1)
   );
 
   pub_ = this->create_publisher<IK_MSG>("/cmd_ik", 10);
+  
+  // MUDANÇA: Timer ajustado de 5ms (200Hz) para 33ms (~30Hz)
+  // Isso reduz a carga no nó de IK e evita timeouts.
   timer_ = this->create_wall_timer(
-    5ms,
+    33ms, 
     std::bind(&HopfCPGNode::timer_callback, this)
   );
 
@@ -60,7 +64,7 @@ HopfCPGNode::HopfCPGNode()
   turn_scale_ = this->get_parameter("turn_scale").as_double();
 
   last_time_ = this->now();
-  RCLCPP_INFO(this->get_logger(), "Hopf CPG node iniciado com entrada de velocidade.");
+  RCLCPP_INFO(this->get_logger(), "Hopf CPG node iniciado com entrada de velocidade (taxa 30Hz).");
 }
 
 void HopfCPGNode::cmd_vel_callback(const TWIST_MSG::SharedPtr msg)
@@ -73,12 +77,31 @@ void HopfCPGNode::timer_callback()
   auto current_time = this->now();
   double dt = (current_time - last_time_).seconds();
   last_time_ = current_time;
-  if (dt <= 0.0 || dt > 0.1) dt = 0.01;
+  // Clamp de DT ajustado para o novo timer de 33ms
+  if (dt <= 0.0 || dt > 0.1) dt = 0.033; 
 
+  // === 1. Obter Comandos de Velocidade ===
   double vx = last_cmd_vel_.linear.x;
   double vy = last_cmd_vel_.linear.y;
   double vth = last_cmd_vel_.angular.z;
 
+  // --- MUDANÇA: Adiciona o Deadzone ---
+  // Se os comandos forem muito pequenos (drift do joystick), zere-os.
+  const double linear_deadzone = 0.02;  // 2 cm/s
+  const double angular_deadzone = 0.05; // ~3 graus/s
+
+  if (std::sqrt(vx*vx + vy*vy) < linear_deadzone)
+  {
+    vx = 0.0;
+    vy = 0.0;
+  }
+  if (std::fabs(vth) < angular_deadzone)
+  {
+    vth = 0.0;
+  }
+  // --- Fim da Mudança ---
+
+  // === 2. Obter Parâmetros ===
   double lift_stance = this->get_parameter("stance_lift_z").as_double();
   double lift_swing = this->get_parameter("swing_lift_z").as_double();
   double body_h = this->get_parameter("body_height").as_double();
@@ -86,25 +109,43 @@ void HopfCPGNode::timer_callback()
   double r_des = this->get_parameter("r_desired").as_double();
   double freq_scale = this->get_parameter("freq_scale").as_double();
   
+  double f_base_hz = this->get_parameter("omega_stance").as_double();
+
   double body_offset_x = this->get_parameter("body_offset_x").as_double();
   double body_offset_y = this->get_parameter("body_offset_y").as_double();
   double body_offset_z = this->get_parameter("body_offset_z").as_double();
 
+  // === 3. Mapear Velocidade para Parâmetros do CPG ===
+
+  // --- A. Frequência ---
   double vel_magnitude = std::sqrt(vx*vx + vy*vy + (vth*turn_scale_)*(vth*turn_scale_));
   double omega_scale = 1.0 + (vel_magnitude * freq_scale);
   double omega_stance = omega_stance_base_ * omega_scale;
   double omega_swing = omega_swing_base_ * omega_scale;
+  
+  double current_f_hz = f_base_hz * omega_scale;
 
+  // --- B. Amplitude (CORRIGIDO) ---
+  double target_amplitude_x = 0.0;
+  double target_amplitude_y = 0.0;
+
+  if (current_f_hz > 0.01) 
+  {
+      target_amplitude_x = vx / (4.0 * current_f_hz);
+      target_amplitude_y = vy / (4.0 * current_f_hz);
+  }
+  
   VectorXd step_x_amp(num_osc_);
   VectorXd step_y_amp(num_osc_);
   
-  step_x_amp[0] = vx - vth * turn_scale_;
-  step_x_amp[1] = vx + vth * turn_scale_;
-  step_x_amp[2] = vx - vth * turn_scale_;
-  step_x_amp[3] = vx + vth * turn_scale_;
+  step_x_amp[0] = target_amplitude_x - vth * turn_scale_;
+  step_x_amp[1] = target_amplitude_x + vth * turn_scale_;
+  step_x_amp[2] = target_amplitude_x - vth * turn_scale_;
+  step_x_amp[3] = target_amplitude_x + vth * turn_scale_;
 
-  step_y_amp.setConstant(vy); 
+  step_y_amp.setConstant(target_amplitude_y); 
 
+  // --- 4. Lógica de Integração do CPG ---
   auto phase_desired = this->get_parameter("phase_desired").as_double_array();
   VectorXd phi_des(num_osc_);
   for (int i = 0; i < num_osc_ && i < (int)phase_desired.size(); ++i)
@@ -133,6 +174,7 @@ void HopfCPGNode::timer_callback()
   for (int i = 0; i < num_osc_; ++i)
     phi_[i] = std::fmod(phi_[i] + M_PI, 2.0 * M_PI) - M_PI;
 
+  // --- 5. Mapeamento Cartesiano ---
   VectorXd leg_x(num_osc_);
   VectorXd leg_y(num_osc_);
   VectorXd leg_z(num_osc_);
@@ -150,6 +192,7 @@ void HopfCPGNode::timer_callback()
     leg_z[i] = lift * rscale * std::sin(ph) + body_h;
   }
 
+  // --- 6. Publicação da Mensagem ---
   auto msg = std::make_unique<IK_MSG>();
   caramel_kinematics::msg::BodyLegIK ik_point;
   ik_point.leg_points.reference_link = 1;

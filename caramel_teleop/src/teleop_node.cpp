@@ -16,8 +16,6 @@ using std::placeholders::_1;
 
 JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
 {
-  // ... (Todo o seu construtor existente) ...
-  // ... (Ele já está correto) ...
   RCLCPP_INFO(this->get_logger(), "Joy Body IK Node initialized");
 
   _state.state = caramel_teleop::msg::TeleopState::INIT;
@@ -28,6 +26,7 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   _ik_publisher = this->create_publisher<caramel_kinematics::msg::BodyLegIKTrajectory>("cmd_ik", 10);
   _default_pose_publisher = this->create_publisher<std_msgs::msg::Empty>("cmd_default_pose", 10);
   _vel_publisher = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
+  // NOVO: Publisher para o CPG
   _cpg_vel_publisher = this->create_publisher<geometry_msgs::msg::Twist>("/cmd_vel_cpg", 10);
 
 
@@ -68,7 +67,7 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
                                 {"gait_period_inc", 10}, {"gait_period_dec", 11} };
 
   this->declare_parameters("max_vel", _default_max_vel_map);
-  this->declare_parameters("gait_range", _default_gait_range_map);
+  this->declare_parameters("gait_range", _gait_range_map);
   this->declare_parameters("axis_linear", _default_axis_linear_map);
   this->declare_parameters("axis_angular", _default_axis_angular_map);
   this->declare_parameters("gait_params", _default_gait_params_map);
@@ -79,6 +78,7 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   this->declare_parameter("walk", 3);
   this->declare_parameter("restart", 9);
   this->declare_parameter("filter_alpha", 0.0);
+  // NOVO: Parâmetro do botão de toggle (padrão 10 = R3)
   this->declare_parameter("cpg_toggle", 10);
 
   this->get_parameters("max_vel", _max_vel_map);
@@ -93,6 +93,7 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   this->get_parameter("walk", _walk_button);
   this->get_parameter("restart", _restart_button);
   this->get_parameter("filter_alpha", _filter_alpha);
+  // NOVO: Obter o botão de toggle
   this->get_parameter("cpg_toggle", _cpg_toggle_button);
 
   _use_filter = _filter_alpha > 0.0;
@@ -109,6 +110,7 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   _body_rotation_y_filter.setFilterAlpha(_filter_alpha);
   _body_rotation_z_filter.setFilterAlpha(_filter_alpha);
 
+  // ... (Resto das esperas de serviço ... )
   while(!_set_state_client->wait_for_service(1s))
   {
     if(!rclcpp::ok())
@@ -183,6 +185,7 @@ JoyTeleop::JoyTeleop() : Node("joy_teleop_node")
   auto request = std::make_shared<caramel_teleop::srv::SetTeleopState::Request>();
   request->state = _state;
   _set_state_client->async_send_request(request);
+
 }
 
 JoyTeleop::~JoyTeleop()
@@ -210,10 +213,12 @@ void JoyTeleop::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg)
     this->movingBodyState(msg);
   else if (_state.state == caramel_teleop::msg::TeleopState::WALKING)
     this->walkingState(msg);
+  // NOVO: Chamada para o novo estado
   else if (_state.state == caramel_teleop::msg::TeleopState::CPG_WALKING)
     this->cpgWalkingState(msg);
   else
     RCLCPP_ERROR(this->get_logger(), "Invalid Teleop State");
+
 }
 
 
@@ -221,22 +226,19 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
   auto last_state = _state.state;
 
-  // --- MUDANÇA: Lógica de detecção de borda (toggle) mais robusta ---
+  // NOVO: Detecção de "borda de subida" para o botão de toggle
   static bool toggle_pressed_last_frame = false;
   bool toggle_just_pressed = false;
-
-  if (msg->buttons.size() > (size_t)_cpg_toggle_button) {
-      bool toggle_currently_pressed = (msg->buttons[_cpg_toggle_button] == 1);
-      if (toggle_currently_pressed && !toggle_pressed_last_frame) {
-          toggle_just_pressed = true;
-      }
-      toggle_pressed_last_frame = toggle_currently_pressed;
-  } else {
-      // Se o botão não existir (improvável), resetamos
-      toggle_pressed_last_frame = false;
+  
+  if (msg->buttons.size() > (size_t)_cpg_toggle_button && 
+      msg->buttons[_cpg_toggle_button] && !toggle_pressed_last_frame) 
+  {
+    toggle_just_pressed = true;
   }
-  // --- Fim da Mudança ---
-
+  if (msg->buttons.size() > (size_t)_cpg_toggle_button) {
+    toggle_pressed_last_frame = msg->buttons[_cpg_toggle_button];
+  }
+  // --- Fim da detecção
 
   switch (_state.state)
   {
@@ -302,9 +304,12 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       _set_body_control_publish_ik_client->async_send_request(request);
 
     }
+    // --- LÓGICA ALTERADA ---
+    // Botão de caminhada agora entra no CPG por padrão
     else if (msg->buttons[_walk_button])
     {
-      _state.state = caramel_teleop::msg::TeleopState::CPG_WALKING; // Padrão é CPG
+      // _state.state = caramel_teleop::msg::TeleopState::WALKING; // Linha antiga
+      _state.state = caramel_teleop::msg::TeleopState::CPG_WALKING; // NOVO: Padrão é CPG
       RCLCPP_INFO(this->get_logger(), "Iniciando modo CPG_WALKING");
           
       auto parameters = _gait_parameters_client->get_parameters({"gait_period"});
@@ -409,6 +414,7 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
       _vel_timer->cancel();
       // _default_pose_timer->reset();
     }
+    // NOVO: Lógica para alternar para CPG
     else if (toggle_just_pressed)
     {
       RCLCPP_INFO(this->get_logger(), "Alternando para modo CPG_WALKING");
@@ -417,18 +423,22 @@ bool JoyTeleop::stateTransition(const sensor_msgs::msg::Joy::SharedPtr msg)
     }
     break;
 
+  // NOVO: Case inteiro para o modo CPG
   case caramel_teleop::msg::TeleopState::CPG_WALKING:
     if (msg->buttons[_walk_button] || msg->buttons[_restart_button])
     {
       _state.state = caramel_teleop::msg::TeleopState::RESTING;
       _default_pose_publisher->publish(std_msgs::msg::Empty());
+      // Envia uma mensagem de velocidade zero para parar o CPG
       auto stop_msg = std::make_unique<geometry_msgs::msg::Twist>();
       _cpg_vel_publisher->publish(std::move(stop_msg));
     }
+    // NOVO: Lógica para alternar de volta para o PID
     else if (toggle_just_pressed)
     {
       RCLCPP_INFO(this->get_logger(), "Alternando para modo WALKING (PID)");
       _state.state = caramel_teleop::msg::TeleopState::WALKING;
+      // Envia uma mensagem de velocidade zero para parar o CPG
       auto stop_msg = std::make_unique<geometry_msgs::msg::Twist>();
       _cpg_vel_publisher->publish(std::move(stop_msg));
       _vel_timer->reset(); // Liga o timer do PID
@@ -450,7 +460,6 @@ void JoyTeleop::initState()
 
 void JoyTeleop::restingState()
 {
-  // ... (Sua função existente) ...
   _ik_msg.body_leg_ik_trajectory.at(0).leg_points.reference_link = caramel_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
 
   _ik_msg.body_leg_ik_trajectory.at(0).body_position.x = 0.0;
@@ -474,7 +483,6 @@ void JoyTeleop::controllingBodyState()
 
 void JoyTeleop::movingBodyState(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
-  // ... (Sua função existente) ...
   _ik_msg.body_leg_ik_trajectory.at(0).leg_points.reference_link = caramel_kinematics::msg::AllLegPoints::FOOT_LINK_AS_REFERENCE;
 
   _ik_msg.body_leg_ik_trajectory.at(0).body_position.x = 0.05*msg->axes[_axis_linear_map["x"]];
@@ -511,7 +519,7 @@ void JoyTeleop::movingBodyState(const sensor_msgs::msg::Joy::SharedPtr msg)
 
 void JoyTeleop::walkingState(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
-  // ... (Sua função existente) ...
+  // Esta função agora controla apenas o modo PID
   if (msg->buttons[_gait_params_map["gait_height_inc"]] || 
       msg->buttons[_gait_params_map["gait_height_dec"]] ||
       msg->buttons[_gait_params_map["gait_period_inc"]] ||
@@ -559,14 +567,18 @@ void JoyTeleop::walkingState(const sensor_msgs::msg::Joy::SharedPtr msg)
     }
   }
 
+  // Esta função apenas define a _vel_msg. O _vel_timer a publica.
   _vel_msg.linear.x = _max_vel_multiplier*_max_vel_map["lin_x"]*msg->axes[_axis_linear_map["x"]];
   _vel_msg.linear.y = _max_vel_multiplier*_max_vel_map["lin_y"]*msg->axes[_axis_linear_map["y"]];
   _vel_msg.angular.z = _max_vel_multiplier*_max_vel_map["ang_z"]*msg->axes[_axis_angular_map["yaw"]];
 }
 
+// NOVO: Função inteira para o estado CPG
 void JoyTeleop::cpgWalkingState(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
-  // ... (Sua função existente) ...
+  // Esta função controla o modo CPG
+  // A lógica de gait (altura/período) pode ou não afetar o CPG.
+  // Vamos copiá-la por enquanto, pois ela afeta o _max_vel_multiplier
   if (msg->buttons[_gait_params_map["gait_height_inc"]] || 
       msg->buttons[_gait_params_map["gait_height_dec"]] ||
       msg->buttons[_gait_params_map["gait_period_inc"]] ||
@@ -612,6 +624,7 @@ void JoyTeleop::cpgWalkingState(const sensor_msgs::msg::Joy::SharedPtr msg)
     }
   }
 
+  // Esta função PUBLICA DIRETAMENTE, pois não usa o _vel_timer
   auto cpg_vel_msg = std::make_unique<geometry_msgs::msg::Twist>();
   cpg_vel_msg->linear.x = _max_vel_multiplier*_max_vel_map["lin_x"]*msg->axes[_axis_linear_map["x"]];
   cpg_vel_msg->linear.y = _max_vel_multiplier*_max_vel_map["lin_y"]*msg->axes[_axis_linear_map["y"]];
@@ -623,7 +636,6 @@ void JoyTeleop::cpgWalkingState(const sensor_msgs::msg::Joy::SharedPtr msg)
 
 void JoyTeleop::filterIK()
 {
-  // ... (Sua função existente) ...
   _ik_msg_filtered = _ik_msg;
   _ik_msg_filtered.body_leg_ik_trajectory.at(0).body_position.x = _body_position_x_filter.filterData(_ik_msg.body_leg_ik_trajectory.at(0).body_position.x);
   _ik_msg_filtered.body_leg_ik_trajectory.at(0).body_position.y = _body_position_y_filter.filterData(_ik_msg.body_leg_ik_trajectory.at(0).body_position.y);
@@ -635,7 +647,6 @@ void JoyTeleop::filterIK()
 
 void JoyTeleop::publishIK()
 {
-  // ... (Sua função existente) ...
   if (_use_filter)
   {
     this->filterIK();
@@ -647,6 +658,7 @@ void JoyTeleop::publishIK()
 
 void JoyTeleop::publishVel()
 {
+  // Este timer agora só publica para o modo PID
   _vel_publisher->publish(_vel_msg);
 }
 
