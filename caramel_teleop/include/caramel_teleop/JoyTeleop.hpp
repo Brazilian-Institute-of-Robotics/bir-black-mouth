@@ -5,6 +5,7 @@
 #include "std_srvs/srv/empty.hpp"
 #include "std_srvs/srv/set_bool.hpp"
 #include "std_msgs/msg/empty.hpp"
+#include "std_msgs/msg/bool.hpp" // <--- NOVO: Necessário para o semáforo
 #include "sensor_msgs/msg/joy.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "caramel_kinematics/msg/body_leg_ik_trajectory.hpp"
@@ -15,6 +16,9 @@
 #include "controller_manager_msgs/srv/switch_controller.hpp"
 
 #include <memory>
+#include <map>
+#include <string>
+#include <vector>
 
 class JoyTeleop : public rclcpp::Node
 {
@@ -49,6 +53,9 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr _vel_publisher;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr _cpg_vel_publisher;
   rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr _default_pose_publisher;
+  
+  // <--- NOVO: Publicador para ativar/desativar o nó CPG
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr _cpg_activation_publisher;
 
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr _joy_subscriber;
 

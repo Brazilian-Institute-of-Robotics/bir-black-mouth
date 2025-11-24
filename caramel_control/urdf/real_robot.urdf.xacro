@@ -4,8 +4,8 @@
     <ros2_control name="CaramelSystem" type="system">
         <hardware>
             <plugin>caramel_control/CaramelHW</plugin>
-            <param name="baud_rate">57600</param>
-            <param name="usb_port">/dev/ttyUSB0</param>
+            <param name="baud_rate">1000000</param>
+            <param name="usb_port">/dev/u2d2</param>
             <param name="return_delay_type">100</param>
         </hardware>
 

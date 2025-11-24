@@ -3,14 +3,17 @@
 #include "rclcpp/rclcpp.hpp"
 #include "caramel_kinematics/msg/body_leg_ik_trajectory.hpp"
 #include "geometry_msgs/msg/twist.hpp"
+#include "std_msgs/msg/bool.hpp" // <--- NOVO: Necessário para o semáforo
 #include <Eigen/Dense>
 #include <chrono>
 #include <cmath>
 #include <memory>
 
 using namespace std::chrono_literals;
+
 using IK_MSG = caramel_kinematics::msg::BodyLegIKTrajectory;
 using TWIST_MSG = geometry_msgs::msg::Twist;
+using BOOL_MSG = std_msgs::msg::Bool; // <--- NOVO
 
 class HopfCPGNode : public rclcpp::Node
 {
@@ -20,10 +23,17 @@ public:
 private:
   void timer_callback();
   void cmd_vel_callback(const TWIST_MSG::SharedPtr msg);
+  
+  // <--- NOVO: Callback para ativar/desativar este nó
+  void mode_callback(const BOOL_MSG::SharedPtr msg);
 
   rclcpp::Publisher<IK_MSG>::SharedPtr pub_;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Subscription<TWIST_MSG>::SharedPtr sub_vel_;
+  
+  // <--- NOVO: Assinante do modo e flag de estado
+  rclcpp::Subscription<BOOL_MSG>::SharedPtr sub_mode_;
+  bool is_active_; 
 
   int num_osc_;
   Eigen::VectorXd r_;

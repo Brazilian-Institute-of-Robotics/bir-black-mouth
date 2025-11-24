@@ -1,12 +1,13 @@
 #include "caramel_cpg/hopf_cpg_node.hpp"
 #include <Eigen/Dense>
-#include <cmath> // Necessário para std::fabs e std::sqrt
+#include <cmath>
 
 using namespace Eigen;
 
 HopfCPGNode::HopfCPGNode()
 : Node("hopf_cpg_node")
 {
+  // --- Parâmetros (Mantive igual) ---
   this->declare_parameter<double>("stance_lift_z", 0.0035);
   this->declare_parameter<double>("swing_lift_z", 0.045);
   this->declare_parameter<double>("body_height", 0.0);
@@ -26,16 +27,25 @@ HopfCPGNode::HopfCPGNode()
   std::vector<double> default_phase_des = {0.0, M_PI, M_PI, 0.0};
   this->declare_parameter<std::vector<double>>("phase_desired", default_phase_des);
 
+  // --- Inicialização do Estado (SEMÁFORO) ---
+  is_active_ = true; // Começa desativado para não brigar com PID
+
+  // --- Subscribers ---
   sub_vel_ = this->create_subscription<TWIST_MSG>(
-    "/cmd_vel", // Lembre-se que o launch remapeia isso para /cmd_vel_cpg
+    "/cmd_vel", 
     10,
     std::bind(&HopfCPGNode::cmd_vel_callback, this, std::placeholders::_1)
   );
 
+  // <--- NOVO: Assina o tópico que diz se é a vez do CPG ou não
+  sub_mode_ = this->create_subscription<BOOL_MSG>(
+    "/robot_mode/cpg_active",
+    10,
+    std::bind(&HopfCPGNode::mode_callback, this, std::placeholders::_1)
+  );
+
   pub_ = this->create_publisher<IK_MSG>("/cmd_ik", 10);
   
-  // MUDANÇA: Timer ajustado de 5ms (200Hz) para 33ms (~30Hz)
-  // Isso reduz a carga no nó de IK e evita timeouts.
   timer_ = this->create_wall_timer(
     33ms, 
     std::bind(&HopfCPGNode::timer_callback, this)
@@ -45,6 +55,7 @@ HopfCPGNode::HopfCPGNode()
   last_cmd_vel_.linear.y = 0.0;
   last_cmd_vel_.angular.z = 0.0;
 
+  // --- Configuração CPG (Mantive igual) ---
   num_osc_ = 4;
   r_ = VectorXd::Constant(num_osc_, this->get_parameter("r_desired").as_double() * 0.9);
   phi_ = VectorXd::Zero(num_osc_);
@@ -64,7 +75,18 @@ HopfCPGNode::HopfCPGNode()
   turn_scale_ = this->get_parameter("turn_scale").as_double();
 
   last_time_ = this->now();
-  RCLCPP_INFO(this->get_logger(), "Hopf CPG node iniciado com entrada de velocidade (taxa 30Hz).");
+  RCLCPP_INFO(this->get_logger(), "Hopf CPG Node inicializado. Aguardando ativacao (/robot_mode/cpg_active)...");
+}
+
+// <--- NOVO: Callback do Semáforo
+void HopfCPGNode::mode_callback(const BOOL_MSG::SharedPtr msg)
+{
+    is_active_ = msg->data;
+    if (is_active_) {
+        RCLCPP_INFO(this->get_logger(), "CPG ATIVADO!");
+    } else {
+        RCLCPP_INFO(this->get_logger(), "CPG PAUSADO.");
+    }
 }
 
 void HopfCPGNode::cmd_vel_callback(const TWIST_MSG::SharedPtr msg)
@@ -74,50 +96,45 @@ void HopfCPGNode::cmd_vel_callback(const TWIST_MSG::SharedPtr msg)
 
 void HopfCPGNode::timer_callback()
 {
+  // <--- NOVO: Trava de Segurança Absoluta
+  // Se não for a vez do CPG, ele não calcula e NÃO PUBLICA nada.
+  if (!is_active_) {
+      return; 
+  }
+
   auto current_time = this->now();
   double dt = (current_time - last_time_).seconds();
   last_time_ = current_time;
-  // Clamp de DT ajustado para o novo timer de 33ms
   if (dt <= 0.0 || dt > 0.1) dt = 0.033; 
 
-  // === 1. Obter Comandos de Velocidade ===
+  // === 1. Deadzone e Filtro de Velocidade ===
   double vx = last_cmd_vel_.linear.x;
   double vy = last_cmd_vel_.linear.y;
   double vth = last_cmd_vel_.angular.z;
 
-  // --- MUDANÇA: Adiciona o Deadzone ---
-  // Se os comandos forem muito pequenos (drift do joystick), zere-os.
-  const double linear_deadzone = 0.02;  // 2 cm/s
-  const double angular_deadzone = 0.05; // ~3 graus/s
+  const double linear_deadzone = 0.02;
+  const double angular_deadzone = 0.05;
 
-  if (std::sqrt(vx*vx + vy*vy) < linear_deadzone)
-  {
-    vx = 0.0;
-    vy = 0.0;
-  }
-  if (std::fabs(vth) < angular_deadzone)
-  {
-    vth = 0.0;
-  }
-  // --- Fim da Mudança ---
+  if (std::sqrt(vx*vx + vy*vy) < linear_deadzone) { vx = 0.0; vy = 0.0; }
+  if (std::fabs(vth) < angular_deadzone) { vth = 0.0; }
+
+  // <--- NOVO: Flag para saber se o robô deve estar parado
+  bool is_moving = (std::abs(vx) > 0.0 || std::abs(vy) > 0.0 || std::abs(vth) > 0.0);
 
   // === 2. Obter Parâmetros ===
   double lift_stance = this->get_parameter("stance_lift_z").as_double();
   double lift_swing = this->get_parameter("swing_lift_z").as_double();
   double body_h = this->get_parameter("body_height").as_double();
+  // ... outros parâmetros ...
   double mu = this->get_parameter("mu").as_double();
   double r_des = this->get_parameter("r_desired").as_double();
   double freq_scale = this->get_parameter("freq_scale").as_double();
-  
   double f_base_hz = this->get_parameter("omega_stance").as_double();
-
   double body_offset_x = this->get_parameter("body_offset_x").as_double();
   double body_offset_y = this->get_parameter("body_offset_y").as_double();
   double body_offset_z = this->get_parameter("body_offset_z").as_double();
 
-  // === 3. Mapear Velocidade para Parâmetros do CPG ===
-
-  // --- A. Frequência ---
+  // === 3. Mapear Velocidade ===
   double vel_magnitude = std::sqrt(vx*vx + vy*vy + (vth*turn_scale_)*(vth*turn_scale_));
   double omega_scale = 1.0 + (vel_magnitude * freq_scale);
   double omega_stance = omega_stance_base_ * omega_scale;
@@ -125,12 +142,10 @@ void HopfCPGNode::timer_callback()
   
   double current_f_hz = f_base_hz * omega_scale;
 
-  // --- B. Amplitude (CORRIGIDO) ---
   double target_amplitude_x = 0.0;
   double target_amplitude_y = 0.0;
 
-  if (current_f_hz > 0.01) 
-  {
+  if (current_f_hz > 0.01) {
       target_amplitude_x = vx / (4.0 * current_f_hz);
       target_amplitude_y = vy / (4.0 * current_f_hz);
   }
@@ -142,14 +157,12 @@ void HopfCPGNode::timer_callback()
   step_x_amp[1] = target_amplitude_x + vth * turn_scale_;
   step_x_amp[2] = target_amplitude_x - vth * turn_scale_;
   step_x_amp[3] = target_amplitude_x + vth * turn_scale_;
-
   step_y_amp.setConstant(target_amplitude_y); 
 
-  // --- 4. Lógica de Integração do CPG ---
+  // === 4. Integração do CPG (Hopf) ===
   auto phase_desired = this->get_parameter("phase_desired").as_double_array();
   VectorXd phi_des(num_osc_);
-  for (int i = 0; i < num_osc_ && i < (int)phase_desired.size(); ++i)
-    phi_des[i] = phase_desired[i];
+  for (int i = 0; i < num_osc_ && i < (int)phase_desired.size(); ++i) phi_des[i] = phase_desired[i];
 
   VectorXd dr(num_osc_);
   VectorXd dphi(num_osc_);
@@ -169,12 +182,14 @@ void HopfCPGNode::timer_callback()
     dphi[i] = omega_i + coupling_sum;
   }
 
+  // <--- IMPORTANTE: Se estiver parado, você pode zerar a evolução da fase ou não.
+  // Aqui deixamos evoluir, mas travamos a altura no passo 5.
   r_ += dr * dt;
   phi_ += dphi * dt;
   for (int i = 0; i < num_osc_; ++i)
     phi_[i] = std::fmod(phi_[i] + M_PI, 2.0 * M_PI) - M_PI;
 
-  // --- 5. Mapeamento Cartesiano ---
+  // === 5. Mapeamento Cartesiano ===
   VectorXd leg_x(num_osc_);
   VectorXd leg_y(num_osc_);
   VectorXd leg_z(num_osc_);
@@ -188,11 +203,31 @@ void HopfCPGNode::timer_callback()
     leg_x[i] = -step_x_amp[i] * rscale * std::cos(ph);
     leg_y[i] = -step_y_amp[i] * rscale * std::cos(ph);
     
-    double lift = swing_phase ? lift_swing : lift_stance;
-    leg_z[i] = lift * rscale * std::sin(ph) + body_h;
+    // <--- CORREÇÃO DO "TROTAR PARADO"
+    // Se a velocidade for zero (is_moving == false), forçamos a perna a ficar no chão (lift_stance).
+    if (!is_moving) 
+    {
+        // Se a velocidade for zero, ZERA tudo.
+        // Trava X e Y sem oscilação
+        leg_x[i] = 0.0; 
+        leg_y[i] = 0.0; 
+        
+        // Trava Z na altura base do corpo (sem lift_stance)
+        // Isso remove aquele "trotinho" de 3mm
+        leg_z[i] = body_h; 
+    } 
+    else 
+    {
+        // Se estiver andando, calcula normal
+        leg_x[i] = -step_x_amp[i] * rscale * std::cos(ph);
+        leg_y[i] = -step_y_amp[i] * rscale * std::cos(ph);
+        
+        double lift = swing_phase ? lift_swing : lift_stance;
+        leg_z[i] = lift * rscale * std::sin(ph) + body_h;
+    }
   }
 
-  // --- 6. Publicação da Mensagem ---
+  // === 6. Publicação ===
   auto msg = std::make_unique<IK_MSG>();
   caramel_kinematics::msg::BodyLegIK ik_point;
   ik_point.leg_points.reference_link = 1;
@@ -221,6 +256,8 @@ void HopfCPGNode::timer_callback()
   builtin_interfaces::msg::Duration t;
   t.sec = 0; t.nanosec = 0;
   msg->time_from_start.push_back(t);
+  
+  // Publica somente se o PID não estiver usando o robô (verificado no início da função)
   pub_->publish(std::move(msg));
 }
 
