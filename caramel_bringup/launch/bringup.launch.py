@@ -160,7 +160,7 @@ def generate_launch_description():
         feet_listener,
         robot_state_publisher,
         TimerAction(period=1.0, actions=[caramel_controllers]),
-        toggle_service_call, # Ativa os controladores
+        # toggle_service_call, # Ativa os controladores
         TimerAction(period=2.0, actions=[inverse_kinematics]),
         TimerAction(period=3.0, actions=[body_control, body_control_remapped]),
         

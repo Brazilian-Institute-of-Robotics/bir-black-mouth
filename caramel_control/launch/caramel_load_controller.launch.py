@@ -1,10 +1,9 @@
-import os 
+import os
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess, DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration, Command
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import Node
-
 
 def generate_launch_description():
 
@@ -17,6 +16,7 @@ def generate_launch_description():
     default_model = os.path.join(caramel_description_pkg_share, "urdf", "caramel.urdf.xacro")    
     robot_model = LaunchConfiguration('model', default=default_model)
 
+    # 1. O Gerenciador Principal (Carrega o driver C++)
     control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
@@ -24,43 +24,43 @@ def generate_launch_description():
         output="both",
     )
 
-    # Load controller to publish joint data
-    load_joint_state_broadcaster = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
-             'joint_state_broadcaster'],
-        output='screen'
+    # 2. Joint State Broadcaster
+    # Esse DEVE nascer ATIVO para você ver o robô no Rviz mesmo parado
+    joint_state_broadcaster_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
     )
 
-    # --- CORREÇÕES ABAIXO: De 'configured' para 'active' ---
-
-    # Load controller of the front left leg joints
-    load_front_left_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', # <--- MUDOU AQUI
-             'front_left_joint_trajectory_controller'],
-        output='screen'
+    # 3. Controladores das Pernas 
+    # ATENÇÃO: A flag "--inactive" é o segredo para o JoyTeleop ligar tudo junto depois
+    
+    front_left_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["front_left_joint_trajectory_controller", "--controller-manager", "/controller_manager", "--inactive"],
     )
 
-    # Load controller of the front right leg joints
-    load_front_right_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', # <--- MUDOU AQUI
-             'front_right_joint_trajectory_controller'],
-        output='screen'
+    front_right_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["front_right_joint_trajectory_controller", "--controller-manager", "/controller_manager", "--inactive"],
     )
 
-    # Load controller of the back left leg joints
-    load_back_left_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', # <--- MUDOU AQUI
-             'back_left_joint_trajectory_controller'],
-        output='screen'
+    back_left_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["back_left_joint_trajectory_controller", "--controller-manager", "/controller_manager", "--inactive"],
     )
 
-    # Load controller of the back right leg joints
-    load_back_right_joint_trajectory_controller = ExecuteProcess(
-        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', # <--- MUDOU AQUI
-             'back_right_joint_trajectory_controller'],
-        output='screen'
+    back_right_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["back_right_joint_trajectory_controller", "--controller-manager", "/controller_manager", "--inactive"],
     )
 
+    # O Controller Toggler (Seu código C++ novo)
+    # Ele não precisa de args especiais, pois já configuramos os tópicos no código
     controller_toggler = Node(
         package="caramel_control",
         executable="controller_toggler_node",
@@ -68,17 +68,20 @@ def generate_launch_description():
         output="screen",
     )
 
-
     return LaunchDescription([
         DeclareLaunchArgument(name='model', default_value=default_model, 
                               description='Absolute path to robot urdf file'),
         DeclareLaunchArgument(name='controllers', default_value=default_controllers, 
                               description='Absolute path to robot controllers file'),
-        load_joint_state_broadcaster,
-        load_front_left_joint_trajectory_controller,
-        load_front_right_joint_trajectory_controller,
-        load_back_left_joint_trajectory_controller,
-        load_back_right_joint_trajectory_controller,
+        
         control_node,
+        
+        # Spawners
+        joint_state_broadcaster_spawner,
+        front_left_spawner,
+        front_right_spawner,
+        back_left_spawner,
+        back_right_spawner,
+        
         controller_toggler,
     ])
