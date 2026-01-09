@@ -13,7 +13,7 @@ hopf_cpg_node:
     body_offset_y: 0.015
     body_offset_z: 0.0
 
-    omega_stance: 0.5
+    omega_stance: 0.3
     omega_swing: 2.5
     turn_scale: 0.25
     freq_scale: 1.5

@@ -28,8 +28,10 @@ InverseKinematics::InverseKinematics() : Node("inverse_kinematics_node")
   _back_left_trajectory_publisher   = this->create_publisher<trajectory_msgs::msg::JointTrajectory>("back_left_joint_trajectory_controller/joint_trajectory", 10);
   _back_right_trajectory_publisher  = this->create_publisher<trajectory_msgs::msg::JointTrajectory>("back_right_joint_trajectory_controller/joint_trajectory", 10);
 
+  // --- CORREÇÃO AQUI ---
+  // Substituído rmw_qos_profile_services_default por rclcpp::ServicesQoS()
   _ik_client = this->create_client<caramel_kinematics::srv::InvKinematics>("compute_inverse_kinematics", 
-                                                                                rmw_qos_profile_services_default, 
+                                                                                rclcpp::ServicesQoS(), 
                                                                                 _callback_group);
 
   _default_joint_limits = { {"hip_roll_limit", 0.785}, {"hip_pitch_limit", 0.785}, {"elbow_limit", 0.785} };
@@ -52,16 +54,8 @@ InverseKinematics::~InverseKinematics()
 
 void InverseKinematics::IKCallback(const caramel_kinematics::msg::BodyLegIKTrajectory::SharedPtr msg)
 {
-  // auto start = std::chrono::steady_clock::now();
-
   this->_cmd_ik_msg = *msg;
-
   this->computeIKAndPublishJoints();
-
-  // auto end = std::chrono::steady_clock::now();
-  // std::cout << "Elapsed time in microseconds: "
-            // << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
-            // << " µs" << std::endl;
 }
 
 void InverseKinematics::defaultPoseCallback(const std_msgs::msg::Empty::SharedPtr msg)
@@ -129,26 +123,27 @@ bool InverseKinematics::checkJointAngles()
       return false;
     }
 
-    if (abs(leg_joints.front_right_leg.hip_roll_joint) > _joint_limits["hip_roll_limit"] ||
-        abs(leg_joints.front_left_leg.hip_roll_joint)  > _joint_limits["hip_roll_limit"] ||
-        abs(leg_joints.back_left_leg.hip_roll_joint)   > _joint_limits["hip_roll_limit"] ||
-        abs(leg_joints.back_right_leg.hip_roll_joint)  > _joint_limits["hip_roll_limit"])
+    // Usei std::abs para garantir a sobrecarga correta para double
+    if (std::abs(leg_joints.front_right_leg.hip_roll_joint) > _joint_limits["hip_roll_limit"] ||
+        std::abs(leg_joints.front_left_leg.hip_roll_joint)  > _joint_limits["hip_roll_limit"] ||
+        std::abs(leg_joints.back_left_leg.hip_roll_joint)   > _joint_limits["hip_roll_limit"] ||
+        std::abs(leg_joints.back_right_leg.hip_roll_joint)  > _joint_limits["hip_roll_limit"])
     {
       RCLCPP_WARN(rclcpp::get_logger("ik_node"), "Hip roll joint angle out of range");
       return false;
     }
-    if (abs(leg_joints.front_right_leg.hip_pitch_joint) > _joint_limits["hip_pitch_limit"] ||
-        abs(leg_joints.front_left_leg.hip_pitch_joint)  > _joint_limits["hip_pitch_limit"] ||
-        abs(leg_joints.back_left_leg.hip_pitch_joint)   > _joint_limits["hip_pitch_limit"] ||
-        abs(leg_joints.back_right_leg.hip_pitch_joint)  > _joint_limits["hip_pitch_limit"])
+    if (std::abs(leg_joints.front_right_leg.hip_pitch_joint) > _joint_limits["hip_pitch_limit"] ||
+        std::abs(leg_joints.front_left_leg.hip_pitch_joint)  > _joint_limits["hip_pitch_limit"] ||
+        std::abs(leg_joints.back_left_leg.hip_pitch_joint)   > _joint_limits["hip_pitch_limit"] ||
+        std::abs(leg_joints.back_right_leg.hip_pitch_joint)  > _joint_limits["hip_pitch_limit"])
     {
       RCLCPP_WARN(rclcpp::get_logger("ik_node"), "Hip pitch joint angle out of range");
       return false;
     }
-    if (abs(leg_joints.front_right_leg.elbow_joint) > _joint_limits["elbow_limit"] ||
-        abs(leg_joints.front_left_leg.elbow_joint)  > _joint_limits["elbow_limit"] ||
-        abs(leg_joints.back_left_leg.elbow_joint)   > _joint_limits["elbow_limit"] ||
-        abs(leg_joints.back_right_leg.elbow_joint)  > _joint_limits["elbow_limit"])
+    if (std::abs(leg_joints.front_right_leg.elbow_joint) > _joint_limits["elbow_limit"] ||
+        std::abs(leg_joints.front_left_leg.elbow_joint)  > _joint_limits["elbow_limit"] ||
+        std::abs(leg_joints.back_left_leg.elbow_joint)   > _joint_limits["elbow_limit"] ||
+        std::abs(leg_joints.back_right_leg.elbow_joint)  > _joint_limits["elbow_limit"])
     {
       RCLCPP_WARN(rclcpp::get_logger("ik_node"), "Elbow joint angle out of range");
       return false;

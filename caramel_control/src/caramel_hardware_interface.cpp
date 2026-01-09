@@ -48,14 +48,19 @@ int16_t nm_to_current_raw(double torque_nm, double current_unit_ma) {
     return (int16_t)raw_value;
 }
 
+// --- MUDANÇA IMPORTANTE AQUI PARA ROS 2 JAZZY ---
+// Assinatura atualizada: recebe 'params' em vez de 'info'
 hardware_interface::CallbackReturn CaramelHW::on_init(
-    const hardware_interface::HardwareInfo& info) {
+    const hardware_interface::HardwareComponentInterfaceParams& params) {
     
-    if (hardware_interface::SystemInterface::on_init(info) !=
+    // Chama a classe pai com os novos parâmetros
+    // A classe pai preenche automaticamente a variável 'info_'
+    if (hardware_interface::SystemInterface::on_init(params) !=
         hardware_interface::CallbackReturn::SUCCESS) {
         return hardware_interface::CallbackReturn::ERROR;
     }
 
+    // A partir daqui, usamos 'info_' (variável membro) em vez do argumento antigo
     for (const hardware_interface::ComponentInfo& joint : info_.joints) {
         if (joint.command_interfaces.size() != 1 || joint.command_interfaces[0].name != hardware_interface::HW_IF_POSITION) {
             RCLCPP_FATAL(rclcpp::get_logger("CaramelHW"), "Joint '%s' expected 1 Position Command Interface.", joint.name.c_str());
@@ -102,8 +107,6 @@ hardware_interface::CallbackReturn CaramelHW::on_init(
 
              if (info_.joints[i].parameters.count("ctrl_kd"))
                 hw_joints_[i].ctrl_kd = std::stod(info_.joints[i].parameters.at("ctrl_kd"));
-             
-             // (Leitura de ff_torque removida daqui)
         }
     }
 
@@ -186,7 +189,6 @@ hardware_interface::return_type CaramelHW::read(
 
     dxl_comm_result_ = presentPositionSyncRead_->txRxPacket();
     if (dxl_comm_result_ != COMM_SUCCESS) {
-        // Mantive a proteção de crash, pois sem ela o robô desliga com qualquer ruído
         RCLCPP_WARN(rclcpp::get_logger("CaramelHW"), "Pacote perdido! Ignorando este ciclo...");
         return hardware_interface::return_type::OK; 
     }
@@ -275,9 +277,6 @@ hardware_interface::return_type CaramelHW::write(
 
     return hardware_interface::return_type::OK;
 }
-
-// ... Métodos de export_state, export_command, activate e deactivate permanecem iguais ...
-// (Para economizar espaço, eles são idênticos ao código anterior)
 
 std::vector<hardware_interface::StateInterface> CaramelHW::export_state_interfaces() {
     std::vector<hardware_interface::StateInterface> state_interfaces;

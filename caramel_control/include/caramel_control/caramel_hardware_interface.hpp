@@ -35,8 +35,6 @@ struct Joint {
     double ctrl_kp = 0.0;
     double ctrl_kd = 0.0;
     
-    // (A variável ff_torque foi removida daqui)
-
     // Estados para cálculo de velocidade (Filtro)
     double prev_state = 0.0;
     double velocity = 0.0;
@@ -61,8 +59,11 @@ class CaramelHW : public hardware_interface::SystemInterface {
 public:
     RCLCPP_SHARED_PTR_DEFINITIONS(CaramelHW)
 
+    // --- CORREÇÃO AQUI (ROS 2 Jazzy) ---
+    // Antes: const hardware_interface::HardwareInfo& info
+    // Agora: const hardware_interface::HardwareComponentInterfaceParams& params
     hardware_interface::CallbackReturn on_init(
-        const hardware_interface::HardwareInfo& info) override;
+        const hardware_interface::HardwareComponentInterfaceParams& params) override;
 
     hardware_interface::CallbackReturn on_configure(
         const rclcpp_lifecycle::State& previous_state) override;
