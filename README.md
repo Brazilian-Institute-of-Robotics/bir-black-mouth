@@ -46,7 +46,7 @@ $ sudo nmap -sn $YOUR_IP_ADDRESS$/24
 Then, connect your computer to the raspberry via SSH. The password is *caramel123*.
 
 ```bash
-$ ssh ubuntu@$RASPBERRY_IP$
+$ ssh caramel@$RASPBERRY_IP$
 ```
 
 In you PC, run:
